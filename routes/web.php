@@ -1,0 +1,57 @@
+<?php
+
+use Illuminate\Support\Facades\Route;
+use App\Http\Controllers\HomeController;
+use App\Http\Controllers\PublicController;
+use App\Http\Controllers\AuthController;
+use App\Http\Controllers\AdminController;
+use App\Http\Controllers\StudentController;
+use App\Http\Controllers\InstructorController;
+
+// Home page
+Route::get('/', function () {
+    return view('home', [
+        'name' => 'Yshacute'
+    ]);
+});
+
+
+Route::get('/login', [AuthController::class, 'showLogin'])
+    ->name('login');
+
+Route::post('/login', [AuthController::class, 'login'])
+    ->name('login.submit');
+
+Route::post('/logout', [AuthController::class, 'logout'])
+    ->name('logout');
+
+
+// Admin routes
+Route::get('/admin', [AdminController::class, 'index'])
+    ->name('admin');
+
+Route::post('/admin/store', [AdminController::class, 'store'])
+    ->name('admin.store');
+
+
+//student routes
+
+Route::get('/student', [StudentController::class, 'index'])
+    ->name('student');
+
+Route::post('/student/store', [StudentController::class, 'store'])
+    ->name('student.store');
+
+//instructor routes
+Route::get('/instructor', [InstructorController::class, 'index'])
+    ->name('instructor');
+
+//home
+Route::get('/home', [HomeController::class, 'index'])->name('home');
+
+
+//public routes
+
+Route::get('/public', [PublicController::class, 'index'])
+    ->name('public');
+

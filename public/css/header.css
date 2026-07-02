@@ -1,0 +1,151 @@
+ :root {
+      --header-blue: #005cc9;
+      --header-blue-dark: #004ba3;
+      --header-white: #f7fbff;
+    }
+
+    .app-topbar {
+      background: linear-gradient(90deg, var(--header-blue-dark) 0%, var(--header-blue) 45%, var(--header-blue-dark) 100%);
+      border-bottom: 2px solid #3ea0ff;
+      min-height: 76px;
+      padding-top: 0.35rem;
+      padding-bottom: 0.35rem;
+    }
+
+    .app-topbar .container-fluid {
+      position: relative;
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+    }
+
+    .app-brand {
+      color: var(--header-white);
+      text-decoration: none;
+      min-width: 240px;
+      max-width: 320px;
+    }
+
+    .app-brand i {
+      color: var(--header-white);
+      opacity: 0.95;
+    }
+
+    .app-brand .welcome-label {
+      font-size: 0.74rem;
+      letter-spacing: 0.4px;
+      text-transform: uppercase;
+      opacity: 0.88;
+      margin-bottom: 0;
+    }
+
+    .app-brand .welcome-user {
+      font-weight: 700;
+      font-size: 0.92rem;
+      line-height: 1.1;
+      margin-bottom: 0;
+    }
+
+    .app-brand .welcome-id {
+      font-size: 0.76rem;
+      margin-bottom: 0;
+      opacity: 0.9;
+    }
+
+    .campus-title {
+      color: var(--header-white);
+      text-align: center;
+      font-family: Georgia, "Times New Roman", serif;
+      font-weight: 700;
+      line-height: 1.15;
+      letter-spacing: 0.1px;
+      margin: 0;
+      width: 100%;
+      flex: 1;
+    }
+
+    .campus-title .line-one {
+      display: block;
+      font-size: 1.4rem;
+    }
+
+    .campus-title .line-two {
+      display: block;
+      font-size: 1.03rem;
+      font-weight: 600;
+    }
+
+    .topbar-menu .nav-link,
+    .topbar-menu .btn-link {
+      color: var(--header-white) !important;
+      font-weight: 600;
+      border: 1px solid rgba(247, 251, 255, 0.2);
+      border-radius: 10px;
+      padding: 0.45rem 0.85rem !important;
+      text-decoration: none;
+      transition: all 0.2s ease;
+      width: 100%;
+      text-align: left;
+    }
+
+    .topbar-menu .nav-link:hover,
+    .topbar-menu .btn-link:hover {
+      background-color: rgba(247, 251, 255, 0.12);
+      border-color: rgba(247, 251, 255, 0.65);
+      color: #fff !important;
+    }
+
+    .navbar-toggler {
+      border: 1px solid rgba(247, 251, 255, 0.45) !important;
+      border-radius: 8px;
+      padding: 0.25rem 0.5rem;
+    }
+
+    .navbar-toggler:focus {
+      box-shadow: 0 0 0 0.15rem rgba(247, 251, 255, 0.35);
+    }
+
+    .navbar-toggler-icon {
+      filter: invert(1) brightness(100);
+    }
+
+    .topbar-collapse-menu {
+      position: absolute;
+      right: 0.75rem;
+      top: calc(100% + 0.45rem);
+      width: min(270px, calc(100vw - 1.5rem));
+      background: rgba(6, 41, 92, 0.96);
+      border: 1px solid rgba(247, 251, 255, 0.35);
+      border-radius: 12px;
+      padding: 0.55rem;
+      z-index: 1050;
+      box-shadow: 0 8px 26px rgba(0, 0, 0, 0.25);
+    }
+
+    .topbar-collapse-menu.collapse:not(.show) {
+      display: none;
+    }
+
+    .topbar-menu {
+      width: 100%;
+    }
+
+    @media (max-width: 991px) {
+      .app-brand {
+        min-width: auto;
+        max-width: none;
+      }
+
+      .campus-title {
+        text-align: left;
+        margin-top: 0.25rem;
+      }
+
+      .campus-title .line-one {
+        font-size: 1.1rem;
+      }
+
+      .campus-title .line-two {
+        font-size: 0.9rem;
+      }
+    }
