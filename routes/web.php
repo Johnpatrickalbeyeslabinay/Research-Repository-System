@@ -46,6 +46,9 @@ Route::post('/student/store', [StudentController::class, 'store'])
 Route::get('/instructor', [InstructorController::class, 'index'])
     ->name('instructor');
 
+Route::post('/instructor/store', [InstructorController::class, 'store'])
+    ->name('instructor.store');
+
 //home
 Route::get('/home', [HomeController::class, 'index'])->name('home');
 
