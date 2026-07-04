@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use App\Models\UserFile;
+use Illuminate\Support\Facades\Storage;
 
 class InstructorController extends Controller
 {
@@ -75,5 +76,20 @@ class InstructorController extends Controller
 
         return redirect()->route('instructor')
             ->with('success', 'Research submitted successfully!');
+    }
+
+
+
+    public function viewFile($id)
+    {
+        $file = UserFile::findOrFail($id);
+
+        $path = storage_path('app/public/' . $file->file_path);
+
+        if (!file_exists($path)) {
+            abort(404, 'File not found.');
+        }
+
+        return response()->file($path);
     }
 }
