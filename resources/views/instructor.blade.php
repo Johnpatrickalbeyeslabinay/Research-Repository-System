@@ -67,21 +67,7 @@
                 </div>
             </div>
 
-            <!-- Total Views -->
-            <div class="col-12 col-sm-6 col-xl-3">
-                <div class="card border-0 shadow-sm rounded-4 h-100">
-                    <div class="card-body d-flex justify-content-between align-items-center">
-                        <div>
-                            <p class="text-secondary mb-2">Total Views</p>
-                            <h3 class="fw-normal mb-0">1874</h3>
-                        </div>
 
-                        <div class="bg-danger bg-opacity-10 rounded-2 p-3">
-                            <i class="fa-regular fa-eye text-danger fs-4"></i>
-                        </div>
-                    </div>
-                </div>
-            </div>
 
         </div>
     </div>
@@ -314,8 +300,7 @@
 
                 <div class="card-body">
 
-                    <h1>My Students</h1>
-                    <p>List of students enrolled in your courses.</p>
+
 
 
                 </div>

@@ -14,7 +14,6 @@ class User extends Authenticatable
         'role',
         'name',
         'year_level',
-        'course',
         'password',
     ];
 

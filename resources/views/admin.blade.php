@@ -102,18 +102,6 @@
                         </div>
 
 
-                        <!-- Course -->
-                        <div class="mb-3">
-
-                            <label class="form-label fw-semibold">
-                                Course
-                            </label>
-
-                            <input type="text" class="form-control form-control-lg rounded-3" value="BS Fisheries" readonly>
-
-                            <input type="hidden" name="course" value="BS Fisheries">
-
-                        </div>
 
                         <!-- Year Level -->
                         <div class="mb-3" id="yearLevelDiv">
