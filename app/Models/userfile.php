@@ -20,6 +20,7 @@ class UserFile extends Model
         'desc',
         'file_path',
         'auto_tag',
+        'downloads',
     ];
 
     public function user()

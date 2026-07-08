@@ -42,6 +42,7 @@ Route::get('/student', [StudentController::class, 'index'])
 Route::post('/student/store', [StudentController::class, 'store'])
     ->name('student.store');
 
+
 //instructor routes
 Route::get('/instructor', [InstructorController::class, 'index'])
     ->name('instructor');
@@ -60,3 +61,8 @@ Route::get('/home', [HomeController::class, 'index'])->name('home');
 Route::get('/public', [PublicController::class, 'index'])
     ->name('public');
 
+
+//download route
+
+Route::get('/download/{id}', [StudentController::class, 'download'])
+    ->name('file.download');
