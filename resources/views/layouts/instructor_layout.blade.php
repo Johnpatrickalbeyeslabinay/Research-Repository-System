@@ -11,14 +11,14 @@
 
   <!-- Bootstrap -->
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
 
 </head>
 
 <style>
   .nav-pills .nav-link {
-    color: #0d6efd;
+    color: black;
     background: #fff;
-    border: 1px solid #dee2e6;
     transition: .2s;
   }
 
@@ -27,15 +27,20 @@
   }
 
   .nav-pills .nav-link.active {
-    background: #0d6efd;
-    color: #fff;
-    border-color: #0d6efd;
+    background: #f3f4f6;
+    color: #374151;
   }
 </style>
 
 
-<body class="text-dark"
-  style="background: linear-gradient(to right, #ecfeff, #f0fdfa, #eff6ff);  font-family: sans-serif;">
+<body class="text-dark" style="font-family: sans-serif, arial;          
+  font-size: var(--font-size-sm);            /* 14px base */
+  color: var(--color-text-primary);          /* #111827 default text */
+  background: #f9fafb;
+  margin: 0;
+  padding: 0;
+  line-height: 1.5;
+}">
 
 
   <button class="navbar-toggler border-0 me-2 d-lg-none" type="button" data-bs-toggle="offcanvas"
@@ -52,16 +57,30 @@
       <nav class="navbar navbar-light bg-white border-bottom d-lg-none">
         <div class="container-fluid">
 
+
+          <div class="d-flex align-items-center">
+
+            <i class="fa-solid fa-fish-fins fs-3 me-3 rounded-circle p-2 text-white"
+              style=" background: linear-gradient(135deg, #1e3a8a, #0d9488);"></i>
+
+            <div class="d-flex flex-column">
+
+              <h5 class="fw-bold mb-0">
+                CSU APARRI
+              </h5>
+
+              <small class="text-secondary">
+                Fisheries Program
+              </small>
+            </div>
+          </div>
+
           <button class="navbar-toggler border-0" type="button" data-bs-toggle="offcanvas" data-bs-target="#sidebar">
 
             <span class="navbar-toggler-icon"></span>
 
           </button>
 
-          <span class="fw-bold">
-            <i class="fa-solid fa-fish-fins text-info"></i>
-            Fish Lab System
-          </span>
 
         </div>
       </nav>
@@ -71,12 +90,13 @@
         style="height:100vh; width:250px; left:0; top:0;">
 
         <!-- Header -->
-        <div class="offcanvas-header py-4 px-3 text-white"
-          style="background: linear-gradient(to right, #14b8a6, #06b6d4);">
+        <div class="offcanvas-header py-4 px-3 text-dark bg-white">
+
 
           <div class="d-flex align-items-center">
 
-            <i class="fa-solid fa-fish-fins fs-3 me-3"></i>
+            <i class="fa-solid fa-fish-fins fs-3 me-3 rounded-circle p-2 text-white"
+              style=" background: linear-gradient(135deg, #1e3a8a, #0d9488);"></i>
 
             <div class="d-flex flex-column">
 
@@ -84,7 +104,7 @@
                 CSU APARRI
               </h5>
 
-              <small class="text-white-50">
+              <small class="text-secondary">
                 Fisheries Program
               </small>
             </div>
@@ -92,11 +112,11 @@
         </div>
 
 
-        <div class="border-top p-2 bg-light d-flex align-items-center gap-2">
+        <div class="border-top p-2 d-flex align-items-center gap-2" style=" background-color: #EFF6FF">
 
           <!-- ICON WITH CIRCLE BACKGROUND -->
-          <div class="d-flex align-items-center justify-content-center rounded-circle bg-primary text-white"
-            style="width: 40px; height: 40px; font-size: 18px;">
+          <div class="d-flex align-items-center justify-content-center rounded-circle text-white"
+            style="width: 40px; height: 35px; font-size: 18px; background: #072a89;">
             <i class="fa-regular fa-user"></i>
           </div>
 
@@ -174,25 +194,34 @@
 
   <div class="offcanvas offcanvas-start d-lg-none" tabindex="-1" id="sidebar">
 
-    <div class="offcanvas-header text-white" style="background: linear-gradient(to right,#14b8a6,#06b6d4);">
+    <div class="offcanvas-header text-white" style="background:;">
 
-      <h5 class="fw-bold">
+      <div class="d-flex align-items-center">
 
-        <i class="fa-solid fa-fish-fins"></i>
+        <i class="fa-solid fa-fish-fins fs-3 me-3 rounded-circle p-2 text-white"
+          style=" background: linear-gradient(135deg, #1e3a8a, #0d9488);"></i>
 
-        Fish Lab System
+        <div class="d-flex flex-column">
 
-      </h5>
+          <h5 class="fw-bold mb-0 text-dark">
+            CSU APARRI
+          </h5>
+
+          <small class="text-secondary">
+            Fisheries Program
+          </small>
+        </div>
+      </div>
 
       <button class="btn-close btn-close-white" data-bs-dismiss="offcanvas"></button>
 
     </div>
 
-    <div class="border-top p-2 bg-light d-flex align-items-center gap-2">
+    <div class="border-top p-2 d-flex align-items-center gap-2" style=" background-color: #EFF6FF">
 
       <!-- ICON WITH CIRCLE BACKGROUND -->
-      <div class="d-flex align-items-center justify-content-center rounded-circle bg-primary text-white"
-        style="width: 45px; height: 45px; font-size: 18px;">
+      <div class="d-flex align-items-center justify-content-center rounded-circle text-white"
+        style="width: 40px; height: 35px; font-size: 18px; background: #072a89;">
         <i class="fa-regular fa-user"></i>
       </div>
 

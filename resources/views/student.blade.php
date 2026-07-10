@@ -27,7 +27,7 @@
         </div>
 
         <div class="mt-3 mt-md-0">
-            <button class="btn btn-primary" popovertarget="popover">
+            <button class="rounded-2 p-2 text-white border-0" style="background: #072a89;" popovertarget="popover">
                 <i class=" fa-solid fa-upload me-2"></i>
                 Upload New Research
             </button>
@@ -126,7 +126,7 @@
 
                     <!-- Buttons -->
                     <div class="d-flex gap-2 mt-4">
-                        <button class="btn btn-primary px-4">
+                        <button class="rounded-2 p-2 text-white border-0" style="background: #072a89;">
                             Submit Research
                         </button>
 

@@ -58,17 +58,22 @@
                 <div class="container-fluid">
 
 
-                    <div class="d-flex flex-column">
+                    <div class="d-flex align-items-center">
 
-                        <h5 class="fw-bold mb-0">
-                            CSU APARRI
-                        </h5>
+                        <i class="fa-solid fa-fish-fins fs-3 me-3 rounded-circle p-2 text-white"
+                            style=" background: linear-gradient(135deg, #1e3a8a, #0d9488);"></i>
 
-                        <small class="text-secondary">
-                            Fisheries Program
-                        </small>
+                        <div class="d-flex flex-column">
+
+                            <h5 class="fw-bold mb-0">
+                                CSU APARRI
+                            </h5>
+
+                            <small class="text-secondary">
+                                Fisheries Program
+                            </small>
+                        </div>
                     </div>
-
                     <button class="navbar-toggler border-0" type="button" data-bs-toggle="offcanvas"
                         data-bs-target="#sidebar">
 
@@ -110,8 +115,8 @@
                 <div class="border-top p-2 d-flex align-items-center gap-2" style=" background-color: #EFF6FF">
 
                     <!-- ICON WITH CIRCLE BACKGROUND -->
-                    <div class="d-flex align-items-center justify-content-center rounded-circle bg-primary text-white"
-                        style="width: 40px; height: 40px; font-size: 18px;">
+                    <div class="d-flex align-items-center justify-content-center rounded-circle text-white"
+                        style="width: 40px; height: 35px; font-size: 18px; background: #072a89;">
                         <i class="fa-regular fa-user"></i>
                     </div>
 
@@ -223,8 +228,8 @@
         <div class="border-top p-2 d-flex align-items-center gap-2" style=" background-color: #EFF6FF">
 
             <!-- ICON WITH CIRCLE BACKGROUND -->
-            <div class="d-flex align-items-center justify-content-center rounded-circle bg-primary text-white"
-                style="width: 45px; height: 45px; font-size: 18px;">
+            <div class="d-flex align-items-center justify-content-center rounded-circle text-white"
+                style="width: 45px; height: 45px; font-size: 18px; background: #072a89">
                 <i class="fa-regular fa-user"></i>
             </div>
 
