@@ -60,19 +60,15 @@
 
           <div class="d-flex align-items-center">
 
-            <i class="fa-solid fa-fish-fins fs-3 me-3 rounded-circle p-2 text-white"
-              style=" background: linear-gradient(135deg, #1e3a8a, #0d9488);"></i>
+            <i data-lucide="fish" class="me-3 rounded-circle p-2 text-white"
+              style="width: 36px; height: 36px; background: linear-gradient(135deg, #1e3a8a, #0d9488);">
+            </i>
 
             <div class="d-flex flex-column">
-
-              <h5 class="fw-bold mb-0">
-                CSU APARRI
-              </h5>
-
-              <small class="text-secondary">
-                Fisheries Program
-              </small>
+              <h5 class="fw-bold mb-0">CSU APARRI</h5>
+              <small class="text-secondary">Fisheries Program</small>
             </div>
+
           </div>
 
           <button class="navbar-toggler border-0" type="button" data-bs-toggle="offcanvas" data-bs-target="#sidebar">

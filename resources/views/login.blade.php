@@ -42,7 +42,9 @@
                     </div>
 
                     <button class="btn btn-outline-light btn-lg">
-                        Browse Public Repository →
+                        <a href="{{ route('public') }}" class="text-decoration-none text-white">
+                            Browse Public Repository →
+                        </a>
                     </button>
 
                 </div>

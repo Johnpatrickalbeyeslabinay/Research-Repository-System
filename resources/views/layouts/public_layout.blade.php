@@ -17,61 +17,60 @@
 </head>
 
 <style>
-  .navbar-toggler-icon {
-    filter: invert(100%);
+  .nav-pills .nav-link {
+    color: black;
+    background: #fff;
+    transition: .2s;
   }
 
-  .nav-link {
-    transition: all 0.3s ease-in-out;
+  .nav-pills .nav-link:hover {
+    background: #f8f9fa;
   }
 
-  .nav-link.active {
-    color: white !important;
-    background-color: #1E90FF;
-    font: bold;
-    border-radius: 10px;
-  }
-
-  nav {
-    z-index: 1000;
-  }
-
-  nav a {
-    text-decoration: none;
+  .nav-pills .nav-link.active {
+    background: #f3f4f6;
+    color: #374151;
   }
 </style>
 
-<body class="text-dark"
-  style="background: linear-gradient(to right, #ecfeff, #f0fdfa, #eff6ff);  font-family: sans-serif;">
+
+<body class="text-dark" style="font-family: sans-serif, arial;          
+  font-size: var(--font-size-sm);            /* 14px base */
+  color: var(--color-text-primary);          /* #111827 default text */
+  background: #f9fafb;
+  margin: 0;
+  padding: 0;
+  line-height: 1.5;
+}">
 
   <!--navbar-->
 
-  <nav class="navbar navbar-expand-lg navbar-dark fixed-top shadow-sm"
-    style="background: linear-gradient(to right, #14b8a6, #06b6d4, #3b82f6);">
+  <nav class="navbar navbar-expand-lg navbar-light bg-white fixed-top shadow-sm border-bottom">
 
     <div class="container-fluid">
 
-      <!-- Title -->
-      <div class="navbar-brand ms-3 d-flex align-items-center">
-        <i class="fa-solid fa-fish-fins fa-2xl me-2" style="color: #67e8f9;"></i>
-        <div>
-          <div class="fw-bold">Research Repository System</div>
-          <small class="text-white-50">CSU Aparri-Fisheries Program</small>
+      <!-- Logo -->
+      <div class="d-flex align-items-center">
+        <i data-lucide="fish" class="me-3 rounded-circle p-2 text-white"
+          style="width:36px;height:36px;background:linear-gradient(135deg,#1e3a8a,#0d9488);">
+        </i>
+
+        <div class="d-flex flex-column">
+          <h5 class="fw-bold mb-0">CSU APARRI</h5>
+          <small class="text-secondary">Fisheries Program</small>
         </div>
       </div>
 
-      <!-- login and register buttons -->
-      <div class="ms-auto d-flex gap-2">
-
-        @if (Route::has('login'))
-          <a href="{{ route('login') }}" class="btn btn-info">Login</a>
-        @else
-          <a href="#" class="btn btn-outline-light text-white fw-bold"
-            style=" background-color: rgba(255, 254, 254, 0.39); backdrop-filter: blur(4px);">Login</a>
-        @endif
+      <!-- Login -->
+      <div>
+        <a href="{{ route('login') }}" class="btn text-white px-3 py-2 me-3" style="background:navy;">
+          <i class="fa-solid fa-arrow-right me-2"></i>
+          Login
+        </a>
       </div>
 
     </div>
+
   </nav>
 
 
@@ -107,7 +106,11 @@
 
   <!-- Bootstrap JS -->
   <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+  <script src="https://unpkg.com/lucide@latest"></script>
 
+  <script>
+    lucide.createIcons();
+  </script>
 </body>
 
 </html>
