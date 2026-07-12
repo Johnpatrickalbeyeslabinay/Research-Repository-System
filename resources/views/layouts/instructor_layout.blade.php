@@ -33,7 +33,7 @@
 </style>
 
 
-<body class="text-dark" style="font-family: sans-serif, arial;          
+<body class="text-dark" style="font-family: sans-serif, arial;
   font-size: var(--font-size-sm);            /* 14px base */
   color: var(--color-text-primary);          /* #111827 default text */
   background: #f9fafb;

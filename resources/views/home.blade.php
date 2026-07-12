@@ -9,11 +9,21 @@
 
 
     <div class="text-center">
-        <i class="fa-solid fa-book" style="font-size: 80px; color: #139184;"></i>
+        <i class="fa-solid fa-book shadow-sm"
+        style="font-size: 50px;  width: 90px; color: white;
+    height: 90px;
+    margin: 0 auto;
+    border-radius: 50%;
+    background: linear-gradient(135deg, #1E3A8A, #0D9488);
+    display: flex;
+    justify-content: center;
+    align-items: center;"></i>
+
         <br><br>
+
         <h1 class="text-dark fw-bold">Student Research Portal</h1>
         <br>
-        <h5 class="text-secondary">Submit, track, and share your fisheries research with the academic community. Contribute
+        <h5 class="text-secondary w-50 mx-auto text-center">Submit, track, and share your fisheries research with the academic community. Contribute
             to the growing body of knowledge in marine and aquatic sciences.</h5>
     </div>
 
@@ -79,7 +89,7 @@
 
                 <div class="col-12 col-md-4">
 
-                    <div class=" rounded-circle bg-primary bg-opacity-25 
+                    <div class=" rounded-circle bg-primary bg-opacity-25
                             d-flex align-items-center justify-content-center
                             mx-auto" style=" width:80px;
                 height:80px;">
