@@ -2,8 +2,8 @@
 
 namespace App\Http\Controllers;
 
-use Illuminate\Http\Request;
 use App\Models\UserFile;
+use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Storage;
 
@@ -13,7 +13,7 @@ class StudentController extends Controller
     {
         $studFiles = UserFile::all();
 
-        $notifications = UserFile::where('user_id', Auth::user()->user_id)
+        $notifications = UserFile::where('user_id', Auth::id())
             ->latest()
             ->get();
 
@@ -52,30 +52,28 @@ class StudentController extends Controller
             'at',
             'by',
             'is',
-            'are'
+            'are',
         ];
 
         $tags = preg_replace('/[^a-z0-9\s]/', '', strtolower($request->title));
         $tags = explode(' ', $tags);
-        $tags = array_filter($tags, fn($word) => !empty($word) && !in_array($word, $stopWords));
+        $tags = array_filter($tags, fn ($word) => ! empty($word) && ! in_array($word, $stopWords));
         $tags = array_unique($tags);
 
         $tags = implode(',', $tags);
 
-
-        // 3. Upload file  
+        // 3. Upload file
         $file = $request->file('file');
 
         $originalName = $file->getClientOriginalName();
 
         $file->storeAs('research_files', $originalName, 'public');
 
-        $filePath = 'research_files/' . $originalName;
-
+        $filePath = 'research_files/'.$originalName;
 
         // 4. Save to database
         UserFile::create([
-            'user_id' => Auth::user()->user_id,
+            'user_id' => Auth::id(),
             'title' => $request->title,
             'name' => Auth::user()->name,
             'adviser' => $request->adviser,
@@ -87,12 +85,10 @@ class StudentController extends Controller
         return redirect()->route('student')->with('success', 'Research submitted successfully!');
     }
 
-
-    //download function
+    // download function
     public function download($id)
     {
         $file = UserFile::findOrFail($id);
-
 
         $file->increment('downloads');
 
