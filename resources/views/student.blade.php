@@ -267,6 +267,10 @@
                                                 {{ $file->created_at->format('M d, Y') }}
                                             </span>
 
+                                            <span>
+                                                <i class="bi bi-eye me-1"></i>
+                                                {{ $file->views ?? 0 }}
+                                            </span>
 
                                             <span>
                                                 <i class="bi bi-download me-1"></i>
@@ -403,7 +407,7 @@
 
                                         <div class="d-flex gap-2 mt-3 mt-md-0">
 
-                                            <a href="{{ asset('storage/' . $file->file_path) }}" target="_blank"
+                                           <a href="{{ route('file.view', $file->id) }}" target="_blank"
                                                 class="btn btn-outline-primary">
                                                 <i class="bi bi-eye me-2"></i>
                                                 View

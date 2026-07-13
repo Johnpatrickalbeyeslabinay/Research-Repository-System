@@ -4,7 +4,6 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
-use App\Models\User;
 
 class UserFile extends Model
 {
@@ -20,6 +19,7 @@ class UserFile extends Model
         'desc',
         'file_path',
         'auto_tag',
+        'views',
         'downloads',
     ];
 
@@ -27,6 +27,4 @@ class UserFile extends Model
     {
         return $this->belongsTo(User::class);
     }
-
-
 }

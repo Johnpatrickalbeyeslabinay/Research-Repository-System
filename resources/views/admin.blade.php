@@ -162,6 +162,25 @@
     </div>
 
 
+
+
+
+
+
+
+<div id="monthlyChart" style="width:100%;height:400px;"></div>
+
+
+
+
+
+
+
+
+
+
+
+
     <br><br><br><br><br>
 
     <script>
@@ -197,4 +216,69 @@
 
     </script>
 
+
+<script src="https://cdn.jsdelivr.net/npm/echarts/dist/echarts.min.js"></script>
+<script>
+
+var chart = echarts.init(document.getElementById('monthlyChart'));
+
+var option = {
+
+    title:{
+        text:'Monthly Upload Trends'
+    },
+
+    tooltip:{
+        trigger:'axis'
+    },
+
+    legend:{
+        data:['Uploads','Approvals']
+    },
+
+    xAxis:{
+        type:'category',
+        data:['Oct','Nov','Dec','Jan','Feb','Mar','Apr','May','Jun']
+    },
+
+    yAxis:{
+        type:'value'
+    },
+
+    series:[
+        {
+            name:'Uploads',
+            type:'bar',
+            data:[12,18,15,22,19,25,21,28,14]
+        },
+        {
+            name:'Approvals',
+            type:'bar',
+            data:[8,12,10,15,13,18,16,20,9]
+        }
+    ]
+
+};
+
+chart.setOption(option);
+
+</script>
+series:[
+{
+    name:'Uploads',
+    type:'bar',
+    itemStyle:{
+        color:'#1E3A8A'
+    },
+    data:[12,18,15,22,19,25,21,28,14]
+},
+{
+    name:'Approvals',
+    type:'bar',
+    itemStyle:{
+        color:'#10B981'
+    },
+    data:[8,12,10,15,13,18,16,20,9]
+}
+]
 @endsection

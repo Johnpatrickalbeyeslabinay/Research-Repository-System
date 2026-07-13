@@ -11,7 +11,7 @@ class StudentController extends Controller
 {
     public function index()
     {
-        $studFiles = UserFile::all();
+        $studFiles = UserFile::where('user_id', Auth::id())->get();
 
         $notifications = UserFile::where('user_id', Auth::id())
             ->latest()
@@ -80,9 +80,24 @@ class StudentController extends Controller
             'desc' => $request->desc,
             'file_path' => $filePath,
             'auto_tag' => $tags,
+            'views' => 0,
+            'downloads' => 0,
         ]);
 
         return redirect()->route('student')->with('success', 'Research submitted successfully!');
+    }
+
+    // view function
+
+    public function view($id)
+    {
+        $file = UserFile::findOrFail($id);
+
+        $file->increment('views');
+
+        return response()->file(
+            storage_path('app/public/'.$file->file_path)
+        );
     }
 
     // download function
