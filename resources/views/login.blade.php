@@ -182,6 +182,29 @@
     </div>
 
 
+
+    <h1 class="text-white">Users</h1>
+
+   <div class="d-flex text-white">
+
+     <div class="me-5">
+        <strong>Student</strong>
+        <h5>23-10210</h5>
+        <h5>1X44buKR</h5>
+     </div>
+    <div class="me-5">
+        <strong>Instructor</strong>
+        <h5>23-01200</h5>
+        <h5>6J68otkT</h5>
+    </div>
+    <div>
+        <strong>Admin</strong>
+        <h5>20-123456</h5>
+        <h5>rSl2Sx1e</h5>
+    </div>
+   </div>
+
+
     <script>
         document.querySelectorAll('input[name="role"]').forEach(radio => {
 

@@ -11,7 +11,9 @@ class AdminController extends Controller
 {
     public function index()
     {
-        return view('admin');
+        $view = request('view', 'dashboard');
+
+        return view('admin', compact('view'));
     }
 
     public function store(Request $request)

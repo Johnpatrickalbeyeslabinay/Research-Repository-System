@@ -169,7 +169,6 @@
                             <div class="d-flex align-items-center mb-4">
                                 <i class="bi bi-graph-up-arrow text-success fs-5 me-2"></i>
                                 <h5 class="mb-0">
-                                    <i class="fa-solid fa-arrow-trend-up text-success"></i>
                                     Recent Actions Needed
                                 </h5>
                             </div>
@@ -242,6 +241,10 @@
                                                 {{ $file->created_at->format('M d, Y') }}
                                             </span>
 
+                                            <span>
+                                                <i class="bi bi-eye me-1"></i>
+                                                {{ $file->views ?? 0 }}
+                                            </span>
 
                                             <span>
                                                 <i class="bi bi-download me-1"></i>
@@ -389,9 +392,8 @@
 
                                         <div class="d-flex gap-2 mt-3 mt-md-0">
 
-                                            <a href="{{ asset('storage/' . $file->file_path) }}" target="_blank"
-                                                class="rounded px-2 py-1 text-white border-0"
-                                                style="max-width:200px; width:100%; background: #072a89; text-decoration: none;">
+                                            <a href="{{ route('file.view', ['id' => $file->id, 'v' => time()]) }}" target="_blank"
+                                                class="btn btn-outline-primary">
                                                 <i class="bi bi-eye me-2"></i>
                                                 View
                                             </a>

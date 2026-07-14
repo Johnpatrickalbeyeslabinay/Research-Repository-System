@@ -31,6 +31,9 @@ Route::get('/admin', [AdminController::class, 'index'])
 Route::post('/admin/store', [AdminController::class, 'store'])
     ->name('admin.store');
 
+     Route::get('/admin_dashboard', [AdminController::class, 'index'])
+    ->middleware(['auth']);
+
 // student routes
 
 Route::get('/student', [StudentController::class, 'index'])
@@ -59,6 +62,8 @@ Route::get('/view/{id}', [StudentController::class, 'view'])
     ->name('file.view');
 
 // download route
-
 Route::get('/download/{id}', [StudentController::class, 'download'])
     ->name('file.download');
+
+
+

@@ -1,11 +1,34 @@
 @extends('layouts.admin_layout')
 
-@section('title', 'Admin Dashboard')
+@section('title', 'ADMIN')
 
 @section('admin')
-    <br><br><br><br><br>
 
-    @if(session('success'))
+
+<!--DASHBOARD-->
+@if($view == 'dashboard')
+
+    Dashboard Content
+
+@endif
+
+<!--MANAGE USERS-->
+@if($view == 'user')
+
+<div class="d-flex justify-content-between align-items-center flex-wrap mb-4">
+
+        <div>
+            <h3 class="fw-bold mb-1">
+                My Research Dashboard
+            </h3>
+
+            <p class="text-secondary mb-0">
+                Manage your research submissions and track progress
+            </p>
+        </div>
+
+        <div class="mt-3 mt-md-0">
+            @if(session('success'))
 
         <div class="alert alert-success alert-dismissible fade show">
 
@@ -48,7 +71,6 @@
 
     </button>
 
-    <h1>walang nabago dito kasi wala lang</h1>
 
     <div class="modal fade" id="addUserModal" tabindex="-1">
         <div class="modal-dialog modal-dialog-centered modal-lg">
@@ -158,6 +180,8 @@
                 </div>
 
             </div>
+            </div>
+            </div>
         </div>
     </div>
 
@@ -165,120 +189,101 @@
 
 
 
+    <!--users total-->
+    <div class="container-fluid py-4">
+        <div class="row g-4">
+
+            <!-- Total Submissions -->
+            <div class="col-12 col-sm-6 col-xl-3">
+                <div class="card border-0 shadow-sm rounded-4 h-100">
+                    <div class="card-body d-flex justify-content-between align-items-center">
+                        <div>
+                            <p class="text-secondary mb-2">Total Users</p>
+                            <h3 class="fw-normal mb-0">1</h3>
+                        </div>
+
+                        <div class="bg-primary bg-opacity-10 rounded-2 p-3">
+                            <i class="fa-regular fa-user text-primary fs-4"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+
+            <div class="col-12 col-sm-6 col-xl-3">
+                <div class="card border-0 shadow-sm rounded-4 h-100">
+                    <div class="card-body d-flex justify-content-between align-items-center">
+                        <div>
+                            <p class="text-secondary mb-2">Students</p>
+                            <h3 class="fw-normal mb-0">1</h3>
+                        </div>
+
+                        <div class="bg-primary bg-opacity-10 rounded-2 p-3">
+                            <i class="fa-regular fa-file-lines text-primary fs-4"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Approved -->
+            <div class="col-12 col-sm-6 col-xl-3">
+                <div class="card border-0 shadow-sm rounded-4 h-100">
+                    <div class="card-body d-flex justify-content-between align-items-center">
+                        <div>
+                            <p class="text-secondary mb-2">Instructor</p>
+                            <h3 class="fw-normal mb-0">2</h3>
+                        </div>
+
+                        <div class="bg-success bg-opacity-10 rounded-2 p-3">
+                            <i class="fa-regular fa-circle-check text-success fs-4"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Pending -->
+            <div class="col-12 col-sm-6 col-xl-3">
+                <div class="card border-0 shadow-sm rounded-4 h-100">
+                    <div class="card-body d-flex justify-content-between align-items-center">
+                        <div>
+                            <p class="text-secondary mb-2">Admin</p>
+                            <h3 class="fw-normal mb-0">1</h3>
+                        </div>
+
+                        <div class="bg-warning bg-opacity-10 rounded-2 p-3">
+                            <i class="fa-regular fa-clock text-warning fs-4"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
 
 
 
-<div id="monthlyChart" style="width:100%;height:400px;"></div>
+        </div>
+    </div>
+
+@endif
+
+<!--RESEARCH-->
+@if($view == 'research')
+
+    Research Content
+
+@endif
+
+<!--REPOSITORY-->
+@if($view == 'repository')
+
+    Repository Content
+
+@endif
+
+<!--REPORTS-->
+@if($view == 'reports')
+
+    Reports Content
+
+@endif
 
 
-
-
-
-
-
-
-
-
-
-
-    <br><br><br><br><br>
-
-    <script>
-
-        document.addEventListener('DOMContentLoaded', function () {
-
-            const role = document.getElementById('role');
-            const yearDiv = document.getElementById('yearLevelDiv');
-            const year = document.getElementById('yearLevel');
-
-            function toggleYearLevel() {
-
-                if (role.value === 'student') {
-
-                    yearDiv.style.display = 'block';
-                    year.required = true;
-
-                } else {
-
-                    yearDiv.style.display = 'none';
-                    year.required = false;
-                    year.value = '';
-
-                }
-
-            }
-
-            toggleYearLevel();
-
-            role.addEventListener('change', toggleYearLevel);
-
-        });
-
-    </script>
-
-
-<script src="https://cdn.jsdelivr.net/npm/echarts/dist/echarts.min.js"></script>
-<script>
-
-var chart = echarts.init(document.getElementById('monthlyChart'));
-
-var option = {
-
-    title:{
-        text:'Monthly Upload Trends'
-    },
-
-    tooltip:{
-        trigger:'axis'
-    },
-
-    legend:{
-        data:['Uploads','Approvals']
-    },
-
-    xAxis:{
-        type:'category',
-        data:['Oct','Nov','Dec','Jan','Feb','Mar','Apr','May','Jun']
-    },
-
-    yAxis:{
-        type:'value'
-    },
-
-    series:[
-        {
-            name:'Uploads',
-            type:'bar',
-            data:[12,18,15,22,19,25,21,28,14]
-        },
-        {
-            name:'Approvals',
-            type:'bar',
-            data:[8,12,10,15,13,18,16,20,9]
-        }
-    ]
-
-};
-
-chart.setOption(option);
-
-</script>
-series:[
-{
-    name:'Uploads',
-    type:'bar',
-    itemStyle:{
-        color:'#1E3A8A'
-    },
-    data:[12,18,15,22,19,25,21,28,14]
-},
-{
-    name:'Approvals',
-    type:'bar',
-    itemStyle:{
-        color:'#10B981'
-    },
-    data:[8,12,10,15,13,18,16,20,9]
-}
-]
 @endsection

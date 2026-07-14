@@ -2,9 +2,9 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\UserFile;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
-use App\Models\UserFile;
 
 class InstructorController extends Controller
 {
@@ -44,12 +44,12 @@ class InstructorController extends Controller
             'at',
             'by',
             'is',
-            'are'
+            'are',
         ];
 
         $tags = preg_replace('/[^a-z0-9\s]/', '', $title);
         $tags = explode(' ', $tags);
-        $tags = array_filter($tags, fn($word) => !empty($word) && !in_array($word, $stopWords));
+        $tags = array_filter($tags, fn ($word) => ! empty($word) && ! in_array($word, $stopWords));
         $tags = array_unique($tags);
 
         // 3. Upload file  <-- DITO ILALAGAY ANG STEP 2
@@ -59,8 +59,7 @@ class InstructorController extends Controller
 
         $file->storeAs('research_files', $originalName, 'public');
 
-        $filePath = 'research_files/' . $originalName;
-
+        $filePath = 'research_files/'.$originalName;
 
         // 4. Save to database
         UserFile::create([
