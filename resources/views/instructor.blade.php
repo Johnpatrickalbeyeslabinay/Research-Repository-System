@@ -411,14 +411,6 @@
                                                 Add Feedback / Comment
                                             </h5>
 
-                                            <!-- Feedback Type -->
-                                            <div class="mb-3">
-                                                <select class="form-select form-select-sm">
-                                                    <option selected>General Feedback</option>
-                                                    <option>Request Revision</option>
-                                                    <option>Approval Comment</option>
-                                                </select>
-                                            </div>
 
                                             <!-- Comment -->
                                             <div class="mb-3">

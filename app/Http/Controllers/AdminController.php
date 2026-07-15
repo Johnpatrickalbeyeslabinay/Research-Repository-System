@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\User;
+use App\Models\UserFile;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Str;
@@ -13,7 +14,24 @@ class AdminController extends Controller
     {
         $view = request('view', 'dashboard');
 
-        return view('admin', compact('view'));
+        $users = User::all();
+
+        $student = User::where('role', 'student')->get();
+
+        $instructor = User::where('role', 'instructor')->get();
+
+        $admin = User::where('role', 'admin')->get();
+
+        $studFiles = UserFile::all();
+
+        return view('admin', compact(
+            'view',
+            'users',
+            'student',
+            'instructor',
+            'admin',
+            'studFiles'
+        ));
     }
 
     public function store(Request $request)

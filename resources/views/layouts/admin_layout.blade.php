@@ -136,8 +136,8 @@
 
                         <li class="nav-item">
 
-                            <a class="nav-link {{ request()->query('view') === 'dashboard' ? 'active text-white bg-primary rounded' : 'text-dark' }}"
-                                href="{{ url('/admin?view=dashboard') }}">
+                            <a class="nav-link {{ $view == 'dashboard' ? 'active text-white bg-primary rounded' : 'text-dark bg-light rounded' }}"
+                            href="{{ url('/admin?view=dashboard') }}">
 
                                 <i class="fa-solid fa-book me-2"></i>
 
@@ -165,9 +165,9 @@
                             <a class="nav-link {{ request()->query('view') === 'research' ? 'active text-white bg-primary rounded' : 'text-dark bg-light rounded' }}"
                                 href="{{ url('/admin?view=research') }}">
 
-                                <i class="fa-regular fa-file me-2"></i>
+                                <i class="fa-regular fa-file me-1"></i>
 
-                                Research Submitions
+                                Research Submissions
 
                             </a>
 
@@ -287,8 +287,8 @@
 
                         <li class="nav-item">
 
-                            <a class="nav-link {{ request()->query('view') === 'dashboard' ? 'active text-white bg-primary rounded' : 'text-dark' }}"
-                                href="{{ url('/admin?view=dashboard') }}">
+                            <a class="nav-link {{ $view == 'dashboard' ? 'active text-white bg-primary rounded' : 'text-dark bg-light rounded' }}"
+                            href="{{ url('/admin?view=dashboard') }}">
 
                                 <i class="fa-solid fa-book me-2"></i>
 
@@ -300,7 +300,7 @@
 
                         <li class="nav-item mt-2">
 
-                            <a class="nav-link {{ request()->query('view') === 'user' ? 'active text-white bg-primary rounded' : 'text-dark bg-light rounded' }}"
+                            <a class="nav-link {{ request()->query('view') === 'user' ? 'text-white bg-primary rounded' : 'text-dark bg-light rounded' }}"
                                 href="{{ url('/admin?view=user') }}">
 
                                 <i class="fa-regular fa-user me-2"></i>
@@ -313,12 +313,12 @@
 
                         <li class="nav-item mt-2">
 
-                            <a class="nav-link {{ request()->query('view') === 'research' ? 'active text-white bg-primary rounded' : 'text-dark bg-light rounded' }}"
+                            <a class="nav-link {{ request()->query('view') === 'research' ? 'text-white bg-primary rounded' : 'text-dark bg-light rounded' }}"
                                 href="{{ url('/admin?view=research') }}">
 
                                 <i class="fa-regular fa-file me-2"></i>
 
-                                Research Submitions
+                                Research Submissions
 
                             </a>
 
@@ -326,7 +326,7 @@
 
                         <li class="nav-item mt-2">
 
-                            <a class="nav-link {{ request()->query('view') === 'repository' ? 'active text-white bg-primary rounded' : 'text-dark bg-light rounded' }}"
+                            <a class="nav-link {{ request()->query('view') === 'repository' ? 'text-white bg-primary rounded' : 'text-dark bg-light rounded' }}"
                                 href="{{ url('/admin?view=repository') }}">
 
                                 <i class="fa-solid fa-folder me-2"></i>
@@ -339,7 +339,7 @@
 
                         <li class="nav-item mt-2">
 
-                            <a class="nav-link {{ request()->query('view') === 'reports' ? 'active text-white bg-primary rounded' : 'text-dark bg-light rounded' }}"
+                            <a class="nav-link {{ request()->query('view') === 'reports' ? 'text-white bg-primary rounded' : 'text-dark bg-light rounded' }}"
                                 href="{{ url('/admin?view=reports') }}">
 
                                 <i class="fa-solid fa-chart-line me-2"></i>

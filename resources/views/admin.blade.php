@@ -8,9 +8,260 @@
 <!--DASHBOARD-->
 @if($view == 'dashboard')
 
-    Dashboard Content
+    <div>
+            <h3 class="fw-bold mb-1">
+                Admin Dashboard
+            </h3>
 
+            <p class="text-secondary mb-0">
+                Comprehensive overview of the research repository system — including Submission tracking, and engagement analytics.
+            </p>
+    </div>
+
+
+<!--mga counts ng users etc.-->
+   <div class="container-fluid mt-3">
+
+    <div class="row g-3">
+
+        <!-- Total Users -->
+        <div class="col-xl-4 col-lg-4 col-md-6">
+            <div class="card shadow-sm border rounded-3">
+                <div class="card-body p-3">
+
+                    <div class="d-flex justify-content-between">
+                        <div class="bg-light rounded-3 p-2">
+                            <i class="bi bi-people fs-4 text-secondary"></i>
+                        </div>
+                    </div>
+
+                    <div class="mt-2">
+                        <small class="text-secondary">Total Users</small>
+                        <h4 class="fw-bold mb-0">{{ count($users) }}</h4>
+                    </div>
+
+                </div>
+            </div>
+        </div>
+
+        <!-- Total Students -->
+        <div class="col-xl-4 col-lg-4 col-md-6">
+            <div class="card shadow-sm border rounded-3">
+                <div class="card-body p-3">
+
+                    <div class="d-flex justify-content-between">
+                        <div class="bg-light rounded-3 p-2">
+                            <i class="bi bi-mortarboard fs-4 text-primary"></i>
+                        </div>
+                    </div>
+
+                    <div class="mt-2">
+                        <small class="text-secondary">Total Students</small>
+                        <h4 class="fw-bold mb-0">{{ count($student) }}</h4>
+                    </div>
+
+                </div>
+            </div>
+        </div>
+
+        <!-- Total Instructors -->
+        <div class="col-xl-4 col-lg-4 col-md-6">
+            <div class="card shadow-sm border rounded-3">
+                <div class="card-body p-3">
+
+                    <div class="d-flex justify-content-between">
+                        <div class="bg-light rounded-3 p-2">
+                            <i class="bi bi-person-workspace fs-4 text-success"></i>
+                        </div>
+                    </div>
+
+                    <div class="mt-2">
+                        <small class="text-secondary">Total Instructors</small>
+                        <h4 class="fw-bold mb-0">{{ count($instructor) }}</h4>
+                    </div>
+
+                </div>
+            </div>
+        </div>
+
+        <!-- Total Research -->
+        <div class="col-xl-4 col-lg-4 col-md-6">
+            <div class="card shadow-sm border rounded-3">
+                <div class="card-body p-3">
+
+                    <div class="d-flex justify-content-between">
+                        <div class="bg-light rounded-3 p-2">
+                            <i class="bi bi-file-earmark-text fs-4 text-primary"></i>
+                        </div>
+                    </div>
+
+                    <div class="mt-2">
+                        <small class="text-secondary">Total Research</small>
+                        <h4 class="fw-bold mb-0">{{ count($studFiles) }}</h4>
+                    </div>
+
+                </div>
+            </div>
+        </div>
+
+        <!-- Pending -->
+        <div class="col-xl-4 col-lg-4 col-md-6">
+            <div class="card shadow-sm border rounded-3">
+                <div class="card-body p-3">
+
+                    <div class="d-flex justify-content-between">
+                        <div class="bg-warning bg-opacity-10 rounded-3 p-2">
+                            <i class="bi bi-clock-history fs-4 text-warning"></i>
+                        </div>
+                    </div>
+
+                    <div class="mt-2">
+                        <small class="text-secondary">Pending Approvals</small>
+                        <h4 class="fw-bold mb-0">?</h4>
+                    </div>
+
+                </div>
+            </div>
+        </div>
+
+    </div>
+
+</div>
+
+
+
+<!--btn ng mga buttons haha-->
+<div class="tab-content">
+ <div class="bg-white rounded-5 shadow-sm d-inline-flex gap-2 nav nav-pills mt-3" id="dashboardTab" role="tablist">
+
+        <!-- My Submissions -->
+        <button class="nav-link active rounded-5 px-2 py-1" id="overview-tab" data-bs-toggle="pill"
+            data-bs-target="#overview" type="button" role="tab">
+            Overview
+        </button>
+
+        <!-- Notifications -->
+        <button class="nav-link rounded-5 px-2 py-1" id="submissions-tab"
+            data-bs-toggle="pill" data-bs-target="#submissions" type="button" role="tab">
+
+            My Submissions
+
+        </button>
+
+        <!-- Bookmarks -->
+        <button class="nav-link rounded-5 px-2 py-1" id="analytics-tab" data-bs-toggle="pill" data-bs-target="#analytics"
+            type="button" role="tab">
+            Analytics
+        </button>
+
+        <button class="nav-link rounded-5 px-2 py-1" id="tracking-tab" data-bs-toggle="pill" data-bs-target="#tracking"
+            type="button" role="tab">
+            Monthly Tracking
+        </button>
+
+        <button class="nav-link rounded-5 px-2 py-1" id="audit-tab" data-bs-toggle="pill" data-bs-target="#audit"
+            type="button" role="tab">
+            Audit Logs
+        </button>
+
+    </div>
+
+
+
+    <!--Content ng mga Buttons-->
+
+  <!-- OVERVIEW -->
+        <div class="tab-pane fade show active" id="overview">
+
+            <div class="mt-3">
+                <h3 class="mb-4">Overview Contents</h3>
+
+                <div class="row g-4">
+
+                <!--Bar graph-->
+            <div class="col-12 col-lg-6">
+                <div class="card h-100 shadow-sm">
+                    <div class="card-body">
+                        <div id="monthlyChart" style="width:100%; height:350px;"></div>
+                    </div>
+                </div>
+            </div>
+                <!--Pie Chart-->
+            <div class="col-12 col-lg-6">
+                <div class="card h-100 shadow-sm">
+                    <div class="card-body">
+                        <div id="pieChart" style="width:100%; height:350px;"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+
+
+        <div class="col-12 mt-3">
+            <div class="card shadow-sm h-100">
+                <div class="card-body">
+                    <div id="lineChart" style="width:100%; height:350px;"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+</div>
+
+
+    <!--SUBMISSIONS BUTTONS-->
+
+    <div class="tab-pane fade" id="submissions">
+
+            <div class="row g-3 mt-3">
+
+            <h3>SUBMISSIONS  Contents</h3>
+
+            </div>
+    </div>
+
+
+    <!--ANALYTICS BUTTONS-->
+
+    <div class="tab-pane fade" id="analytics">
+
+            <div class="row g-3 mt-3">
+
+            <h3>ANALYTICS Contents</h3>
+
+            </div>
+    </div>
+
+
+    <!--TRACKING BUTTONS-->
+
+    <div class="tab-pane fade" id="tracking">
+
+            <div class="row g-3 mt-3">
+
+            <h3>TRACKING  Contents</h3>
+
+            </div>
+    </div>
+
+
+    <!--AUDIT BUTTONS-->
+
+    <div class="tab-pane fade" id="audit">
+
+            <div class="row g-3 mt-3">
+
+            <h3>AUDIT  Contents</h3>
+
+            </div>
+    </div>
+</div>
 @endif
+
+
+
+
 
 <!--MANAGE USERS-->
 @if($view == 'user')
@@ -199,7 +450,7 @@
                     <div class="card-body d-flex justify-content-between align-items-center">
                         <div>
                             <p class="text-secondary mb-2">Total Users</p>
-                            <h3 class="fw-normal mb-0">1</h3>
+                            <h3 class="fw-normal mb-0">{{ count($users) }}</h3>
                         </div>
 
                         <div class="bg-primary bg-opacity-10 rounded-2 p-3">
@@ -215,7 +466,7 @@
                     <div class="card-body d-flex justify-content-between align-items-center">
                         <div>
                             <p class="text-secondary mb-2">Students</p>
-                            <h3 class="fw-normal mb-0">1</h3>
+                            <h3 class="fw-normal mb-0">{{ count($student) }}</h3>
                         </div>
 
                         <div class="bg-primary bg-opacity-10 rounded-2 p-3">
@@ -231,7 +482,7 @@
                     <div class="card-body d-flex justify-content-between align-items-center">
                         <div>
                             <p class="text-secondary mb-2">Instructor</p>
-                            <h3 class="fw-normal mb-0">2</h3>
+                            <h3 class="fw-normal mb-0">{{ count($instructor) }}</h3>
                         </div>
 
                         <div class="bg-success bg-opacity-10 rounded-2 p-3">
@@ -247,7 +498,7 @@
                     <div class="card-body d-flex justify-content-between align-items-center">
                         <div>
                             <p class="text-secondary mb-2">Admin</p>
-                            <h3 class="fw-normal mb-0">1</h3>
+                            <h3 class="fw-normal mb-0">{{ count($admin) }}</h3>
                         </div>
 
                         <div class="bg-warning bg-opacity-10 rounded-2 p-3">
@@ -264,12 +515,150 @@
 
 @endif
 
+
+
+
+
+
+
+
+
 <!--RESEARCH-->
 @if($view == 'research')
 
-    Research Content
+    <div class="container-fluid py-4">
+
+    <div class="card rounded-5 shadow-sm border-0">
+
+        <div class="card-body p-4">
+
+            <!-- Header -->
+            <div class="d-flex justify-content-between align-items-center flex-wrap mb-4">
+
+                <h3 class="fw-bold mb-3 mb-md-0">
+                    All Research Submissions
+                </h3>
+
+                <div class="d-flex flex-wrap gap-3">
+
+                    <span>
+                        <i class="bi bi-circle-fill text-success small"></i>
+                        Approved: 3
+                    </span>
+
+                    <span>
+                        <i class="bi bi-circle-fill text-warning small"></i>
+                        Pending: 2
+                    </span>
+
+                    <span>
+                        <i class="bi bi-circle-fill text-danger small"></i>
+                        Rejected: 1
+                    </span>
+
+                </div>
+
+            </div>
+
+            <!-- Table -->
+            <div class="table-responsive">
+
+                <table class="table align-middle">
+
+                    <thead>
+
+                        <tr>
+
+                            <th>Title</th>
+                            <th>Author</th>
+                            <th>Adviser</th>
+                            <th>Submitted</th>
+                            <th>Views</th>
+                            <th>Downloads</th>
+                            <th>Status</th>
+                            <th class="text-end">Actions</th>
+
+                        </tr>
+
+                    </thead>
+
+                    <tbody>
+                        @foreach($studFiles as $file)
+
+                        <tr>
+                            <td style="max-width: 250px;">
+                                <h6 class="fw-semibold mb-0 text-truncate">
+                                            {{ $file->title }}
+                                </h6>
+                            </td>
+
+                            <td>{{ $file->name }}</td>
+
+                            <td class="text-muted">{{ $file->adviser }}</td>
+
+                            <td> {{ $file->created_at->format('M d, Y') }}</td>
+
+                            <td>
+
+                                <span class="text-primary">
+
+                                    <i class="bi bi-eye"></i>
+                                    {{ $file->views ?? 0 }}
+                                </span>
+
+                            </td>
+
+                            <td>
+
+                                <span class="text-primary">
+
+                                    <i class="bi bi-download"></i>
+                                        {{ $file->downloads ?? 0 }}
+                                </span>
+
+                            </td>
+
+                            <td>
+
+                                <span class="badge rounded-pill text-bg-success-subtle text-success px-3 py-2">
+                                    Approved
+                                </span>
+
+                            </td>
+                            @endforeach
+                            <td class="text-end">
+
+                                <button class="btn btn-outline-primary rounded-3">
+
+                                    <i class="bi bi-eye me-2"></i>
+
+                                    View
+
+                                </button>
+
+                            </td>
+
+                        </tr>
+
+                    </tbody>
+
+                </table>
+
+            </div>
+
+        </div>
+
+    </div>
+
+</div>
 
 @endif
+
+
+
+
+
+
 
 <!--REPOSITORY-->
 @if($view == 'repository')
@@ -277,6 +666,13 @@
     Repository Content
 
 @endif
+
+
+
+
+
+
+
 
 <!--REPORTS-->
 @if($view == 'reports')
@@ -286,4 +682,261 @@
 @endif
 
 
+
+
+
+
+
+
+
+
+
+
+
+<script src="https://cdn.jsdelivr.net/npm/echarts@5/dist/echarts.min.js"></script>
+
+
+<!--bar graph-->
+<script>
+var chart = echarts.init(document.getElementById('monthlyChart'));
+
+var option = {
+
+    title: {
+    text: 'Monthly Upload Trends',
+    left: 'left',
+
+    textStyle: {
+        color: '#1F2937',
+        fontSize: 13,
+    }
+    },
+
+
+    tooltip:{
+        trigger:'axis'
+    },
+
+    legend: {
+    data: ['Uploads', 'Approvals'],
+    bottom: 10,
+    left: 'center'
+},
+
+    xAxis:{
+        type:'category',
+        data:['Oct','Nov','Dec','Jan','Feb','Mar','Apr','May','Jun']
+    },
+
+    yAxis:{
+        type:'value'
+    },
+
+    series:[
+        {
+            name:'Uploads',
+            type:'bar',
+            itemStyle:{
+                color:'#1E3A8A'
+            },
+            data:[12,18,15,22,19,25,21,28,14]
+        },
+        {
+            name:'Approvals',
+            type:'bar',
+            itemStyle:{
+                color:'#10B981'
+            },
+            data:[8,12,10,15,13,18,16,20,9]
+        }
+    ]
+
+};
+
+chart.setOption(option);
+window.addEventListener('resize', function () {
+    chart.resize();
+    pieChart.resize();
+});
+</script>
+
+
+
+<!--Pie chart-->
+<script>
+var pieChart = echarts.init(document.getElementById('pieChart'));
+
+var option = {
+
+ title: {
+    text: 'Research Status Distribution',
+    left: 'left',
+
+    textStyle: {
+        color: '#1F2937',
+        fontSize: 13,
+    }
+    },
+    tooltip: {
+        trigger: 'item'
+    },
+
+    legend: {
+        bottom: '10',
+        left: 'center',
+    },
+
+    series: [
+        {
+            name: 'Research Status',
+            type: 'pie',
+            radius: ['40%', '70%'],
+
+            avoidLabelOverlap: false,
+
+            label: {
+                show: false,
+                position: 'center'
+            },
+
+            emphasis: {
+                label: {
+                    show: true,
+                    fontSize: 24,
+                    fontWeight: 'bold'
+                }
+            },
+
+            labelLine: {
+                show: false
+            },
+
+            data: [
+                {
+                    value: 10,
+                    name: 'Approved',
+                    itemStyle: {
+                        color: '#198754' // Bootstrap Success
+                    }
+                },
+                {
+                    value: 5,
+                    name: 'Pending',
+                    itemStyle: {
+                        color: '#FFC107' // Bootstrap Warning
+                    }
+                },
+                {
+                    value: 2,
+                    name: 'Rejected',
+                    itemStyle: {
+                        color: '#DC3545' // Bootstrap Danger
+                    }
+                }
+            ]
+        }
+    ]
+};
+
+pieChart.setOption(option);
+window.addEventListener('resize', function () {
+    chart.resize();
+    pieChart.resize();
+});
+</script>
+
+<!--Linechart-->
+<script>
+    var chart = echarts.init(document.getElementById('lineChart'));
+
+var option = {
+
+    title: {
+        text: 'Downloads & Engagement Trends (Views vs Downloads)',
+        left: 'left',
+        textStyle: {
+            color: '#1F2937',
+            fontSize: 13,
+        }
+    },
+
+    tooltip: {
+        trigger: 'axis'
+    },
+
+    legend: {
+        bottom: 10,
+        left: 'center',
+        data: ['Views', 'Downloads']
+    },
+
+    grid: {
+        top: 70,
+        left: '8%',
+        right: '5%',
+        bottom: 60,
+        containLabel: true
+    },
+
+    xAxis: {
+        type: 'category',
+        boundaryGap: false,
+        data: ['Oct','Nov','Dec','Jan','Feb','Mar','Apr','May','Jun']
+    },
+
+    yAxis: {
+        type: 'value'
+    },
+
+    series: [
+        {
+            name: 'Views',
+            type: 'line',
+            smooth: true,
+            data: [620,890,750,1120,970,1340,1250,1450,720],
+
+            lineStyle: {
+                color: '#7C4DFF',
+                width: 3
+            },
+
+            itemStyle: {
+                color: '#FFFFFF',
+                borderColor: '#7C4DFF',
+                borderWidth: 3
+            },
+
+            symbol: 'circle',
+            symbolSize: 8
+        },
+
+        {
+            name: 'Downloads',
+            type: 'line',
+            smooth: true,
+            data: [160,240,200,290,250,340,320,380,180],
+
+            lineStyle: {
+                color: '#10B981',
+                width: 3
+            },
+
+            itemStyle: {
+                color: '#FFFFFF',
+                borderColor: '#10B981',
+                borderWidth: 3
+            },
+
+            symbol: 'circle',
+            symbolSize: 8
+        }
+    ]
+};
+
+chart.setOption(option);
+
+window.addEventListener('resize', function () {
+    chart.resize();
+});
+</script>
 @endsection

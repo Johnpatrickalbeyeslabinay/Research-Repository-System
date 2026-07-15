@@ -219,7 +219,6 @@
 
 <script src="https://cdn.jsdelivr.net/npm/echarts/dist/echarts.min.js"></script>
 <script>
-
 var chart = echarts.init(document.getElementById('monthlyChart'));
 
 var option = {

@@ -22,7 +22,7 @@ class StudentController extends Controller
 
     public function store(Request $request)
     {
-        // 1. Validate
+        // Validate
         $request->validate([
             'title' => 'required',
             'adviser' => 'required',
@@ -34,7 +34,7 @@ class StudentController extends Controller
             'file.max' => 'The PDF file must not exceed 10 MB.',
         ]);
 
-        // 2. Generate auto tags
+        //  Generate auto tags
         $title = strtolower($request->title);
 
         $stopWords = [
