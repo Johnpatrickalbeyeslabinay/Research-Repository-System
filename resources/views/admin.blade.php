@@ -588,7 +588,7 @@
                         <tr>
                             <td style="max-width: 250px;">
                                 <h6 class="fw-semibold mb-0 text-truncate">
-                                            {{ $file->title }}
+                                    {{ $file->title }}
                                 </h6>
                             </td>
 
@@ -628,10 +628,10 @@
                             @endforeach
                             <td class="text-end">
 
-                                <button class="btn btn-outline-primary rounded-3">
+                                <button class="btn btn-outline-primary rounded py-1"
+                                    popovertarget="popover-{{ $file->id }}">
 
-                                    <i class="bi bi-eye me-2"></i>
-
+                                    <i class="bi bi-folder me-2"></i>
                                     View
 
                                 </button>
