@@ -117,7 +117,7 @@
 
                     <div class="mt-2">
                         <small class="text-secondary">Pending Approvals</small>
-                        <h4 class="fw-bold mb-0">?</h4>
+                        <h4 class="fw-bold mb-0">{{ $pendingCount }}</h4>
                     </div>
 
                 </div>
@@ -924,7 +924,7 @@
                             </td>
 
                             <td>
-                                <span class="rounded text-bg-success-subtle text-success px-3 py-2">
+                                <span class="rounded px-3 py-2">
                                    @if(empty($file->status) || $file->status == 'pending')
                                         <span class="badge bg-warning text-dark rounded-pill">
                                             Pending
@@ -1291,21 +1291,21 @@ var option = {
                     value: {{ $approvedCount }},
                     name: 'Approved',
                     itemStyle: {
-                        color: '#198754' // Bootstrap Success
+                        color: '#198754'
                     }
                 },
                 {
                     value: {{ $pendingCount }},
                     name: 'Pending',
                     itemStyle: {
-                        color: '#FFC107' // Bootstrap Warning
+                        color: '#FFC107'
                     }
                 },
                 {
                     value: {{ $rejectedCount }},
                     name: 'Rejected',
                     itemStyle: {
-                        color: '#DC3545' // Bootstrap Danger
+                        color: '#DC3545'
                     }
                 }
             ]

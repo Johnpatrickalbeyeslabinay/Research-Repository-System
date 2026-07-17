@@ -51,7 +51,7 @@
                             </p>
 
                             <h3 class="fw-normal mb-0">
-                                {{ count($studFiles) }}
+                                {{ $totalUploads }}
                             </h3>
                         </div>
 
@@ -107,7 +107,7 @@
                         </label>
 
                         <textarea class="form-control" name="desc" rows="4"
-                            placeholder="Provide a comprehensive abstract (minimum 100 words)"></textarea>
+                            placeholder="Provide a comprehensive abstract"></textarea>
                     </div>
 
 
@@ -153,7 +153,7 @@
                             </p>
 
                             <h3 class="fw-normal mb-0">
-                                2
+                               {{ $approvedUploads }}
                             </h3>
                         </div>
 
@@ -176,11 +176,40 @@
 
                         <div>
                             <p class="text-secondary mb-2">
-                                Pending Review
+                                Pending
                             </p>
 
                             <h3 class="fw-normal mb-0">
-                                1
+                               {{ $pendingUploads }}
+                            </h3>
+                        </div>
+
+                        <div class="bg-warning bg-opacity-10 rounded-2 p-1">
+                            <i class="fa-regular fa-clock text-warning"></i>
+                        </div>
+
+                    </div>
+
+                </div>
+
+            </div>
+
+
+
+            <!-- Rejected -->
+            <div class="col-12 col-sm-6 col-xl-3">
+
+                <div class="card border-0 shadow-sm rounded-4 h-100">
+
+                    <div class="card-body d-flex justify-content-between align-items-center">
+
+                        <div>
+                            <p class="text-secondary mb-2">
+                                Rejected
+                            </p>
+
+                            <h3 class="fw-normal mb-0">
+                               {{ $rejectedUploads }}
                             </h3>
                         </div>
 
@@ -437,48 +466,83 @@
 
 
         <!-- ================= NOTIFICATIONS ================= -->
-        <div class="tab-pane fade" id="notification">
-
+         <div class="tab-pane fade" id="notification">
             <div class="card mt-3 shadow-sm border-0 rounded-4">
+            <div class="card-body">
+            <h5 class="fw-bold"> Notifications </h5>
+        @forelse($notifications as $notification)
 
-                <div class="card-body">
+    <div class="border-bottom py-3">
 
-                    <h5 class="fw-bold">
-                        Notifications
-                    </h5>
+        @if($notification->created_at == $notification->updated_at)
 
-                    @forelse($notifications as $notification)
-
-                        <div class="border-bottom py-3">
-
-                            <div class="fw-semibold text-success">
-                                ✅ Research Submitted
-                            </div>
-
-                            <div>
-                                You submitted
-                                <strong>{{ $notification->title }}</strong>.
-                            </div>
-
-                            <small class="text-muted">
-                                {{ $notification->created_at->diffForHumans() }}
-                            </small>
-
-                        </div>
-
-                    @empty
-
-                        <p class="text-secondary">
-                            No notifications yet.
-                        </p>
-
-                    @endforelse
-
-                </div>
-
+            <div class="fw-semibold text-primary">
+                <i class="fa-solid fa-upload"></i>
+                 Research Submitted
             </div>
 
-        </div>
+            <div>
+                You submitted
+                <strong>{{ $notification->title }}</strong>.
+            </div>
+
+        @elseif($notification->status == 'approved')
+
+            <div class="fw-semibold text-success">
+                <i class="fa-regular fa-circle-check"></i>
+                 Research Approved
+            </div>
+
+            <div>
+                Your research
+                <strong>{{ $notification->title }}</strong>
+                has been approved by the instructor.
+            </div>
+
+        @elseif($notification->status == 'rejected')
+
+            <div class="fw-semibold text-danger">
+                <i class="fa-regular fa-circle-xmark"></i>
+                 Research Rejected
+            </div>
+
+            <div>
+                Your research
+                <strong>{{ $notification->title }}</strong>
+                has been rejected by the instructor.
+            </div>
+
+        @else
+
+            <div class="fw-semibold text-warning">
+                ⏳ Research Pending
+            </div>
+
+            <div>
+                Your research
+                <strong>{{ $notification->title }}</strong>
+                is currently under review.
+            </div>
+
+        @endif
+
+        <small class="text-muted">
+            {{ $notification->updated_at->diffForHumans() }}
+        </small>
+
+    </div>
+
+@empty
+
+    <p class="text-secondary">
+        No notifications yet.
+    </p>
+
+@endforelse
+</div>
+</div>
+</div>
+
 
         <!-- ================= BOOKMARKS ================= -->
         <div class="tab-pane fade" id="bookmark">

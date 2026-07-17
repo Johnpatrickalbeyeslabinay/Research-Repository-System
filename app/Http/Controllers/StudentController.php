@@ -17,7 +17,28 @@ class StudentController extends Controller
             ->latest()
             ->get();
 
-        return view('student', compact('studFiles', 'notifications'));
+        $totalUploads = UserFile::where('user_id', Auth::id())->count();
+
+        $pendingUploads = UserFile::where('user_id', Auth::id())
+            ->where('status', 'Pending')
+            ->count();
+
+        $approvedUploads = UserFile::where('user_id', Auth::id())
+            ->where('status', 'Approved')
+            ->count();
+
+        $rejectedUploads = UserFile::where('user_id', Auth::id())
+            ->where('status', 'Rejected')
+            ->count();
+
+        return view('student', compact(
+            'studFiles',
+            'notifications',
+            'totalUploads',
+            'pendingUploads',
+            'approvedUploads',
+            'rejectedUploads'
+        ));
     }
 
     public function store(Request $request)
