@@ -24,13 +24,56 @@ class AdminController extends Controller
 
         $studFiles = UserFile::all();
 
+        $approvedCount = UserFile::where('status', 'approved')->count();
+        $rejectedCount = UserFile::where('status', 'rejected')->count();
+        $pendingCount = UserFile::where('status', 'pending')->count();
+
+        $year = request('year', date('Y'));
+
+        $uploadData = [];
+        $approvalData = [];
+
+        for ($month = 1; $month <= 12; $month++) {
+
+            $uploadData[] = UserFile::whereYear('created_at', $year)
+                ->whereMonth('created_at', $month)
+                ->count();
+
+            $approvalData[] = UserFile::where('status', 'approved')
+                ->whereYear('created_at', $year)
+                ->whereMonth('created_at', $month)
+                ->count();
+        }
+
+        $viewData = [];
+        $downloadData = [];
+
+        for ($month = 1; $month <= 12; $month++) {
+
+            $viewData[] = UserFile::whereYear('created_at', $year)
+                ->whereMonth('created_at', $month)
+                ->sum('views');
+
+            $downloadData[] = UserFile::whereYear('created_at', $year)
+                ->whereMonth('created_at', $month)
+                ->sum('downloads');
+        }
+
         return view('admin', compact(
             'view',
             'users',
             'student',
             'instructor',
             'admin',
-            'studFiles'
+            'studFiles',
+            'approvedCount',
+            'rejectedCount',
+            'pendingCount',
+            'uploadData',
+            'approvalData',
+            'viewData',
+            'downloadData',
+            'year'
         ));
     }
 
@@ -66,5 +109,27 @@ class AdminController extends Controller
             'generated_name' => $request->name,
             'generated_user_id' => $request->user_id,
         ]);
+    }
+
+    // APPROBE BTN
+    public function approve($id)
+    {
+        $file = UserFile::findOrFail($id);
+
+        $file->status = 'Approved';
+        $file->save();
+
+        return back()->with('success', 'Research approved successfully.');
+    }
+
+    // REJECT BTN
+    public function reject($id)
+    {
+        $file = UserFile::findOrFail($id);
+
+        $file->status = 'Rejected';
+        $file->save();
+
+        return back()->with('success', 'Research rejected successfully.');
     }
 }

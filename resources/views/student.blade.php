@@ -309,7 +309,7 @@
                     </div>
 
 
-                    <!-- POPOVER -->
+                     <!-- POPOVER -->
                     <div id="popover-{{ $file->id }}" popover
                         style="border: 1px solid #dee2e6;  max-width: 1200px; width: 90%; overflow-y: auto; max-height: 90vh;">
                         <div class="container py-5">
@@ -327,7 +327,7 @@
                                         <div class="col-md-6">
                                             <div class="d-flex align-items-center gap-3">
                                                 <div class="bg-primary bg-opacity-10 rounded-2 py-2 px-1 d-flex justify-content-center align-items-center"
-                                                    style="width:45px; height:45px background-color: #EFF6FF;">
+                                                    style="width:45px; height:45px; background-color: #EFF6FF;">
                                                     <i class="fa-regular fa-user text-primary"></i>
                                                 </div>
 
@@ -416,12 +416,6 @@
                                                 class="btn btn-outline-primary">
                                                 <i class="bi bi-eye me-2"></i>
                                                 View
-                                            </a>
-
-
-                                            <a href="{{ route('file.download', $file->id) }}" class="btn btn-primary">
-                                                <i class="bi bi-download me-2"></i>
-                                                Download
                                             </a>
 
                                         </div>

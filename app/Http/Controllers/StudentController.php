@@ -62,7 +62,7 @@ class StudentController extends Controller
 
         $tags = implode(',', $tags);
 
-        // 3. Upload file
+        // Upload file
         $file = $request->file('file');
 
         $originalName = $file->getClientOriginalName();
@@ -71,7 +71,7 @@ class StudentController extends Controller
 
         $filePath = 'research_files/'.$originalName;
 
-        // 4. Save to database
+        // Save to database
         UserFile::create([
             'user_id' => Auth::id(),
             'title' => $request->title,
@@ -82,6 +82,7 @@ class StudentController extends Controller
             'auto_tag' => $tags,
             'views' => 0,
             'downloads' => 0,
+            'status' => 'pending',
         ]);
 
         return redirect()->route('student')->with('success', 'Research submitted successfully!');

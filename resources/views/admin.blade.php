@@ -170,23 +170,39 @@
 
     <!--Content ng mga Buttons-->
 
-  <!-- OVERVIEW -->
-        <div class="tab-pane fade show active" id="overview">
+ <!-- OVERVIEW -->
+<div class="tab-pane fade show active" id="overview">
 
-            <div class="mt-3">
-                <h3 class="mb-4">Overview Contents</h3>
+    <div class="mt-3">
 
-                <div class="row g-4">
+        <div class="d-flex justify-content-between align-items-center mb-4">
+            <h3>Overview Contents</h3>
+        </div>
 
-                <!--Bar graph-->
+        <div class="row g-4">
+
+            <!-- Bar Graph -->
             <div class="col-12 col-lg-6">
                 <div class="card h-100 shadow-sm">
+
+                    <form method="GET">
+                        <input type="hidden" name="view" value="dashboard">
+
+                        <select name="year" class="form-select" onchange="this.form.submit()">
+                            @for($y = date('Y'); $y >= 2024; $y--)
+                                <option value="{{ $y }}" {{ $year == $y ? 'selected' : '' }}>
+                                    {{ $y }}
+                                </option>
+                            @endfor
+                        </select>
+                    </form>
                     <div class="card-body">
                         <div id="monthlyChart" style="width:100%; height:350px;"></div>
                     </div>
                 </div>
             </div>
-                <!--Pie Chart-->
+
+            <!-- Pie Chart -->
             <div class="col-12 col-lg-6">
                 <div class="card h-100 shadow-sm">
                     <div class="card-body">
@@ -194,9 +210,8 @@
                     </div>
                 </div>
             </div>
+
         </div>
-
-
 
         <div class="col-12 mt-3">
             <div class="card shadow-sm h-100">
@@ -205,6 +220,7 @@
                 </div>
             </div>
         </div>
+
     </div>
 
 </div>
@@ -214,12 +230,301 @@
 
     <div class="tab-pane fade" id="submissions">
 
-            <div class="row g-3 mt-3">
+            <div class="container-fluid py-4">
 
-            <h3>SUBMISSIONS  Contents</h3>
+    <div class="card rounded-5 shadow-sm border-0">
+
+        <div class="card-body p-4">
+
+            <!-- Header -->
+            <div class="d-flex justify-content-between align-items-center flex-wrap mb-4">
+
+                <h3 class="fw-bold mb-3 mb-md-0">
+                    All Research Submissions
+                </h3>
+
+                <div class="d-flex flex-wrap gap-3">
+
+                    <span>
+                        <i class="bi bi-circle-fill text-success small"></i>
+                        {{ $approvedCount }}
+                    </span>
+
+                    <span>
+                        <i class="bi bi-circle-fill text-warning small"></i>
+                        {{ $pendingCount }}
+                    </span>
+
+                    <span>
+                        <i class="bi bi-circle-fill text-danger small"></i>
+                        {{ $rejectedCount }}
+                    </span>
+
+                </div>
 
             </div>
+
+            <!-- Table -->
+            <div class="table-responsive">
+
+                <table class="table align-middle">
+
+                    <thead>
+
+                        <tr>
+
+                            <th>Title</th>
+                            <th>Author</th>
+                            <th>Adviser</th>
+                            <th>Submitted</th>
+                            <th>Views</th>
+                            <th>Downloads</th>
+                            <th>Status</th>
+                            <th class="text-end">Actions</th>
+
+                        </tr>
+
+                    </thead>
+
+                    <tbody>
+                        @foreach($studFiles as $file)
+
+                        <tr>
+                            <td style="max-width: 250px;">
+                                <h6 class="fw-semibold mb-0 text-truncate">
+                                    {{ $file->title }}
+                                </h6>
+                            </td>
+
+                            <td>{{ $file->name }}</td>
+
+                            <td class="text-muted">{{ $file->adviser }}</td>
+
+                            <td> {{ $file->created_at->format('M d, Y') }}</td>
+
+                            <td>
+
+                                <span class="text-primary">
+
+                                    <i class="bi bi-eye"></i>
+                                    {{ $file->views ?? 0 }}
+                                </span>
+
+                            </td>
+
+                            <td>
+
+                                <span class="text-primary">
+
+                                    <i class="bi bi-download"></i>
+                                        {{ $file->downloads ?? 0 }}
+                                </span>
+
+                            </td>
+
+                            <td>
+                                <span class="rounded text-bg-success-subtle text-success px-3 py-2">
+                                   @if(empty($file->status) || $file->status == 'pending')
+                                        <span class="badge bg-warning text-dark rounded-pill">
+                                            Pending
+                                        </span>
+                                    @elseif($file->status == 'approved')
+                                        <span class="badge bg-success rounded-pill">
+                                            Approved
+                                        </span>
+                                    @elseif($file->status == 'rejected')
+                                        <span class="badge bg-danger rounded-pill">
+                                            Rejected
+                                        </span>
+                                    @endif
+
+                                </span>
+                            </td>
+
+
+                            <td class="text-end">
+
+                                <button class="btn btn-outline-primary rounded py-1"
+                                    popovertarget="popover-{{ $file->id }}">
+
+                                    <i class="bi bi-folder me-2"></i>
+                                    View
+
+                                </button>
+
+
+
+
+                                <!-- POPOVER -->
+                    <div id="popover-{{ $file->id }}" popover
+                        style="border: 1px solid #dee2e6;  max-width: 500px; width: 90%; overflow-y: auto; max-height: 90vh;">
+                        <div class="container">
+                            <div class="border-0">
+                                <div class=" p-2 p-md-2">
+                                    <h5 class="fw-bold text-start mb-2"> {{ $file->title }} </h5>
+
+                                    <div class="text-muted text-start small mb-4">
+                                         <span class="me-3">
+                                             <i class="bi bi-eye"></i>
+                                                {{ $file->views ?? 0 }}
+                                        </span>
+
+                                        <span class="me-3">
+                                             <i class="bi bi-download"></i>
+                                                {{ $file->downloads ?? 0 }}
+                                        </span>
+                                    </div>
+
+                                    <div class="row g-4 mb-4">
+
+                                        <div class="col-md-6">
+                                            <div class="d-flex align-items-center gap-3">
+                                                <div class="bg-primary bg-opacity-10 rounded-2 py-2 px-1 d-flex justify-content-center align-items-center"
+                                                    style="width:45px; height:45px; background-color: #EFF6FF;">
+                                                    <i class="fa-regular fa-user text-primary"></i>
+                                                </div>
+
+                                                <div class="text-start">
+                                                    <strong>Author</strong><br>
+                                                    {{ $file->name }}
+                                                </div>
+                                            </div>
+                                        </div>
+
+                                        <div class="col-md-6">
+                                            <div class="d-flex align-items-center gap-3">
+                                                <div class="bg-success bg-opacity-10 rounded-2 py-2 px-1 d-flex justify-content-center align-items-center"
+                                                    style="width:45px; height:45px;">
+                                                    <i class="fa-regular fa-calendar text-success"></i>
+                                                </div>
+
+                                                <div class="text-start">
+                                                    <strong>Year Published</strong><br>
+                                                    {{ $file->created_at->format('Y') }}
+                                                </div>
+                                            </div>
+                                        </div>
+
+                                        <div class="col-md-6">
+                                            <div class="d-flex align-items-center gap-3">
+                                                <div class="bg-primary bg-opacity-10 rounded-2 py-2 px-1 d-flex justify-content-center align-items-center"
+                                                    style="width:45px; height:45px;">
+                                                    <i class="fa-regular fa-calendar-check text-primary"></i>
+                                                </div>
+
+                                                <div class="text-start">
+                                                    <strong>Submitted</strong><br>
+                                                    {{ $file->created_at->format('M j, Y') }}
+                                                </div>
+                                            </div>
+                                        </div>
+
+                                        <div class="col-md-6">
+                                            <div class="d-flex align-items-center gap-3">
+                                                <div class="bg-success bg-opacity-10 rounded-2 py-2 px-1 d-flex justify-content-center align-items-center"
+                                                    style="width:45px; height:45px;">
+                                                    <i class="fa-solid fa-tags text-success"></i>
+                                                </div>
+
+                                                <div class="text-start">
+                                                    <strong>Keywords</strong><br>
+                                                    {{ count(array_filter(explode(',', $file->auto_tag))) }} tags
+                                                </div>
+                                            </div>
+                                        </div>
+
+                                    </div>
+
+                                    <h6 class="fw-bold text-start">Abstract</h6>
+                                    <p class="text-muted" style="text-align: justify;">
+                                        {{ $file->desc ?? 'No abstract available.' }}
+                                    </p>
+
+                                    <h6 class="fw-bold mt-4 text-start">Keywords</h6>
+                                    <div class="text-start">
+                                        @foreach(explode(',', $file->auto_tag) as $tag)
+                                        <span class="small text-start rounded me-1 mb-1 px-2 py-1"
+                                            style="background-color:#EFF6FF; color:#3B5FBF;">
+                                            {{ trim($tag) }}
+                                        </span>
+                                    @endforeach
+                                    </div>
+
+                                    <div
+                                        class="alert alert-primary d-flex justify-content-between align-items-center mt-5 flex-wrap">
+
+                                        <div>
+                                            <div>
+                                                <div class="fw-bold text-start">Full Research Document</div>
+                                                <small>{{ basename($file->file_path) }}</small>
+                                            </div>
+                                        </div>
+
+                                        <div class="d-flex gap-2 mt-3 mt-md-0">
+
+                                           <!--<a href="{{ route('file.view', $file->id) }}" target="_blank"
+                                                class="btn btn-outline-primary">
+                                                <i class="bi bi-eye me-2"></i>
+                                                View
+                                            </a>-->
+                                            <a href="{{ route('file.view', ['id' => $file->id, 'v' => time()]) }}" target="_blank"
+                                                class="btn btn-outline-primary mt-2">
+                                                <i class="bi bi-eye me-2"></i>
+                                                View
+                                            </a>
+
+
+                                        </div>
+                                    </div>
+
+                                    <!--ACTION-->
+                                    <div class="d-flex gap-3">
+
+                                       @if($file->status == 'pending')
+                                            <div class="d-flex gap-3">
+
+                                                <form action="{{ route('research.approve', $file->id) }}" method="POST">
+                                                    @csrf
+                                                    <button type="submit" class="btn btn-outline-success">
+                                                        <i class="fa-regular fa-circle-check"></i>
+                                                        Approve
+                                                    </button>
+                                                </form>
+
+                                                <form action="{{ route('research.reject', $file->id) }}" method="POST">
+                                                    @csrf
+                                                    <button type="submit" class="btn btn-outline-danger">
+                                                        <i class="fa-regular fa-circle-xmark"></i>
+                                                        Reject
+                                                    </button>
+                                                </form>
+
+                                            </div>
+                                        @endif
+
+                                    </div>
+
+
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                            </td>
+
+                        </tr>
+                        @endforeach
+                    </tbody>
+
+                </table>
+
+            </div>
+
+        </div>
+
     </div>
+
+</div>
 
 
     <!--ANALYTICS BUTTONS-->
@@ -543,17 +848,17 @@
 
                     <span>
                         <i class="bi bi-circle-fill text-success small"></i>
-                        Approved: 3
+                        {{ $approvedCount }}
                     </span>
 
                     <span>
                         <i class="bi bi-circle-fill text-warning small"></i>
-                        Pending: 2
+                        {{ $pendingCount }}
                     </span>
 
                     <span>
                         <i class="bi bi-circle-fill text-danger small"></i>
-                        Rejected: 1
+                        {{ $rejectedCount }}
                     </span>
 
                 </div>
@@ -619,13 +924,25 @@
                             </td>
 
                             <td>
+                                <span class="rounded text-bg-success-subtle text-success px-3 py-2">
+                                   @if(empty($file->status) || $file->status == 'pending')
+                                        <span class="badge bg-warning text-dark rounded-pill">
+                                            Pending
+                                        </span>
+                                    @elseif($file->status == 'approved')
+                                        <span class="badge bg-success rounded-pill">
+                                            Approved
+                                        </span>
+                                    @elseif($file->status == 'rejected')
+                                        <span class="badge bg-danger rounded-pill">
+                                            Rejected
+                                        </span>
+                                    @endif
 
-                                <span class="badge rounded-pill text-bg-success-subtle text-success px-3 py-2">
-                                    Approved
                                 </span>
-
                             </td>
-                            @endforeach
+
+
                             <td class="text-end">
 
                                 <button class="btn btn-outline-primary rounded py-1"
@@ -636,10 +953,168 @@
 
                                 </button>
 
+
+
+
+                                <!-- POPOVER -->
+                    <div id="popover-{{ $file->id }}" popover
+                        style="border: 1px solid #dee2e6;  max-width: 500px; width: 90%; overflow-y: auto; max-height: 90vh;">
+                        <div class="container">
+                            <div class="border-0">
+                                <div class=" p-2 p-md-2">
+                                    <h5 class="fw-bold text-start mb-2"> {{ $file->title }} </h5>
+
+                                    <div class="text-muted text-start small mb-4">
+                                         <span class="me-3">
+                                             <i class="bi bi-eye"></i>
+                                                {{ $file->views ?? 0 }}
+                                        </span>
+
+                                        <span class="me-3">
+                                             <i class="bi bi-download"></i>
+                                                {{ $file->downloads ?? 0 }}
+                                        </span>
+                                    </div>
+
+                                    <div class="row g-4 mb-4">
+
+                                        <div class="col-md-6">
+                                            <div class="d-flex align-items-center gap-3">
+                                                <div class="bg-primary bg-opacity-10 rounded-2 py-2 px-1 d-flex justify-content-center align-items-center"
+                                                    style="width:45px; height:45px; background-color: #EFF6FF;">
+                                                    <i class="fa-regular fa-user text-primary"></i>
+                                                </div>
+
+                                                <div class="text-start">
+                                                    <strong>Author</strong><br>
+                                                    {{ $file->name }}
+                                                </div>
+                                            </div>
+                                        </div>
+
+                                        <div class="col-md-6">
+                                            <div class="d-flex align-items-center gap-3">
+                                                <div class="bg-success bg-opacity-10 rounded-2 py-2 px-1 d-flex justify-content-center align-items-center"
+                                                    style="width:45px; height:45px;">
+                                                    <i class="fa-regular fa-calendar text-success"></i>
+                                                </div>
+
+                                                <div class="text-start">
+                                                    <strong>Year Published</strong><br>
+                                                    {{ $file->created_at->format('Y') }}
+                                                </div>
+                                            </div>
+                                        </div>
+
+                                        <div class="col-md-6">
+                                            <div class="d-flex align-items-center gap-3">
+                                                <div class="bg-primary bg-opacity-10 rounded-2 py-2 px-1 d-flex justify-content-center align-items-center"
+                                                    style="width:45px; height:45px;">
+                                                    <i class="fa-regular fa-calendar-check text-primary"></i>
+                                                </div>
+
+                                                <div class="text-start">
+                                                    <strong>Submitted</strong><br>
+                                                    {{ $file->created_at->format('M j, Y') }}
+                                                </div>
+                                            </div>
+                                        </div>
+
+                                        <div class="col-md-6">
+                                            <div class="d-flex align-items-center gap-3">
+                                                <div class="bg-success bg-opacity-10 rounded-2 py-2 px-1 d-flex justify-content-center align-items-center"
+                                                    style="width:45px; height:45px;">
+                                                    <i class="fa-solid fa-tags text-success"></i>
+                                                </div>
+
+                                                <div class="text-start">
+                                                    <strong>Keywords</strong><br>
+                                                    {{ count(array_filter(explode(',', $file->auto_tag))) }} tags
+                                                </div>
+                                            </div>
+                                        </div>
+
+                                    </div>
+
+                                    <h6 class="fw-bold text-start">Abstract</h6>
+                                    <p class="text-muted" style="text-align: justify;">
+                                        {{ $file->desc ?? 'No abstract available.' }}
+                                    </p>
+
+                                    <h6 class="fw-bold mt-4 text-start">Keywords</h6>
+                                    <div class="text-start">
+                                        @foreach(explode(',', $file->auto_tag) as $tag)
+                                        <span class="small text-start rounded me-1 mb-1 px-2 py-1"
+                                            style="background-color:#EFF6FF; color:#3B5FBF;">
+                                            {{ trim($tag) }}
+                                        </span>
+                                    @endforeach
+                                    </div>
+
+                                    <div
+                                        class="alert alert-primary d-flex justify-content-between align-items-center mt-5 flex-wrap">
+
+                                        <div>
+                                            <div>
+                                                <div class="fw-bold text-start">Full Research Document</div>
+                                                <small>{{ basename($file->file_path) }}</small>
+                                            </div>
+                                        </div>
+
+                                        <div class="d-flex gap-2 mt-3 mt-md-0">
+
+                                           <!--<a href="{{ route('file.view', $file->id) }}" target="_blank"
+                                                class="btn btn-outline-primary">
+                                                <i class="bi bi-eye me-2"></i>
+                                                View
+                                            </a>-->
+                                            <a href="{{ route('file.view', ['id' => $file->id, 'v' => time()]) }}" target="_blank"
+                                                class="btn btn-outline-primary mt-2">
+                                                <i class="bi bi-eye me-2"></i>
+                                                View
+                                            </a>
+
+
+                                        </div>
+                                    </div>
+
+                                    <!--ACTION-->
+                                    <div class="d-flex gap-3">
+
+                                       @if($file->status == 'pending')
+                                            <div class="d-flex gap-3">
+
+                                                <form action="{{ route('research.approve', $file->id) }}" method="POST">
+                                                    @csrf
+                                                    <button type="submit" class="btn btn-outline-success">
+                                                        <i class="fa-regular fa-circle-check"></i>
+                                                        Approve
+                                                    </button>
+                                                </form>
+
+                                                <form action="{{ route('research.reject', $file->id) }}" method="POST">
+                                                    @csrf
+                                                    <button type="submit" class="btn btn-outline-danger">
+                                                        <i class="fa-regular fa-circle-xmark"></i>
+                                                        Reject
+                                                    </button>
+                                                </form>
+
+                                            </div>
+                                        @endif
+
+                                    </div>
+
+
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
                             </td>
 
                         </tr>
-
+                        @endforeach
                     </tbody>
 
                 </table>
@@ -725,31 +1200,31 @@ var option = {
 
     xAxis:{
         type:'category',
-        data:['Oct','Nov','Dec','Jan','Feb','Mar','Apr','May','Jun']
+        data:['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec']
     },
 
     yAxis:{
         type:'value'
     },
 
-    series:[
-        {
-            name:'Uploads',
-            type:'bar',
-            itemStyle:{
-                color:'#1E3A8A'
-            },
-            data:[12,18,15,22,19,25,21,28,14]
+   series: [
+    {
+        name: 'Uploads',
+        type: 'bar',
+        itemStyle: {
+            color: '#1E3A8A'
         },
-        {
-            name:'Approvals',
-            type:'bar',
-            itemStyle:{
-                color:'#10B981'
-            },
-            data:[8,12,10,15,13,18,16,20,9]
-        }
-    ]
+        data: @json($uploadData)
+    },
+    {
+        name: 'Approvals',
+        type: 'bar',
+        itemStyle: {
+            color: '#10B981'
+        },
+        data: @json($approvalData)
+    }
+]
 
 };
 
@@ -813,21 +1288,21 @@ var option = {
 
             data: [
                 {
-                    value: 10,
+                    value: {{ $approvedCount }},
                     name: 'Approved',
                     itemStyle: {
                         color: '#198754' // Bootstrap Success
                     }
                 },
                 {
-                    value: 5,
+                    value: {{ $pendingCount }},
                     name: 'Pending',
                     itemStyle: {
                         color: '#FFC107' // Bootstrap Warning
                     }
                 },
                 {
-                    value: 2,
+                    value: {{ $rejectedCount }},
                     name: 'Rejected',
                     itemStyle: {
                         color: '#DC3545' // Bootstrap Danger
@@ -881,7 +1356,7 @@ var option = {
     xAxis: {
         type: 'category',
         boundaryGap: false,
-        data: ['Oct','Nov','Dec','Jan','Feb','Mar','Apr','May','Jun']
+        data:['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec']
     },
 
     yAxis: {
@@ -889,48 +1364,48 @@ var option = {
     },
 
     series: [
-        {
-            name: 'Views',
-            type: 'line',
-            smooth: true,
-            data: [620,890,750,1120,970,1340,1250,1450,720],
+    {
+        name: 'Views',
+        type: 'line',
+        smooth: true,
+        data: @json($viewData),
 
-            lineStyle: {
-                color: '#7C4DFF',
-                width: 3
-            },
-
-            itemStyle: {
-                color: '#FFFFFF',
-                borderColor: '#7C4DFF',
-                borderWidth: 3
-            },
-
-            symbol: 'circle',
-            symbolSize: 8
+        lineStyle: {
+            color: '#7C4DFF',
+            width: 3
         },
 
-        {
-            name: 'Downloads',
-            type: 'line',
-            smooth: true,
-            data: [160,240,200,290,250,340,320,380,180],
+        itemStyle: {
+            color: '#FFFFFF',
+            borderColor: '#7C4DFF',
+            borderWidth: 3
+        },
 
-            lineStyle: {
-                color: '#10B981',
-                width: 3
-            },
+        symbol: 'circle',
+        symbolSize: 8
+    },
 
-            itemStyle: {
-                color: '#FFFFFF',
-                borderColor: '#10B981',
-                borderWidth: 3
-            },
+    {
+        name: 'Downloads',
+        type: 'line',
+        smooth: true,
+        data: @json($downloadData),
 
-            symbol: 'circle',
-            symbolSize: 8
-        }
-    ]
+        lineStyle: {
+            color: '#10B981',
+            width: 3
+        },
+
+        itemStyle: {
+            color: '#FFFFFF',
+            borderColor: '#10B981',
+            borderWidth: 3
+        },
+
+        symbol: 'circle',
+        symbolSize: 8
+    }
+]
 };
 
 chart.setOption(option);
@@ -939,4 +1414,9 @@ window.addEventListener('resize', function () {
     chart.resize();
 });
 </script>
+
+
+
+
+
 @endsection

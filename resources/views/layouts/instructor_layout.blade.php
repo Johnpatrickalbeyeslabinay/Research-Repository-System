@@ -113,7 +113,7 @@
           <!-- ICON WITH CIRCLE BACKGROUND -->
           <div class="d-flex align-items-center justify-content-center rounded-circle text-white"
             style="width: 40px; height: 35px; font-size: 18px; background: #072a89;">
-            <i class="fa-regular fa-user"></i>
+            {{ strtoupper(substr(Auth::user()->name, 0, 1)) }}
           </div>
 
           <!-- USER INFO -->
@@ -218,7 +218,7 @@
       <!-- ICON WITH CIRCLE BACKGROUND -->
       <div class="d-flex align-items-center justify-content-center rounded-circle text-white"
         style="width: 40px; height: 35px; font-size: 18px; background: #072a89;">
-        <i class="fa-regular fa-user"></i>
+        {{ strtoupper(substr(Auth::user()->name, 0, 1)) }}
       </div>
 
       <!-- USER INFO -->
@@ -306,6 +306,12 @@
 
   <!-- Bootstrap JS -->
   <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+
+  <script src="https://unpkg.com/lucide@latest"></script>
+
+  <script>
+    lucide.createIcons();
+  </script>
 </body>
 
 </html>

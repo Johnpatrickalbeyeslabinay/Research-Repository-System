@@ -62,7 +62,7 @@
                     <div class="d-flex align-items-center">
 
                         <i data-lucide="fish" class="me-3 rounded-circle p-2 text-white"
-                            style="width: 36px; height: 36px; background: linear-gradient(135deg, #1e3a8a, #0d9488);">
+                        style="width:36px;height:36px;background:linear-gradient(135deg,#1e3a8a,#0d9488);">
                         </i>
 
                         <div class="d-flex flex-column">
@@ -92,8 +92,9 @@
 
                     <div class="d-flex align-items-center">
 
-                        <i class="fa-solid fa-fish-fins fs-3 me-3 rounded-circle p-2 text-white"
-                            style=" background: linear-gradient(135deg, #1e3a8a, #0d9488);"></i>
+                        <i data-lucide="fish" class="me-3 rounded-circle p-2 text-white"
+                        style="width:36px;height:36px;background:linear-gradient(135deg,#1e3a8a,#0d9488);">
+                        </i>
 
                         <div class="d-flex flex-column">
 
@@ -114,7 +115,7 @@
                     <!-- ICON WITH CIRCLE BACKGROUND -->
                     <div class="d-flex align-items-center justify-content-center rounded-circle text-white"
                         style="width: 40px; height: 35px; font-size: 18px; background: #072a89;">
-                        <i class="fa-regular fa-user"></i>
+                        {{ strtoupper(substr(Auth::user()->name, 0, 1)) }}
                     </div>
 
                     <!-- USER INFO -->
@@ -238,8 +239,9 @@
 
                 <div class="d-flex align-items-center">
 
-                    <i class="fa-solid fa-fish-fins fs-3 me-3 rounded-circle p-2 text-white"
-                        style=" background: linear-gradient(135deg, #1e3a8a, #0d9488);"></i>
+                    <i data-lucide="fish" class="me-3 rounded-circle p-2 text-white"
+                    style="width:36px;height:36px;background:linear-gradient(135deg,#1e3a8a,#0d9488);">
+                    </i>
 
                     <div class="d-flex flex-column">
 
@@ -266,7 +268,7 @@
             <!-- ICON WITH CIRCLE BACKGROUND -->
             <div class="d-flex align-items-center justify-content-center rounded-circle text-white"
                 style="width: 45px; height: 45px; font-size: 18px; background: #072a89">
-                <i class="fa-regular fa-user"></i>
+                {{ strtoupper(substr(Auth::user()->name, 0, 1)) }}
             </div>
 
             <!-- USER INFO -->
@@ -400,7 +402,11 @@
 
     <!-- Bootstrap JS -->
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+<script src="https://unpkg.com/lucide@latest"></script>
 
+  <script>
+    lucide.createIcons();
+  </script>
 </body>
 
 </html>

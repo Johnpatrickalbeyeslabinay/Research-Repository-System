@@ -31,7 +31,7 @@ Route::get('/admin', [AdminController::class, 'index'])
 Route::post('/admin/store', [AdminController::class, 'store'])
     ->name('admin.store');
 
-     Route::get('/admin_dashboard', [AdminController::class, 'index'])
+Route::get('/admin_dashboard', [AdminController::class, 'index'])
     ->middleware(['auth']);
 
 // student routes
@@ -65,5 +65,7 @@ Route::get('/view/{id}', [StudentController::class, 'view'])
 Route::get('/download/{id}', [StudentController::class, 'download'])
     ->name('file.download');
 
+// ACTION ADMIN
+Route::post('/research/{id}/approve', [AdminController::class, 'approve'])->name('research.approve');
 
-
+Route::post('/research/{id}/reject', [AdminController::class, 'reject'])->name('research.reject');

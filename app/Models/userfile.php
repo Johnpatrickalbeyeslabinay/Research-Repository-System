@@ -21,6 +21,7 @@ class UserFile extends Model
         'auto_tag',
         'views',
         'downloads',
+        'status',
     ];
 
     public function user()
