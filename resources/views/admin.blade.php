@@ -1063,17 +1063,11 @@
 
                                         <div class="d-flex gap-2 mt-3 mt-md-0">
 
-                                           <!--<a href="{{ route('file.view', $file->id) }}" target="_blank"
+                                           <a href="{{ route('file.view', $file->id) }}" target="_blank"
                                                 class="btn btn-outline-primary">
                                                 <i class="bi bi-eye me-2"></i>
                                                 View
-                                            </a>-->
-                                            <a href="{{ route('file.view', ['id' => $file->id, 'v' => time()]) }}" target="_blank"
-                                                class="btn btn-outline-primary mt-2">
-                                                <i class="bi bi-eye me-2"></i>
-                                                View
                                             </a>
-
 
                                         </div>
                                     </div>

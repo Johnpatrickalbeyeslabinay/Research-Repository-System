@@ -10,7 +10,10 @@ class InstructorController extends Controller
 {
     public function index()
     {
-        $studFiles = UserFile::all();
+        $studFiles = UserFile::where('adviser', Auth::user()->name)
+            ->where('status', 'approved')
+            ->latest()
+            ->get();
 
         return view('instructor', compact('studFiles'));
     }

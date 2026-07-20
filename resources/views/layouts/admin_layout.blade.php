@@ -176,25 +176,12 @@
 
                         <li class="nav-item mt-2">
 
-                            <a class="nav-link {{ request()->query('view') === 'repository' ? 'active text-white bg-primary rounded' : 'text-dark bg-light rounded' }}"
-                                href="{{ url('/admin?view=repository') }}">
+                            <a class="nav-link active bg-primary rounded text-dark bg-light"
+                                href="{{ route('repository')  }}">
 
                                 <i class="fa-solid fa-folder me-2"></i>
 
                                 Repository
-
-                            </a>
-
-                        </li>
-
-                        <li class="nav-item mt-2">
-
-                            <a class="nav-link {{ request()->query('view') === 'reports' ? 'active text-white bg-primary rounded' : 'text-dark bg-light rounded' }}"
-                                href="{{ url('/admin?view=reports') }}">
-
-                                <i class="fa-solid fa-chart-line me-2"></i>
-
-                                Reports/Analytics
 
                             </a>
 
@@ -328,8 +315,8 @@
 
                         <li class="nav-item mt-2">
 
-                            <a class="nav-link {{ request()->query('view') === 'repository' ? 'text-white bg-primary rounded' : 'text-dark bg-light rounded' }}"
-                                href="{{ url('/admin?view=repository') }}">
+                             <a class="nav-link active bg-primary rounded text-dark bg-light"
+                                href="{{ route('repository')  }}">
 
                                 <i class="fa-solid fa-folder me-2"></i>
 
@@ -339,18 +326,6 @@
 
                         </li>
 
-                        <li class="nav-item mt-2">
-
-                            <a class="nav-link {{ request()->query('view') === 'reports' ? 'text-white bg-primary rounded' : 'text-dark bg-light rounded' }}"
-                                href="{{ url('/admin?view=reports') }}">
-
-                                <i class="fa-solid fa-chart-line me-2"></i>
-
-                                Reports/Analytics
-
-                            </a>
-
-                        </li>
 
                     </ul>
 

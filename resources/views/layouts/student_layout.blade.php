@@ -149,10 +149,10 @@
 
                         <li class="nav-item mt-2">
 
-                            <a class="nav-link {{ request()->query('view') === 'search' ? 'active text-white bg-primary rounded' : 'text-dark bg-light rounded' }}"
-                                href="{{ url('/student_dashboard?view=search') }}">
+                            <a class="nav-link active bg-primary rounded text-dark bg-light"
+                                href="{{ route('repository')  }}">
 
-                                <i class="fa-solid fa-search me-2"></i>
+                                <i class="fa-solid fa-folder me-2"></i>
 
                                 Repository
 
@@ -261,14 +261,14 @@
 
                 <li class="nav-item mt-2">
 
-                    <a class="nav-link {{ request()->query('view') === 'search' ? 'active text-white bg-primary rounded' : 'text-dark bg-light rounded' }}"
-                        href="{{ url('/student_dashboard?view=search') }}">
+                     <a class="nav-link active bg-primary rounded text-dark bg-light"
+                                href="{{ route('repository')  }}">
 
-                        <i class="fa-solid fa-search me-2"></i>
+                                <i class="fa-solid fa-folder me-2"></i>
 
-                        Repository
+                                Repository
 
-                    </a>
+                            </a>
 
                 </li>
             </ul>

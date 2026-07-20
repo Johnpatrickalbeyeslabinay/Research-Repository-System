@@ -213,6 +213,8 @@
 
                 @foreach($studFiles as $file)
 
+                @if($file->adviser == Auth::user()->name)
+
                     <!-- CARD -->
                     <div class="col-12">
 
@@ -433,6 +435,7 @@
                             </div>
                         </div>
                     </div>
+                    @endif
                 @endforeach
             </div>
         </div>

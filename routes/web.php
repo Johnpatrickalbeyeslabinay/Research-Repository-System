@@ -5,6 +5,7 @@ use App\Http\Controllers\AuthController;
 use App\Http\Controllers\HomeController;
 use App\Http\Controllers\InstructorController;
 use App\Http\Controllers\PublicController;
+use App\Http\Controllers\RepositoryController;
 use App\Http\Controllers\StudentController;
 use Illuminate\Support\Facades\Route;
 
@@ -69,3 +70,8 @@ Route::get('/download/{id}', [StudentController::class, 'download'])
 Route::post('/research/{id}/approve', [AdminController::class, 'approve'])->name('research.approve');
 
 Route::post('/research/{id}/reject', [AdminController::class, 'reject'])->name('research.reject');
+
+// Repository route
+Route::get('/repository', [RepositoryController::class, 'index'])
+    ->middleware('auth')
+    ->name('repository');
