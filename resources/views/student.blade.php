@@ -14,6 +14,10 @@
         </div>
     @endif
 
+
+
+@if($view == 'dashboard')
+
     <div class="d-flex justify-content-between align-items-center flex-wrap mb-4">
 
         <div>
@@ -278,6 +282,27 @@
                                 <div class="row align-items-center">
 
                                     <div class="col-lg-9">
+
+
+                                        <!--STATUS-->
+                                       <div class="position-absolute top-0 end-0 m-3">
+                                        @if(empty($file->status) || $file->status == 'pending')
+                                            <span class="badge bg-warning text-dark rounded-pill px-3 py-2">
+                                                Pending
+                                            </span>
+                                        @elseif($file->status == 'approved')
+                                            <span class="badge bg-success rounded-pill px-3 py-2">
+                                                Approved
+                                            </span>
+                                        @elseif($file->status == 'rejected')
+                                            <span class="badge bg-danger rounded-pill px-3 py-2">
+                                                Rejected
+                                            </span>
+                                        @endif
+                                    </div>
+
+
+
 
                                         <h5 class="fw-bold mb-2">
                                             {{ $file->title }}
@@ -565,7 +590,7 @@
         </div>
 
     </div>
-
+@endif
     <script>
         document.getElementById('pdfFile').addEventListener('change', function () {
             const file = this.files[0];

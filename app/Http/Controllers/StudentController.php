@@ -11,6 +11,8 @@ class StudentController extends Controller
 {
     public function index()
     {
+        $view = request('view', 'dashboard');
+
         $studFiles = UserFile::where('user_id', Auth::id())->get();
 
         $notifications = UserFile::where('user_id', Auth::id())
@@ -32,6 +34,7 @@ class StudentController extends Controller
             ->count();
 
         return view('student', compact(
+            'view',
             'studFiles',
             'notifications',
             'totalUploads',
