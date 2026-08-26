@@ -52,7 +52,18 @@
     color: #6c757d;
   }
 
+.toggle-show {
+    position: absolute;
+    right: 12px;
+    top: 50%;
+    transform: translateY(-50%);
 
+    border: none;
+    background: transparent;
+    padding: 0;
+    color: #0d6efd;
+    cursor: pointer;
+}
 </style>
 
 

@@ -54,7 +54,6 @@
                 style="width: 520px; max-width: 95vw; min-height: 580px;">
 
 
-
                 <div class="d-flex justify-content-between align-items-center mb-3">
                 <h5 class="mb-0 fw-bold">Manage Account</h5>
                 <button type="button" class="btn-close" aria-label="Close"></button>
@@ -72,16 +71,16 @@
                 <div class="mb-3">
                     <label for="currentPassword" class="form-label fw-medium">Current Password</label>
                     <div class="input-group">
-                    <input type="password" class="form-control" id="currentPassword" placeholder="Enter current password">
-                    <button type="button" class=" btn-toggle-show" onclick="togglePassword('currentPassword', this)">Show</button>
+                    <input type="password" class="rounded-2 form-control" id="currentPassword" placeholder="Enter current password">
+                    <button type="button" class=" toggle-show" onclick="togglePassword('currentPassword', this)">Show</button>
                     </div>
                 </div>
 
                 <div class="mb-3">
                     <label for="newPassword" class="form-label fw-medium">New Password</label>
                     <div class="input-group">
-                    <input type="password" class="form-control" id="newPassword" placeholder="At least 6 characters">
-                    <button type="button" class=" btn-toggle-show" onclick="togglePassword('newPassword', this)">Show</button>
+                    <input type="password" class="rounded-2 form-control" id="newPassword" placeholder="At least 8 characters">
+                    <button type="button" class=" toggle-show" onclick="togglePassword('newPassword', this)">Show</button>
                     </div>
                 </div>
 
@@ -89,7 +88,7 @@
                     <label for="confirmPassword" class="form-label fw-medium">Confirm New Password</label>
                     <div class="input-group">
                     <input type="password" class="form-control" id="confirmPassword" placeholder="Repeat new password">
-                    <button type="button" class=" btn-toggle-show" onclick="togglePassword('confirmPassword', this)">Show</button>
+                    <button type="button" class=" toggle-show" onclick="togglePassword('confirmPassword', this)">Show</button>
                     </div>
                 </div>
 
