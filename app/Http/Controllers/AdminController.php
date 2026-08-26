@@ -2,10 +2,12 @@
 
 namespace App\Http\Controllers;
 
+use App\Mail\repositoryMail;
 use App\Models\User;
 use App\Models\UserFile;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Str;
 
 class AdminController extends Controller
@@ -14,13 +16,16 @@ class AdminController extends Controller
     {
         $view = request('view', 'dashboard');
 
-        $users = User::all();
+        // Role filter
+        $role = request('role');
 
-        $student = User::where('role', 'student')->get();
+        $users = User::query();
 
-        $instructor = User::where('role', 'instructor')->get();
+        if ($role) {
+            $users->where('role', $role);
+        }
 
-        $admin = User::where('role', 'admin')->get();
+        $users = $users->get();
 
         $studFiles = UserFile::all();
 
@@ -62,9 +67,7 @@ class AdminController extends Controller
         return view('admin', compact(
             'view',
             'users',
-            'student',
-            'instructor',
-            'admin',
+            'role',
             'studFiles',
             'approvedCount',
             'rejectedCount',
@@ -79,8 +82,10 @@ class AdminController extends Controller
 
     public function store(Request $request)
     {
+
         $request->validate([
-            'user_id' => 'required|unique:users,user_id',
+            'user_id' => 'required',
+            'email' => 'required|email',
             'role' => 'required',
             'name' => 'required',
         ]);
@@ -94,14 +99,26 @@ class AdminController extends Controller
 
         User::create([
             'user_id' => $request->user_id,
+            'email' => $request->email,
             'role' => $request->role,
             'name' => $request->name,
             'year_level' => $request->role === 'student'
                 ? $request->year_level
                 : null,
-            'course' => 'BS Fisheries',
             'password' => Hash::make($generatedPassword),
         ]);
+
+        Mail::to($request->email)->send(
+            new repositoryMail(
+                $request->name,
+                $request->user_id,
+                $request->email,
+                $generatedPassword,
+                $request->role
+            )
+        );
+
+        // return 'Email sent successfully!';
 
         return redirect()->back()->with([
             'success' => 'User created successfully!',
@@ -109,7 +126,16 @@ class AdminController extends Controller
             'generated_name' => $request->name,
             'generated_user_id' => $request->user_id,
         ]);
+
     }
+
+    // mail
+    // public function repositoryMail()
+    // {
+    //   Mail::to('repository@gmail.com')->send(new repositoryMail);
+
+    //   return 'Email sent successfully!';
+    // }
 
     // APPROBE BTN
     public function approve($id)

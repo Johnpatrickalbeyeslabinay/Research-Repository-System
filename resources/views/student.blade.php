@@ -31,6 +31,13 @@
         </div>
 
         <div class="mt-3 mt-md-0">
+
+
+           <button class="rounded-2 p-2 bg-white border border-secondary"
+                    popovertarget="account">
+                Manage Account
+            </button>
+
             <button class="rounded-2 p-2 text-white border-0" style="background: #072a89;" popovertarget="popover">
                 <i class=" fa-solid fa-upload me-2"></i>
                 Upload New Research
@@ -42,37 +49,68 @@
 
         <div class="row g-4">
 
-            <!-- Total Submissions -->
-            <div class="col-12 col-sm-6 col-xl-3">
+        <!--MANAGE ACCOUNT BTN-->
+        <div id="account" popover class="rounded-4 border-0 shadow p-4"
+                style="width: 520px; max-width: 95vw; min-height: 580px;">
 
-                <div class="card border-0 shadow-sm rounded-4 h-100">
 
-                    <div class="card-body d-flex justify-content-between align-items-center">
 
-                        <div>
-                            <p class="text-secondary mb-2">
-                                Total Submissions
-                            </p>
-
-                            <h3 class="fw-normal mb-0">
-                                {{ $totalUploads }}
-                            </h3>
-                        </div>
-
-                        <div class="bg-primary bg-opacity-10 rounded-2 p-1">
-                            <i class="fa-regular fa-file-lines text-primary"></i>
-                        </div>
-
-                    </div>
-
+                <div class="d-flex justify-content-between align-items-center mb-3">
+                <h5 class="mb-0 fw-bold">Manage Account</h5>
+                <button type="button" class="btn-close" aria-label="Close"></button>
                 </div>
 
-            </div>
+                <div class="bg-info-soft rounded-3 p-3 mb-4">
+                <p class="mb-1 text-info-strong"><strong>Name:</strong> Anna Martinez</p>
+                <p class="mb-1 text-info-strong"><strong>User ID:</strong> STU-001</p>
+                <p class="mb-0 text-info-strong"><strong>Role:</strong> Student</p>
+                </div>
 
+                <h6 class="fw-bold mb-3">Change Password</h6>
+
+                <form>
+                <div class="mb-3">
+                    <label for="currentPassword" class="form-label fw-medium">Current Password</label>
+                    <div class="input-group">
+                    <input type="password" class="form-control" id="currentPassword" placeholder="Enter current password">
+                    <button type="button" class=" btn-toggle-show" onclick="togglePassword('currentPassword', this)">Show</button>
+                    </div>
+                </div>
+
+                <div class="mb-3">
+                    <label for="newPassword" class="form-label fw-medium">New Password</label>
+                    <div class="input-group">
+                    <input type="password" class="form-control" id="newPassword" placeholder="At least 6 characters">
+                    <button type="button" class=" btn-toggle-show" onclick="togglePassword('newPassword', this)">Show</button>
+                    </div>
+                </div>
+
+                <div class="mb-4">
+                    <label for="confirmPassword" class="form-label fw-medium">Confirm New Password</label>
+                    <div class="input-group">
+                    <input type="password" class="form-control" id="confirmPassword" placeholder="Repeat new password">
+                    <button type="button" class=" btn-toggle-show" onclick="togglePassword('confirmPassword', this)">Show</button>
+                    </div>
+                </div>
+
+                <div class="d-flex gap-3">
+                    <button type="submit" class="btn btn-primary flex-grow-1 fw-bold py-2">Save New Password</button>
+                    <button type="button" class=" fw-bold py-2 px-4">Cancel</button>
+                </div>
+                </form>
+
+        </div>
+
+
+
+
+
+
+        <!--Upload-->
             <div id="popover" popover class="rounded-4 border-0 shadow p-4"
                 style="width: 520px; max-width: 95vw; min-height: 580px;">
 
-                <!-- Header -->
+
                 <div class="d-flex justify-content-between align-items-center mb-4">
                     <h3 class="fw-bold mb-0">Submit New Research</h3>
 
@@ -143,6 +181,36 @@
                 </form>
 
             </div>
+
+
+
+            <!-- Total Submissions -->
+            <div class="col-12 col-sm-6 col-xl-3">
+
+                <div class="card border-0 shadow-sm rounded-4 h-100">
+
+                    <div class="card-body d-flex justify-content-between align-items-center">
+
+                        <div>
+                            <p class="text-secondary mb-2">
+                                Total Submissions
+                            </p>
+
+                            <h3 class="fw-normal mb-0">
+                                {{ $totalUploads }}
+                            </h3>
+                        </div>
+
+                        <div class="bg-primary bg-opacity-10 rounded-2 p-1">
+                            <i class="fa-regular fa-file-lines text-primary"></i>
+                        </div>
+
+                    </div>
+
+                </div>
+
+            </div>
+
 
             <!-- Approved -->
             <div class="col-12 col-sm-6 col-xl-3">
@@ -605,4 +673,20 @@
             }
         });
     </script>
+
+
+<!--js manage-->
+<script>
+  function togglePassword(id, btn) {
+    const input = document.getElementById(id);
+    if (input.type === "password") {
+      input.type = "text";
+      btn.textContent = "Hide";
+    } else {
+      input.type = "password";
+      btn.textContent = "Show";
+    }
+  }
+</script>
+
 @endsection

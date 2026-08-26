@@ -33,13 +33,6 @@
                         📚 Discover academic research
                     </div>
 
-                    <div class="mb-3 fs-5">
-                        🔍 Advanced search & filtering
-                    </div>
-
-                    <div class="mb-5 fs-5">
-                        🎓 Student & faculty collaboration
-                    </div>
 
                     <button class="btn btn-outline-light btn-lg">
                         <a href="{{ route('public') }}" class="text-decoration-none text-white">
@@ -71,49 +64,7 @@
                                 Select your role and enter your credentials
                             </p>
 
-                            <label class="fw-semibold mb-2">
-                                Select Role
-                            </label>
 
-                            <div class="row g-2 mb-4">
-
-                                <div class="col-4">
-                                    <input type="radio" class="btn-check" name="role" id="student" value="student" checked>
-
-                                    <label id="studentCard" class="card border-primary text-primary h-100 text-center p-3"
-                                        for="student" style="cursor:pointer;">
-                                        <i id="studentIcon" class="bi bi-mortarboard fs-3"></i>
-                                        <div class="fw-semibold mt-2">
-                                            Student
-                                        </div>
-                                    </label>
-                                </div>
-
-                                <div class="col-4">
-                                    <input type="radio" class="btn-check" name="role" id="instructor" value="instructor">
-
-                                    <label id="instructorCard" class="card h-100 text-center p-3" for="instructor"
-                                        style="cursor:pointer;">
-                                        <i id="instructorIcon" class="bi bi-people fs-3"></i>
-                                        <div class="fw-semibold mt-2">
-                                            Instructor
-                                        </div>
-                                    </label>
-                                </div>
-
-                                <div class="col-4">
-                                    <input type="radio" class="btn-check" name="role" id="admin" value="admin">
-
-                                    <label id="adminCard" class="card h-100 text-center p-3" for="admin"
-                                        style="cursor:pointer;">
-                                        <i id="adminIcon" class="bi bi-shield-lock fs-3"></i>
-                                        <div class="fw-semibold mt-2">
-                                            Admin
-                                        </div>
-                                    </label>
-                                </div>
-
-                            </div>
 
                             <div class="mb-3">
 
@@ -125,8 +76,8 @@
 
                                     <i class="bi bi-person me-3 text-secondary"></i>
 
-                                    <input type="text" name="user_id" class="form-control border-0 shadow-none"
-                                        placeholder="Enter your User ID" value="{{ old('user_id') }}" required>
+                                    <input type="text" name="login" class="form-control border-0 shadow-none"
+                                        placeholder="Enter your User ID" value="{{ old('login') }}" required>
 
                                 </div>
 
@@ -205,7 +156,7 @@
    </div>
 
 
-    <script>
+    <!--<script>
         document.querySelectorAll('input[name="role"]').forEach(radio => {
 
             radio.addEventListener('change', function () {
@@ -296,7 +247,7 @@
             });
 
         });
-    </script>
+    </script>-->
 
 
 

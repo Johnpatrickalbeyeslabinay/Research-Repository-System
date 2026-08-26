@@ -15,16 +15,17 @@ class AuthController extends Controller
     public function login(Request $request)
     {
         $request->validate([
-            'user_id' => 'required',
+            'login' => 'required',
             'password' => 'required',
-            'role' => 'required',
         ]);
+
+        $login = $request->login; // Check kung email o user ID ang inilagay
+        $field = filter_var($login, FILTER_VALIDATE_EMAIL) ? 'email' : 'user_id';
 
         if (
             Auth::attempt([
-                'user_id' => $request->user_id,
+                $field => $login,
                 'password' => $request->password,
-                'role' => $request->role,
             ])
         ) {
 
@@ -46,7 +47,7 @@ class AuthController extends Controller
         }
 
         return back()->withErrors([
-            'user_id' => 'Invalid User ID, Password or Role.',
+            'login' => 'Invalid User ID or Password.',
         ])->withInput();
     }
 

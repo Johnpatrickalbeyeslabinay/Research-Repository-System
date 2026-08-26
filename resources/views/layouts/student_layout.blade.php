@@ -31,6 +31,28 @@
         background: #f3f4f6;
         color: #374151;
     }
+
+.bg-info-soft {
+    background-color: #eaf1fe;
+  }
+  .text-info-strong {
+    color: #1e40c9;
+  }
+  .btn-navy {
+    background-color: #1e2a78;
+    border-color: #1e2a78;
+    color: #fff;
+  }
+  .btn-navy:hover {
+    background-color: #16205c;
+    border-color: #16205c;
+    color: #fff;
+  }
+  .btn-toggle-show {
+    color: #6c757d;
+  }
+
+
 </style>
 
 

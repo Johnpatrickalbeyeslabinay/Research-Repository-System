@@ -75,3 +75,5 @@ Route::post('/research/{id}/reject', [AdminController::class, 'reject'])->name('
 Route::get('/repository', [RepositoryController::class, 'index'])
     ->middleware('auth')
     ->name('repository');
+
+//route::get('send-mail', [AdminController::class, 'repositoryMail']);

@@ -31,6 +31,7 @@
         background: #f3f4f6;
         color: #374151;
     }
+
 </style>
 
 
@@ -161,18 +162,6 @@
 
                         </li>
 
-                        <li class="nav-item mt-2">
-
-                            <a class="nav-link {{ request()->query('view') === 'research' ? 'active text-white bg-primary rounded' : 'text-dark bg-light rounded' }}"
-                                href="{{ url('/admin?view=research') }}">
-
-                                <i class="fa-regular fa-file me-1"></i>
-
-                                Research Submissions
-
-                            </a>
-
-                        </li>
 
                         <li class="nav-item mt-2">
 
