@@ -51,15 +51,15 @@
             <!-- login and register buttons -->
             <div class="ms-auto d-flex gap-2">
                 @if (Route::has('public'))
-                    <a href="{{ route('public') }}" class="btn border border-dark text-dark ">Browse Repository</a>
+                    <a href="{{ route('public') }}" class="btn border border-dark text-dark px-2 py-1">Browse Repository</a>
                 @else
                     <a href="#" class="btn">Browse Repository</a>
                 @endif
 
                 @if (Route::has('login'))
-                    <a href="{{ route('login') }}" class="btn text-white px-3 py-2 me-3" style="background:navy;">Student Login</a>
+                    <a href="{{ route('login') }}" class="btn text-white px-2 py-1 me-3" style="background:navy;">Student Login</a>
                 @else
-                    <a href="#" class="btn btn-outline-light text-white fw-bold">Student Login</a>
+                    <a href="#" class="btn btn-outline-light text-white fw-bold px-2 py-1">Student Login</a>
                 @endif
             </div>
 

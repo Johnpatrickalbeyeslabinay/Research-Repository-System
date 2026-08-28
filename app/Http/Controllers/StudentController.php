@@ -107,6 +107,7 @@ class StudentController extends Controller
             'views' => 0,
             'downloads' => 0,
             'status' => 'pending',
+            'visibility' => $request->visibility,
         ]);
 
         return redirect()->route('student')->with('success', 'Research submitted successfully!');

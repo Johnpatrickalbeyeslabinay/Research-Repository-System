@@ -64,6 +64,30 @@
     color: #0d6efd;
     cursor: pointer;
 }
+
+
+
+.visibility-option {
+    cursor: pointer;
+    transition: 0.2s ease;
+    background-color: transparent;
+}
+
+input#public:checked + .visibility-option {
+    background-color: #dffbf7;
+    border-color: #20c997 !important;
+}
+
+
+.visibility-private {
+    cursor: pointer;
+    transition: 0.15s ease;
+}
+
+input#private:checked + .visibility-private {
+    background-color: #f1f1f3;
+    box-shadow: 0 0 0 1px black;
+}
 </style>
 
 
@@ -95,7 +119,7 @@
                     <div class="d-flex align-items-center">
 
                         <i data-lucide="fish" class="me-3 rounded-circle p-2 text-white"
-                            style="width: 36px; height: 36px; background: linear-gradient(135deg, #1e3a8a, #0d9488);">
+                        style="width:36px;height:36px;background:linear-gradient(135deg,#1e3a8a,#0d9488);">
                         </i>
 
                         <div class="d-flex flex-column">
@@ -125,8 +149,9 @@
 
                     <div class="d-flex align-items-center">
 
-                        <i class="fa-solid fa-fish-fins fs-3 me-3 rounded-circle p-2 text-white"
-                            style=" background: linear-gradient(135deg, #1e3a8a, #0d9488);"></i>
+                        <i data-lucide="fish" class="me-3 rounded-circle p-2 text-white"
+                        style="width:36px;height:36px;background:linear-gradient(135deg,#1e3a8a,#0d9488);">
+                        </i>
 
                         <div class="d-flex flex-column">
 
@@ -232,8 +257,9 @@
 
                 <div class="d-flex align-items-center">
 
-                    <i class="fa-solid fa-fish-fins fs-3 me-3 rounded-circle p-2 text-white"
-                        style=" background: linear-gradient(135deg, #1e3a8a, #0d9488);"></i>
+                    <i data-lucide="fish" class="me-3 rounded-circle p-2 text-white"
+                        style="width:36px;height:36px;background:linear-gradient(135deg,#1e3a8a,#0d9488);">
+                        </i>
 
                     <div class="d-flex flex-column">
 

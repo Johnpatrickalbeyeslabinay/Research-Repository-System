@@ -135,16 +135,6 @@
                                 <div class="progress-bar bg-warning" style="width:25%"></div>
                             </div>
 
-                            <!-- Under Revision -->
-                            <div class="d-flex justify-content-between mb-2">
-                                <span>Under Revision</span>
-                                <strong>2 (25%)</strong>
-                            </div>
-
-                            <div class="progress mb-4" style="height:8px;">
-                                <div class="progress-bar bg-primary" style="width:25%"></div>
-                            </div>
-
                             <!-- Rejected -->
                             <div class="d-flex justify-content-between mb-2">
                                 <span>Rejected</span>

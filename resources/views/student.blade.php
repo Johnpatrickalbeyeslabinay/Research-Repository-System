@@ -33,12 +33,12 @@
         <div class="mt-3 mt-md-0">
 
 
-           <button class="rounded-2 p-2 bg-white border border-secondary"
+           <button class="rounded-2 px-2 py-1 bg-white border border-secondary"
                     popovertarget="account">
                 Manage Account
             </button>
 
-            <button class="rounded-2 p-2 text-white border-0" style="background: #072a89;" popovertarget="popover">
+            <button class="rounded-2 px-2 py-1 text-white border-0" style="background: #072a89;" popovertarget="popover">
                 <i class=" fa-solid fa-upload me-2"></i>
                 Upload New Research
             </button>
@@ -51,18 +51,18 @@
 
         <!--MANAGE ACCOUNT BTN-->
         <div id="account" popover class="rounded-4 border-0 shadow p-4"
-                style="width: 520px; max-width: 95vw; min-height: 580px;">
+                style="width: 520px; max-width: 95vw; min-height: 500px;">
 
 
                 <div class="d-flex justify-content-between align-items-center mb-3">
                 <h5 class="mb-0 fw-bold">Manage Account</h5>
-                <button type="button" class="btn-close" aria-label="Close"></button>
+                <button class="btn-close" popovertarget="account" popovertargetaction="hide"></button>
                 </div>
 
                 <div class="bg-info-soft rounded-3 p-3 mb-4">
-                <p class="mb-1 text-info-strong"><strong>Name:</strong> Anna Martinez</p>
-                <p class="mb-1 text-info-strong"><strong>User ID:</strong> STU-001</p>
-                <p class="mb-0 text-info-strong"><strong>Role:</strong> Student</p>
+                <p class="mb-1 text-info-strong"><strong>Name:</strong> {{ Auth::user()->name }}</p>
+                <p class="mb-1 text-info-strong"><strong>User ID:</strong> {{ Auth::user()->user_id }}</p>
+                <p class="mb-0 text-info-strong"><strong>Role:</strong> {{ Auth::user()->role }}</p>
                 </div>
 
                 <h6 class="fw-bold mb-3">Change Password</h6>
@@ -88,13 +88,16 @@
                     <label for="confirmPassword" class="form-label fw-medium">Confirm New Password</label>
                     <div class="input-group">
                     <input type="password" class="form-control" id="confirmPassword" placeholder="Repeat new password">
-                    <button type="button" class=" toggle-show" onclick="togglePassword('confirmPassword', this)">Show</button>
+                    <button type="button" class="toggle-show" onclick="togglePassword('confirmPassword', this)">Show</button>
                     </div>
                 </div>
 
                 <div class="d-flex gap-3">
-                    <button type="submit" class="btn btn-primary flex-grow-1 fw-bold py-2">Save New Password</button>
-                    <button type="button" class=" fw-bold py-2 px-4">Cancel</button>
+                    <button type="submit" class="text-white rounded-3 border-0 flex-grow-1 fw-bold py-2" style="background: #072a89;">Save New Password</button>
+                    <button type="button" class="btn btn-outline-secondary" popovertarget="account"
+                            popovertargetaction="hide">
+                            Cancel
+                        </button>
                 </div>
                 </form>
 
@@ -105,7 +108,7 @@
 
 
 
-        <!--Upload-->
+        <!--Uploadfikes-->
             <div id="popover" popover class="rounded-4 border-0 shadow p-4"
                 style="width: 520px; max-width: 95vw; min-height: 580px;">
 
@@ -149,6 +152,47 @@
 
                         <textarea class="form-control" name="desc" rows="4"
                             placeholder="Provide a comprehensive abstract"></textarea>
+                    </div>
+
+                    <!--visibility-->
+                    <div class="mb-3">
+                        <label class="form-label fw-semibold">Research Visibility *</label>
+
+                        <div class="row g-3">
+                            <div class="col-6">
+                                <input type="radio" class="btn-check" name="visibility"
+                                    id="public" value="public">
+
+                                <label class="visibility-option border border-1 border-success rounded-3 w-100 p-2 text-dark" for="public">
+                                    <div class="d-flex align-items-center gap-2">
+                                        <div class="text-center">
+                                            <i class="fa-solid fa-globe fa-lg"></i>
+                                        </div>
+                                        <div>
+                                            <strong>Public</strong><br>
+                                            <small class="text-muted">Visible in repository</small>
+                                        </div>
+                                    </div>
+                                </label>
+                            </div>
+
+                            <div class="col-6">
+                                <input type="radio" class="btn-check" name="visibility"
+                                    id="private" value="private">
+
+                                <label class="visibility-private border border-1 border-secondary rounded-3 w-100 p-2" for="private">
+                                    <div class="d-flex align-items-center gap-2">
+                                        <div class="text-center">
+                                            <i class="fa-solid fa-lock fa-lg"></i>
+                                        </div>
+                                        <div>
+                                            <strong>Private</strong><br>
+                                            <small class="text-muted">Only you, adviser & admins</small>
+                                        </div>
+                                    </div>
+                                </label>
+                            </div>
+                        </div>
                     </div>
 
 
@@ -351,21 +395,46 @@
                                     <div class="col-lg-9">
 
 
-                                        <!--STATUS-->
-                                       <div class="position-absolute top-0 end-0 m-3">
+                                       <!-- STATUS & VISIBILITY -->
+                                    <div class="position-absolute top-0 end-0 m-3 d-flex align-items-center gap-2">
+
+                                        <!-- STATUS -->
                                         @if(empty($file->status) || $file->status == 'pending')
-                                            <span class="badge bg-warning text-dark rounded-pill px-3 py-2">
+                                            <span class="badge text-dark rounded-pill px-2 py-1"
+                                                style="background-color: #fff3cd;">
                                                 Pending
                                             </span>
+
                                         @elseif($file->status == 'approved')
-                                            <span class="badge bg-success rounded-pill px-3 py-2">
+                                            <span class="badge text-dark rounded-pill px-2 py-1"
+                                                style="background-color: #d1e7dd;">
                                                 Approved
                                             </span>
+
                                         @elseif($file->status == 'rejected')
-                                            <span class="badge bg-danger rounded-pill px-3 py-2">
+                                            <span class="badge text-dark rounded-pill px-2 py-1"
+                                                style="background-color: #f8d7da;">
                                                 Rejected
                                             </span>
                                         @endif
+
+
+                                        <!-- VISIBILITY -->
+                                        @if(empty($file->visibility) || $file->visibility == 'private')
+                                            <span class="badge text-dark rounded-pill px-2 py-1"
+                                                style="background-color: #f8f9fa;">
+                                                <i class="fa-solid fa-lock fa-2xs"></i>
+                                                Private
+                                            </span>
+
+                                        @elseif($file->visibility == 'public')
+                                            <span class="badge text-dark rounded-pill px-2 py-1"
+                                                style="background-color: #edf7ef;">
+                                                <i class="fa-solid fa-globe fa-2xs"></i>
+                                                Public
+                                            </span>
+                                        @endif
+
                                     </div>
 
 

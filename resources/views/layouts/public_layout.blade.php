@@ -63,7 +63,7 @@
 
       <!-- Login -->
       <div>
-        <a href="{{ route('login') }}" class="btn text-white px-3 py-2 me-3" style="background:navy;">
+        <a href="{{ route('login') }}" class="btn text-white px-2 py-1 me-3" style="background:navy;">
           <i class="fa-solid fa-arrow-right me-2"></i>
           Login
         </a>

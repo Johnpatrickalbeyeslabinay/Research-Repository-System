@@ -129,14 +129,6 @@ class AdminController extends Controller
 
     }
 
-    // mail
-    // public function repositoryMail()
-    // {
-    //   Mail::to('repository@gmail.com')->send(new repositoryMail);
-
-    //   return 'Email sent successfully!';
-    // }
-
     // APPROBE BTN
     public function approve($id)
     {
