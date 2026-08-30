@@ -23,6 +23,7 @@ class UserFile extends Model
         'downloads',
         'status',
         'visibility',
+        'requested_visibility',
     ];
 
     public function user()

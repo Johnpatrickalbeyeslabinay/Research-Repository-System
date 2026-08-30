@@ -107,7 +107,8 @@ class StudentController extends Controller
             'views' => 0,
             'downloads' => 0,
             'status' => 'pending',
-            'visibility' => $request->visibility,
+            'visibility' => 'private',
+            'requested_visibility' => $request->visibility,
         ]);
 
         return redirect()->route('student')->with('success', 'Research submitted successfully!');
@@ -137,5 +138,53 @@ class StudentController extends Controller
             $file->file_path,
             basename($file->file_path)
         );
+    }
+
+    // update research
+    public function update(Request $request, $id)
+    {
+        $file = UserFile::where('id', $id)
+            ->where('user_id', Auth::id())
+            ->firstOrFail();
+
+        $request->validate([
+            'title' => 'required|string|max:255',
+            'adviser' => 'required|string|max:255',
+            'desc' => 'required|string',
+            'visibility' => 'required|in:public,private',
+            'file' => 'nullable|mimes:pdf|max:10240',
+        ]);
+
+        $file->title = $request->title;
+        $file->adviser = $request->adviser;
+        $file->desc = $request->desc;
+        $file->visibility = $request->visibility;
+
+        // Replace PDF only if a new file was selected
+        if ($request->hasFile('file')) {
+
+            // Delete old PDF
+            if (
+                $file->file_path &&
+                Storage::disk('public')->exists($file->file_path)
+            ) {
+                Storage::disk('public')->delete($file->file_path);
+            }
+
+            // Store new PDF
+            $path = $request->file('file')
+                ->store('research_files', 'public');
+
+            $file->file_path = $path;
+        }
+
+        // Send back for approval
+        $file->status = 'pending';
+
+        $file->save();
+
+        return redirect()
+            ->back()
+            ->with('success', 'Research submission updated successfully.');
     }
 }

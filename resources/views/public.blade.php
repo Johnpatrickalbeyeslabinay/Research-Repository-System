@@ -46,16 +46,6 @@
                         <option>2022</option>
                     </select>
                 </div>
-
-                <div class="col-md-6">
-                    <label class="form-label fw-semibold">Filter by Keyword</label>
-                    <select class="form-select form-select-sm">
-                        <option>All Keywords</option>
-                        <option>Aquaculture</option>
-                        <option>Conservation</option>
-                        <option>Genetics</option>
-                    </select>
-                </div>
             </div>
         </div>
 
@@ -225,10 +215,7 @@
                                                 class="btn btn-outline-primary">
                                                 <i class="bi bi-eye me-2"></i>
                                                 View
-                                            </a>
-
-
-
+                                        </a>
                                     </div>
 
                                 </div>

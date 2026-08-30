@@ -88,6 +88,67 @@ input#private:checked + .visibility-private {
     background-color: #f1f1f3;
     box-shadow: 0 0 0 1px black;
 }
+
+.update-btn {
+    max-width: 200px;
+    width: 100%;
+    border: 1px solid #e9ecef;
+    color: #6c757d;
+    transition: all 0.2s ease;
+}
+
+.update-btn:hover {
+    background-color: #e9ecef !important;
+    border-color: black !important;
+    color: black !important;
+}
+
+
+/*VISIBILITY BTN*/
+input[name="visibility"][value="public"]:checked + .visibility-option {
+    background-color: #d1e7dd !important;
+    color: black !important;
+    border-color: #a3cfbb !important;
+}
+
+
+input[name="visibility"][value="private"]:checked + .visibility-private {
+    background-color: #e9ecef !important;
+    color: black !important;
+    border-color: #e9ecef !important;
+}
+
+
+input[name="visibility"]:checked + label small,
+input[name="visibility"]:checked + label i {
+    color: black !important;
+}
+
+
+.visibility-option,
+.visibility-private {
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+
+/*favorite icon*/
+.favorite-btn {
+    color: #6c757d;
+    background-color: transparent;
+    border-radius: 6px;
+    transition: all 0.2s ease;
+}
+
+.favorite-btn:hover {
+    background-color: #e9ecef;
+    color: #495057;
+}
+
+.btn-check:checked + .favorite-btn {
+    background-color: #adb5bd !important;
+    color: #212529 !important;
+}
 </style>
 
 

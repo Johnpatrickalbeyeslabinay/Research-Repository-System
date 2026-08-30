@@ -88,6 +88,7 @@ class AdminController extends Controller
             'email' => 'required|email',
             'role' => 'required',
             'name' => 'required',
+            'year_level' => 'nullable|string',
         ]);
 
         $generatedPassword = Str::password(
@@ -134,7 +135,12 @@ class AdminController extends Controller
     {
         $file = UserFile::findOrFail($id);
 
-        $file->status = 'Approved';
+        $file->status = 'approved';
+
+        if ($file->requested_visibility === 'public') {
+            $file->visibility = 'public';
+        }
+
         $file->save();
 
         return back()->with('success', 'Research approved successfully.');
@@ -145,7 +151,7 @@ class AdminController extends Controller
     {
         $file = UserFile::findOrFail($id);
 
-        $file->status = 'Rejected';
+        $file->status = 'rejected';
         $file->save();
 
         return back()->with('success', 'Research rejected successfully.');

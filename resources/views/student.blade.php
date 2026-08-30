@@ -483,13 +483,19 @@
 
                                 </div>
 
-                                <button class="view rounded py-1 mt-3 bg-white"
+                                <button class="view rounded px-2 py-1 mt-3 bg-white"
                                     style="max-width:200px;width:100%; border: 1px solid #5FEFDB; color: #0E7F77;"
                                     popovertarget="popover-{{ $file->id }}">
 
-                                    <i class="bi bi-folder me-2"></i>
+                                    <i class="bi bi-eye me-2"></i>
                                     View in Repository
 
+                                </button>
+
+                                <button class="view rounded px-2 py-1 mt-3 bg-white update-btn "
+                                    popovertarget="update-sub-{{ $file->id }}">
+                                    <i class="fa-regular fa-pen-to-square me-2"></i>
+                                    Update Submission
                                 </button>
 
                             </div>
@@ -499,7 +505,174 @@
                     </div>
 
 
-                     <!-- POPOVER -->
+
+
+                    <!--POPOVER-UPDATE-->
+                    <div id="update-sub-{{ $file->id }}" popover class="rounded-4 border-0 shadow p-4"
+                        style="width: 520px; max-width: 95vw; min-height: 580px;">
+
+                        <div class="d-flex justify-content-between align-items-center mb-4">
+                            <h3 class="fw-bold mb-0">Update Research</h3>
+
+                            <button class="btn-close" popovertarget="update-sub" popovertargetaction="hide"></button>
+                        </div>
+
+                        <form action="{{ route('student.update', $file->id) }}" method="POST" enctype="multipart/form-data">
+
+                            @csrf
+                            @method('PUT')
+
+
+                            <!-- Research Title -->
+                            <div class="mb-3">
+                                <label class="form-label fw-semibold">
+                                    Research Title <span class="text-danger">*</span>
+                                </label>
+
+                                <input
+                                    type="text"
+                                    name="title"
+                                    class="form-control form-control-lg"
+                                    value="{{ old('title', $file->title) }}"
+                                    placeholder="Enter the title of your research"
+                                    required>
+                            </div>
+
+                            <div class="row">
+
+                                <div class="col-md-6 mb-3">
+                                    <label class="form-label fw-semibold">
+                                        Research Adviser <span class="text-danger">*</span>
+                                    </label>
+
+                                    <input
+                                        type="text"
+                                        name="adviser"
+                                        class="form-control"
+                                        value="{{ old('adviser', $file->adviser) }}"
+                                        placeholder="e.g., Dr. Maria Santos"
+                                        required>
+                                </div>
+                            </div>
+
+                            <!-- Abstract -->
+                            <div class="mb-3">
+                                <label class="form-label fw-semibold">
+                                    Abstract <span class="text-danger">*</span>
+                                </label>
+
+                                <textarea
+                                    class="form-control"
+                                    name="desc"
+                                    rows="4"
+                                    placeholder="Provide a comprehensive abstract"
+                                    required>{{ old('desc', $file->desc) }}</textarea>
+                            </div>
+
+                            <!--visibility-->
+                            <div class="mb-3">
+                                <label class="form-label fw-semibold">Research Visibility *</label>
+
+                                <div class="row g-3">
+                                    <div class="col-6">
+                                        <input
+                                            type="radio"
+                                            class="btn-check"
+                                            name="visibility"
+                                            id="public-{{ $file->id }}"
+                                            value="public"
+                                            {{ $file->visibility == 'public' ? 'checked' : '' }}>
+
+                                        <label
+                                            class="visibility-option border border-1 border-success rounded-3 w-100 p-2 text-dark"
+                                            for="public-{{ $file->id }}">
+
+                                            <div class="d-flex align-items-center gap-2">
+                                                <div class="text-center">
+                                                    <i class="fa-solid fa-globe fa-lg"></i>
+                                                </div>
+
+                                                <div>
+                                                    <strong>Public</strong><br>
+                                                    <small class="text-muted">Visible in repository</small>
+                                                </div>
+                                            </div>
+
+                                        </label>
+                                    </div>
+
+                                    <div class="col-6">
+                                        <input
+                                            type="radio"
+                                            class="btn-check"
+                                            name="visibility"
+                                            id="private-{{ $file->id }}"
+                                            value="private"
+                                            {{ $file->visibility == 'private' ? 'checked' : '' }}>
+
+                                        <label
+                                            class="visibility-private border border-1 border-secondary rounded-3 w-100 p-2"
+                                            for="private-{{ $file->id }}">
+
+                                            <div class="d-flex align-items-center gap-2">
+                                                <div class="text-center">
+                                                    <i class="fa-solid fa-lock fa-lg"></i>
+                                                </div>
+
+                                                <div>
+                                                    <strong>Private</strong><br>
+                                                    <small class="text-muted">Only you, adviser & admins</small>
+                                                </div>
+                                            </div>
+
+                                        </label>
+                                    </div>
+                                </div>
+                            </div>
+
+
+                            <!-- Upload -->
+                            <div class="mb-2">
+                                <label class="form-label fw-semibold">
+                                    Upload PDF Document <span class="text-danger">*</span>
+                                </label>
+
+                                <input
+                                    type="file"
+                                    id="pdfFile-{{ $file->id }}"
+                                    name="file"
+                                    class="form-control"
+                                    accept=".pdf">
+                            </div>
+
+                            <small class="text-secondary">
+                                Leave blank if you don't want to replace the current PDF.
+                            </small>
+
+                            <!-- Buttons -->
+                            <div class="d-flex gap-2 mt-4">
+                                <button class="rounded-2 p-2 text-white border-0" style="background: #072a89;">
+                                    Update Research
+                                </button>
+
+                                <button
+                                    type="button"
+                                    class="btn btn-outline-secondary"
+                                    popovertarget="update-sub-{{ $file->id }}"
+                                    popovertargetaction="hide">
+                                    Cancel
+                                </button>
+                            </div>
+
+                        </form>
+                    </div>
+
+
+
+
+
+
+                     <!-- POPOVER FILE -->
                     <div id="popover-{{ $file->id }}" popover
                         style="border: 1px solid #dee2e6;  max-width: 1200px; width: 90%; overflow-y: auto; max-height: 90vh;">
                         <div class="container py-5">
@@ -602,10 +775,17 @@
                                                 <i class="bi bi-eye me-2"></i>
                                                 View
                                             </a>-->
+
                                             <a href="{{ route('file.view', ['id' => $file->id, 'v' => time()]) }}" target="_blank"
-                                                class="btn btn-outline-primary">
+                                                class="btn btn-outline-primary px-2 py-1">
                                                 <i class="bi bi-eye me-2"></i>
                                                 View
+                                            </a>
+
+                                            <a href="{{ route('file.download', $file->id) }}"
+                                            class="btn btn-outline-success px-2 py-1">
+                                                <i class="bi bi-download me-2"></i>
+                                                Download
                                             </a>
 
                                         </div>
@@ -615,6 +795,9 @@
                             </div>
                         </div>
                     </div>
+
+
+
                 @endforeach
             </div>
         </div>
@@ -715,9 +898,16 @@
                         Bookmarks
                     </h5>
 
-                    <p class="text-secondary mb-0">
-                        This is a bookmark message.
-                    </p>
+                    <div class="container py-4">
+
+    <div class="d-flex align-items-center justify-content-between mb-4">
+        <h3 class="mb-0">
+            <i class="fa-solid fa-bookmark text-warning me-2"></i> My Favorites
+        </h3>
+    </div>
+
+
+</div>
 
                 </div>
 
@@ -756,5 +946,9 @@
     }
   }
 </script>
+
+
+
+
 
 @endsection

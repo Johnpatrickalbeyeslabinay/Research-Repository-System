@@ -762,12 +762,12 @@
 
                     <!-- Search -->
                     <div class="input-group" style="max-width: 750px;">
-                        <span class="input-group-text bg-light border-0 text-secondary">
+                        <span class="input-group-text bg-light border-0 text-secondary px-2 py-1">
                             <i class="fa-solid fa-magnifying-glass"></i>
                         </span>
 
                         <input type="text"
-                            class="form-control bg-light border-0"
+                            class="form-control bg-light border-0 px-2 py-1"
                             placeholder="Search by name, email, ID, or department...">
                     </div>
 
@@ -776,22 +776,22 @@
                     <div class="d-flex flex-wrap gap-2" role="group" aria-label="Role filter">
 
                         <a href="{{ route('admin', ['view' => 'user']) }}"
-                        class="btn {{ !$role ? 'btn-primary' : 'btn-outline-secondary' }}">
+                        class="btn px-2 py-1 {{ !$role ? 'btn-primary' : 'btn-outline-secondary' }}">
                             All
                         </a>
 
                         <a href="{{ route('admin', ['view' => 'user', 'role' => 'student']) }}"
-                        class="btn {{ $role === 'student' ? 'btn-primary' : 'btn-outline-secondary' }}">
+                        class="btn px-2 py-1 {{ $role === 'student' ? 'btn-primary' : 'btn-outline-secondary' }}">
                             Student
                         </a>
 
                         <a href="{{ route('admin', ['view' => 'user', 'role' => 'instructor']) }}"
-                        class="btn {{ $role === 'instructor' ? 'btn-primary' : 'btn-outline-secondary' }}">
+                        class="btn px-2 py-1 {{ $role === 'instructor' ? 'btn-primary' : 'btn-outline-secondary' }}">
                             Instructor
                         </a>
 
                         <a href="{{ route('admin', ['view' => 'user', 'role' => 'admin']) }}"
-                        class="btn {{ $role === 'admin' ? 'btn-primary' : 'btn-outline-secondary' }}">
+                        class="btn px-2 py-1 {{ $role === 'admin' ? 'btn-primary' : 'btn-outline-secondary' }}">
                             Admin
                         </a>
 
@@ -839,8 +839,12 @@
                             {{ $user->year_level ?? '—' }}
                         </td>
                         <td class="text-end" style="font-size: 13px;">
-                            <button class="btn btn-outline-primary">Edit</button>
-                            <button class="btn btn-outline-danger">Delete</button>
+                            <button class="btn btn-outline-primary px-1 py-0">
+                            <i class="fa-regular fa-pen-to-square fa-sm"></i>
+                            Edit</button>
+                            <button class="btn btn-outline-danger px-1 py-0">
+                            <i class="fa-solid fa-trash fa-sm"></i>
+                            Delete</button>
                         </td>
 
                     </tr>

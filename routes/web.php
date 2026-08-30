@@ -76,4 +76,18 @@ Route::get('/repository', [RepositoryController::class, 'index'])
     ->middleware('auth')
     ->name('repository');
 
-//route::get('send-mail', [AdminController::class, 'repositoryMail']);
+// research update
+Route::put('/student/submission/{id}', [StudentController::class, 'update'])
+    ->name('student.update');
+
+// routes/web.php
+
+use App\Http\Controllers\FavoriteController;
+
+Route::middleware('auth')->group(function () {
+    Route::post('/favorites/{file}/toggle', [FavoriteController::class, 'toggle'])
+        ->name('favorites.toggle');
+
+    Route::get('/favorites', [FavoriteController::class, 'index'])
+        ->name('favorites.index');
+});

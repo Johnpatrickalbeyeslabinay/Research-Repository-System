@@ -8,7 +8,9 @@ class PublicController extends Controller
 {
     public function index()
     {
-        $studFiles = UserFile::all();
+        $studFiles = UserFile::where('visibility', 'public')
+            ->where('status', 'approved')
+            ->get();
 
         return view('public', compact('studFiles'));
     }

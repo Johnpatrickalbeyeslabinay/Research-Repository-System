@@ -34,11 +34,9 @@
                     </div>
 
 
-                    <button class="btn btn-outline-light btn-lg">
-                        <a href="{{ route('public') }}" class="text-decoration-none text-white">
-                            Browse Public Repository →
-                        </a>
-                    </button>
+                    <a href="{{ route('public') }}" class="btn btn-outline-light btn-lg px-2 py-1 fw-normal">
+                        Browse Public Repository <i class="fa-solid fa-arrow-right ms-2"></i>
+                    </a>
 
                 </div>
 
@@ -61,7 +59,7 @@
                             </h2>
 
                             <p class="text-center text-secondary mb-4">
-                                Select your role and enter your credentials
+                                Use your User ID or email address to sign in
                             </p>
 
 
@@ -69,15 +67,15 @@
                             <div class="mb-3">
 
                                 <label class="form-label fw-semibold">
-                                    User ID
+                                    User ID or Email
                                 </label>
 
                                 <div class="d-flex align-items-center border rounded-4 px-3">
 
-                                    <i class="bi bi-person me-3 text-secondary"></i>
+                                    <i class="fa-solid fa-user fa-sm"></i>
 
                                     <input type="text" name="login" class="form-control border-0 shadow-none"
-                                        placeholder="Enter your User ID" value="{{ old('login') }}" required>
+                                        placeholder="Enter your user id or email" value="{{ old('login') }}" required>
 
                                 </div>
 
@@ -91,13 +89,21 @@
 
                                 <div class="d-flex align-items-center border rounded-4 px-3">
 
-                                    <i class="bi bi-lock me-3 text-secondary"></i>
+                                    <i class="fa-solid fa-user-lock fa-sm"></i>
 
-                                    <input type="password" name="password" class="form-control border-0 shadow-none"
-                                        placeholder="Enter your password" required>
+                                    <input
+                                        type="password"
+                                        name="password"
+                                        id="password"
+                                        class="form-control border-0 shadow-none"
+                                        placeholder="Enter your password"
+                                        required>
 
-                                    <button class="btn p-0 border-0">
-                                        <i class="bi bi-eye text-secondary"></i>
+                                    <button
+                                        type="button"
+                                        id="togglePassword"
+                                        class="btn btn-sm border-0 text-secondary">
+                                        Show
                                     </button>
 
                                 </div>
@@ -248,6 +254,29 @@
 
         });
     </script>-->
+
+
+
+   <script>
+document.addEventListener('DOMContentLoaded', function () {
+
+    const password = document.getElementById('password');
+    const toggle = document.getElementById('togglePassword');
+
+    toggle.addEventListener('click', function () {
+
+        if (password.type === 'password') {
+            password.type = 'text';
+            toggle.textContent = 'Hide';
+        } else {
+            password.type = 'password';
+            toggle.textContent = 'Show';
+        }
+
+    });
+
+});
+</script>
 
 
 

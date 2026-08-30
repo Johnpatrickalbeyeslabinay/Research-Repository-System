@@ -61,9 +61,14 @@
 
                         <div class="card-body d-flex flex-column">
 
-                            <h5 class="card-title fw-bold">
-                                {{ $file->title }}
-                            </h5>
+                            <div class="d-flex justify-content-between align-items-center mb-2">
+                                    <h5 class="fw-bold mb-0">
+                                        {{ $file->title }}
+                                    </h5>
+
+
+                                </div>
+
 
                             <p class="text-muted mb-2">
                                 <strong>Author:</strong> {{ $file->name }}
@@ -116,7 +121,10 @@
                     <div class="container py-5">
                         <div class="card shadow-sm border-0">
                             <div class="card-body p-4 p-md-5">
-                                <h5 class="fw-bold mb-2"> {{ $file->title }} </h5>
+
+                                    <h5 class="fw-bold mb-0">
+                                        {{ $file->title }}
+                                    </h5>
 
                                 <div class="text-muted small mb-4"> <span class="me-3">
                                         <span> <i class="bi bi-download"></i>
@@ -213,8 +221,13 @@
                                                 class="btn btn-outline-primary">
                                                 <i class="bi bi-eye me-2"></i>
                                                 View
-                                            </a>
+                                        </a>
 
+                                        <a href="{{ route('file.download', $file->id) }}"
+                                            class="btn btn-outline-success px-2 py-1">
+                                                <i class="bi bi-download me-2"></i>
+                                                Download
+                                        </a>
 
 
                                     </div>
@@ -231,6 +244,8 @@
 
 
     </div>
+
+
 
 
     @endsection

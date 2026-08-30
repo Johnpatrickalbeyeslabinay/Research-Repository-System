@@ -30,6 +30,18 @@
     background: #f3f4f6;
     color: #374151;
   }
+
+
+  /*FAVORITE BTN*/
+  .favorite-btn {
+    cursor: pointer;
+    color: #adb5bd;
+    transition: 0.2s ease;
+}
+
+.btn-check:checked + .favorite-btn {
+    color: #006400 !important;
+}
 </style>
 
 
