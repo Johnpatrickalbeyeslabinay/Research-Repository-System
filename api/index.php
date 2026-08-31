@@ -11,11 +11,10 @@ try {
 
     echo '<h1>Laravel Error</h1>';
     echo '<pre>';
-    echo 'Message: '.$e->getMessage()."\n\n";
-    echo 'File: '.$e->getFile()."\n";
-    echo 'Line: '.$e->getLine()."\n\n";
-    echo $e->getTraceAsString();
+    echo 'MESSAGE: '.$e->getMessage()."\n\n";
+    echo 'FILE: '.$e->getFile()."\n";
+    echo 'LINE: '.$e->getLine()."\n\n";
+    echo 'TRACE:'."\n".$e->getTraceAsString();
     echo '</pre>';
 }
-
 // require __DIR__.'/../public/index.php';
