@@ -1,3 +1,3 @@
 <?php
 
-require __DIR__.'/../public/index.php';
+echo 'PHP IS WORKING';
