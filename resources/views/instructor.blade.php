@@ -5,15 +5,25 @@
 @section('instructor')
 
     <div class="d-flex justify-content-between align-items-center flex-wrap mb-4">
+
         <div>
             <h3 class="fw-bold mb-1">
                 Research Review Dashboard
             </h3>
 
-            <p class="text-secondary mb-0">
+            <small class="text-secondary mb-0">
                 Review, approve, and provide feedback on student research submissions
-            </p>
+            </small>
         </div>
+
+        <div class="mt-3 mt-md-0">
+
+           <button class="rounded-2 px-2 py-1 me-5 bg-white border border-secondary"
+                    popovertarget="account">
+                Manage Account
+            </button>
+        </div>
+
     </div>
 
     <div class="container-fluid py-4">
@@ -41,7 +51,7 @@
                     <div class="card-body d-flex justify-content-between align-items-center">
                         <div>
                             <p class="text-secondary mb-2">Approved</p>
-                            <h3 class="fw-normal mb-0">2</h3>
+                            <h3 class="fw-normal mb-0">{{ $approvedCount }}</h3>
                         </div>
 
                         <div class="bg-success bg-opacity-10 rounded-2 p-3">
@@ -57,7 +67,23 @@
                     <div class="card-body d-flex justify-content-between align-items-center">
                         <div>
                             <p class="text-secondary mb-2">Pending Review</p>
-                            <h3 class="fw-normal mb-0">1</h3>
+                            <h3 class="fw-normal mb-0">{{ $pendingCount }}</h3>
+                        </div>
+
+                        <div class="bg-warning bg-opacity-10 rounded-2 p-3">
+                            <i class="fa-regular fa-clock text-warning fs-4"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Reject -->
+            <div class="col-12 col-sm-6 col-xl-3">
+                <div class="card border-0 shadow-sm rounded-4 h-100">
+                    <div class="card-body d-flex justify-content-between align-items-center">
+                        <div>
+                            <p class="text-secondary mb-2">Reject</p>
+                            <h3 class="fw-normal mb-0">{{ $rejectedCount }}</h3>
                         </div>
 
                         <div class="bg-warning bg-opacity-10 rounded-2 p-3">
@@ -94,6 +120,26 @@
 
         </button>
 
+        <!-- Repository -->
+        <button class="nav-link rounded-5 px-1 py-1  d-flex align-items-center gap-2" id="repository-tab" data-bs-toggle="pill"
+            data-bs-target="#repository" type="button" role="tab">
+
+            Repository
+
+        </button>
+
+        <!-- Notification -->
+        <button class="nav-link rounded-5 px-1 py-1  d-flex align-items-center gap-2" id="notification-tab" data-bs-toggle="pill"
+            data-bs-target="#notification" type="button" role="tab">
+
+            Notification
+
+            <span class="badge d-flex align-items-center justify-content-center text-dark">
+                <i class="fa-regular fa-bell"></i>
+            </span>
+
+        </button>
+
     </div>
 
 
@@ -104,96 +150,185 @@
 
             <div class="row g-4 mt-3">
 
-                <!-- Graph -->
-                <div class="col-12 col-lg-6">
+               <!-- Graph -->
+                        <div class="col-12 col-lg-6">
 
-                    <div class="card shadow-sm rounded-4 border-0 h-100">
-                        <div class="card-body p-4">
+                            <div class="card shadow-sm rounded-4 border-0 h-100">
 
-                            <h5 class="mb-4">
-                                <i class="bi bi-bar-chart-line me-2 text-primary"></i>
-                                Submission Status Summary
-                            </h5>
+                                <div class="card-body p-4">
 
-                            <!-- Approved -->
-                            <div class="d-flex justify-content-between mb-2">
-                                <span>Approved</span>
-                                <strong>3 (38%)</strong>
-                            </div>
+                                    <h5 class="mb-4">
+                                        <i class="bi bi-bar-chart-line me-2 text-primary"></i>
+                                        Submission Status Summary
+                                    </h5>
 
-                            <div class="progress mb-4" style="height:8px;">
-                                <div class="progress-bar bg-success" style="width:38%"></div>
-                            </div>
+                                    @php
+                                        $totalSubmissions = $approvedCount + $pendingCount + $rejectedCount;
 
-                            <!-- Pending -->
-                            <div class="d-flex justify-content-between mb-2">
-                                <span>Pending Review</span>
-                                <strong>2 (25%)</strong>
-                            </div>
+                                        $approvedPercentage = $totalSubmissions > 0
+                                            ? round(($approvedCount / $totalSubmissions) * 100)
+                                            : 0;
 
-                            <div class="progress mb-4" style="height:8px;">
-                                <div class="progress-bar bg-warning" style="width:25%"></div>
-                            </div>
+                                        $pendingPercentage = $totalSubmissions > 0
+                                            ? round(($pendingCount / $totalSubmissions) * 100)
+                                            : 0;
 
-                            <!-- Rejected -->
-                            <div class="d-flex justify-content-between mb-2">
-                                <span>Rejected</span>
-                                <strong>1 (13%)</strong>
-                            </div>
+                                        $rejectedPercentage = $totalSubmissions > 0
+                                            ? round(($rejectedCount / $totalSubmissions) * 100)
+                                            : 0;
+                                    @endphp
 
-                            <div class="progress" style="height:8px;">
-                                <div class="progress-bar bg-danger" style="width:13%"></div>
-                            </div>
 
-                        </div>
-                    </div>
+                                    <!-- APPROVED -->
+                                    <div class="d-flex justify-content-between mb-2">
 
-                </div>
+                                        <span>
+                                            Approved
+                                        </span>
 
-                <!-- ACTIONS -->
-                <div class="col-12 col-lg-6">
+                                        <strong>
+                                            {{ $approvedCount }} ({{ $approvedPercentage }}%)
+                                        </strong>
 
-                    <div class="card border-0 shadow-sm rounded-4 h-100 overflow-y: auto;">
-                        <div class="card-body p-4">
-
-                            <div class="d-flex align-items-center mb-4">
-                                <i class="bi bi-graph-up-arrow text-success fs-5 me-2"></i>
-                                <h5 class="mb-0">
-                                    Recent Actions Needed
-                                </h5>
-                            </div>
-
-                            @foreach($studFiles as $file)
-
-                                <div class="row align-items-center gy-3 py-3 border-bottom">
-
-                                    <div class="col">
-                                        <h6 class="fw-semibold mb-1 text-truncate">
-                                            {{ $file->title }}
-                                        </h6>
-
-                                        <small class="text-secondary">
-                                            {{ $file->name }}
-                                        </small>
                                     </div>
 
-                                    <div class="col-auto">
-                                        <button class="btn btn-outline-secondary btn-sm rounded-pill px-3">
-                                            Review
-                                        </button>
+                                    <div class="progress mb-4" style="height: 8px;">
+
+                                        <div class="progress-bar bg-success"
+                                            style="width: {{ $approvedPercentage }}%">
+                                        </div>
+
+                                    </div>
+
+
+                                    <!-- PENDING -->
+                                    <div class="d-flex justify-content-between mb-2">
+
+                                        <span>
+                                            Pending Review
+                                        </span>
+
+                                        <strong>
+                                            {{ $pendingCount }} ({{ $pendingPercentage }}%)
+                                        </strong>
+
+                                    </div>
+
+                                    <div class="progress mb-4" style="height: 8px;">
+
+                                        <div class="progress-bar bg-warning"
+                                            style="width: {{ $pendingPercentage }}%">
+                                        </div>
+
+                                    </div>
+
+
+                                    <!-- REJECTED -->
+                                    <div class="d-flex justify-content-between mb-2">
+
+                                        <span>
+                                            Rejected
+                                        </span>
+
+                                        <strong>
+                                            {{ $rejectedCount }} ({{ $rejectedPercentage }}%)
+                                        </strong>
+
+                                    </div>
+
+                                    <div class="progress" style="height: 8px;">
+
+                                        <div class="progress-bar bg-danger"
+                                            style="width: {{ $rejectedPercentage }}%">
+                                        </div>
+
                                     </div>
 
                                 </div>
 
-                            @endforeach
+                            </div>
+
+                        </div>
+                                <!-- ACTIONS -->
+                                <div class="col-12 col-lg-6">
+
+                                    <div class="card border-0 shadow-sm rounded-4 h-100">
+
+                                        <div class="card-body p-3 p-md-4">
+
+                                            <div class="d-flex align-items-center mb-4">
+                                                <i class="bi bi-graph-up-arrow text-success fs-5 me-2"></i>
+                                                <h5 class="mb-0">Recent Actions Needed</h5>
+                                            </div>
+
+                                            <div class="action-list"
+                                                style="max-height: 340px; overflow-y: auto;">
+
+                                                @forelse($pendingFiles as $file)
+
+                                                    <div class="d-flex flex-column flex-sm-row justify-content-between align-items-sm-center gap-2 gap-sm-3 py-3 border-bottom">
+
+                                                        <!-- TITLE + NAME -->
+                                                        <div class="flex-grow-1" style="min-width: 0;">
+
+                                                            <strong class="fw-semibold small d-block text-truncate text-dark"
+                                                                title="{{ $file->title }}">
+
+                                                                {{ \Illuminate\Support\Str::limit($file->title, 45, '...') }}
+
+                                                            </strong>
+
+                                                            <small class="text-secondary d-block text-truncate">
+                                                                {{ $file->name }}
+                                                            </small>
+
+                                                        </div>
+
+                                                        <!-- STATUS + REVIEW -->
+                                                        <div class="d-flex align-items-center gap-2 flex-shrink-0">
+
+                                                            <span class="badge text-dark rounded-pill px-2 py-1"
+                                                                style="background-color: #fff3cd;">
+                                                                Pending
+                                                            </span>
+
+                                                            <button
+                                                                class="btn btn-outline-secondary btn-sm rounded-pill px-2 py-1"
+                                                                popovertarget="popover-{{ $file->id }}">
+
+                                                                <i class="bi bi-eye me-1"></i>
+                                                                Review
+
+                                                            </button>
+
+                                                        </div>
+
+                                                    </div>
+
+                                                @empty
+
+                                                    <div class="text-center text-secondary py-5">
+
+                                                        <i class="bi bi-check2-circle fs-2 d-block mb-2 text-success"></i>
+
+                                                        <p class="mb-0 small">
+                                                            No pending actions at this time.
+                                                        </p>
+
+                                                    </div>
+
+                                                @endforelse
+
+                                            </div>
+
+                                        </div>
+
+                                    </div>
+
+                                </div>
 
                         </div>
                     </div>
-
-                </div>
-
-            </div>
-        </div>
 
 
         <!-- ================= REVIEW ================= -->
@@ -215,6 +350,49 @@
                                 <div class="row align-items-center">
 
                                     <div class="col-lg-9">
+
+
+                                    <!-- STATUS & VISIBILITY -->
+                                    <div class="position-absolute top-0 end-0 m-3 d-flex align-items-center gap-2">
+
+                                        <!-- STATUS -->
+                                        @if(empty($file->status) || $file->status == 'pending')
+                                            <span class="badge text-dark rounded-pill px-2 py-1"
+                                                style="background-color: #fff3cd;">
+                                                Pending
+                                            </span>
+
+                                        @elseif($file->status == 'approved')
+                                            <span class="badge text-dark rounded-pill px-2 py-1"
+                                                style="background-color: #d1e7dd;">
+                                                Approved
+                                            </span>
+
+                                        @elseif($file->status == 'rejected')
+                                            <span class="badge text-dark rounded-pill px-2 py-1"
+                                                style="background-color: #f8d7da;">
+                                                Rejected
+                                            </span>
+                                        @endif
+
+
+                                        <!-- VISIBILITY -->
+                                        @if(empty($file->visibility) || $file->visibility == 'private')
+                                            <span class="badge text-dark rounded-pill px-2 py-1"
+                                                style="background-color: #f8f9fa;">
+                                                <i class="fa-solid fa-lock fa-2xs"></i>
+                                                Private
+                                            </span>
+
+                                        @elseif($file->visibility == 'public')
+                                            <span class="badge text-dark rounded-pill px-2 py-1"
+                                                style="background-color: #edf7ef;">
+                                                <i class="fa-solid fa-globe fa-2xs"></i>
+                                                Public
+                                            </span>
+                                        @endif
+
+                                    </div>
 
                                         <h5 class="fw-bold mb-2">
                                             {{ $file->title }}
@@ -259,14 +437,45 @@
 
                                 </div>
 
-                                <button class="rounded py-1 mt-3 bg-white text-primary"
-                                    style="max-width:200px;width:100%; border: 1px solid blue;"
-                                    popovertarget="popover-{{ $file->id }}">
+                               <div class="d-flex align-items-center gap-3 mt-3 flex-wrap">
 
-                                    <i class="bi bi-eye me-2"></i>
-                                    Review & Comment
+                                    <!-- REVIEW & COMMENT -->
+                                    <button class="rounded px-2 py-1 bg-white text-primary"
+                                        style="max-width:200px; width:100%; border:1px solid blue;"
+                                        popovertarget="popover-{{ $file->id }}">
 
-                                </button>
+                                        <i class="bi bi-eye me-2"></i>
+                                        Review & Comment
+
+                                    </button>
+
+
+                                    <!-- ACTION -->
+                                    @if($file->status == 'pending')
+
+                                        <form action="{{ route('research.approve', $file->id) }}" method="POST" class="m-0">
+                                            @csrf
+
+                                            <button type="submit" class="btn btn-outline-success px-2 py-1">
+                                                <i class="fa-regular fa-circle-check me-1"></i>
+                                                Approve
+                                            </button>
+                                        </form>
+
+
+                                        <form action="{{ route('research.reject', $file->id) }}" method="POST" class="m-0">
+                                            @csrf
+
+                                            <button type="submit" class="btn btn-outline-danger px-2 py-1">
+                                                <i class="fa-regular fa-circle-xmark me-1"></i>
+                                                Reject
+                                            </button>
+                                        </form>
+
+                                    @endif
+
+                                </div>
+
 
                             </div>
 
@@ -410,6 +619,8 @@
                                                     placeholder="Enter your feedback, comments, or revision instructions..."></textarea>
                                             </div>
 
+
+
                                             <!-- Button -->
                                             <button type="submit" class="rounded py-1 mt-3 text-white border-0"
                                                 style="max-width:200px; width:100%; background: #072a89;">
@@ -418,6 +629,33 @@
                                                 Post Feedback
                                             </button>
 
+
+                                                <div class="d-flex align-items-center gap-3 mt-3 flex-wrap">
+                                            <!-- ACTION -->
+                                    @if($file->status == 'pending')
+
+                                        <form action="{{ route('research.approve', $file->id) }}" method="POST" class="m-0">
+                                            @csrf
+
+                                            <button type="submit" class="btn btn-outline-success px-2 py-1">
+                                                <i class="fa-regular fa-circle-check me-1"></i>
+                                                Approve
+                                            </button>
+                                        </form>
+
+
+                                        <form action="{{ route('research.reject', $file->id) }}" method="POST" class="m-0">
+                                            @csrf
+
+                                            <button type="submit" class="btn btn-outline-danger px-2 py-1">
+                                                <i class="fa-regular fa-circle-xmark me-1"></i>
+                                                Reject
+                                            </button>
+                                        </form>
+
+                                    @endif
+
+                                    </div>
 
                                         </div>
                                     </div>
@@ -429,6 +667,31 @@
                 @endforeach
             </div>
         </div>
+
+
+            <!-- ================= REPOSITORY ================= -->
+        <div class="tab-pane fade" id="repository">
+
+            <div class="row g-4 mt-3">
+                <strong>Repository</strong>
+            </div>
+
+        </div>
+
+
+
+
+
+             <!-- ================= NOTIFICATION ================= -->
+        <div class="tab-pane fade" id="notification">
+
+            <div class="row g-4 mt-3">
+                <strong>Notification</strong>
+            </div>
+
+        </div>
+
+
     </div>
 
 

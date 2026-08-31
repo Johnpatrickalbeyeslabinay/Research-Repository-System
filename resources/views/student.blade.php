@@ -840,7 +840,7 @@
             <div>
                 Your research
                 <strong>{{ $notification->title }}</strong>
-                has been approved by the instructor.
+                has been approved by the admin.
             </div>
 
         @elseif($notification->status == 'rejected')
@@ -853,7 +853,7 @@
             <div>
                 Your research
                 <strong>{{ $notification->title }}</strong>
-                has been rejected by the instructor.
+                has been rejected by the admin.
             </div>
 
         @else
@@ -887,6 +887,12 @@
 </div>
 </div>
 
+
+
+
+
+
+
         <!-- ================= BOOKMARKS ================= -->
         <div class="tab-pane fade" id="bookmark">
 
@@ -901,9 +907,7 @@
                     <div class="container py-4">
 
     <div class="d-flex align-items-center justify-content-between mb-4">
-        <h3 class="mb-0">
-            <i class="fa-solid fa-bookmark text-warning me-2"></i> My Favorites
-        </h3>
+
     </div>
 
 

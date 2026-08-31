@@ -131,24 +131,24 @@
         <!-- Menu -->
         <div class="flex-grow-1 p-3">
 
-          <ul class="nav flex-column">
+                    <ul class="nav flex-column">
 
-            <li class="nav-item">
+                        <li class="nav-item">
 
-              <a class="nav-link {{ request()->query('view') === 'subjects' ? 'active text-white bg-primary rounded' : 'text-dark' }}"
-                href="{{ url('/student_dashboard?view=subjects') }}">
+                            <a class="nav-link {{ $view == 'dashboard' ? 'active text-white bg-primary rounded' : 'text-dark bg-light rounded' }}"
+                            href="{{ url('/instructor?view=dashboard') }}">
 
-                <i class="fa-solid fa-book me-2"></i>
+                                <i class="fa-solid fa-book me-2"></i>
 
-                Dashboard
+                                Dashboard
 
-              </a>
+                            </a>
 
-            </li>
+                        </li>
 
-            <li class="nav-item mt-2">
+                        <li class="nav-item mt-2">
 
-               <a class="nav-link active bg-primary rounded text-dark bg-light"
+                            <a class="nav-link active bg-primary rounded text-dark bg-light"
                                 href="{{ route('repository')  }}">
 
                                 <i class="fa-solid fa-folder me-2"></i>
@@ -157,11 +157,11 @@
 
                             </a>
 
-            </li>
+                        </li>
 
-          </ul>
+                    </ul>
 
-        </div>
+                </div>
 
         <!-- Footer -->
         <div class="border-top p-3">
@@ -237,22 +237,22 @@
 
       <ul class="nav flex-column">
 
-        <li class="nav-item">
+                        <li class="nav-item">
 
-           <a class="nav-link active bg-primary rounded text-dark bg-light"
-                                href="">
+                            <a class="nav-link {{ $view == 'dashboard' ? 'active text-white bg-primary rounded' : 'text-dark bg-light rounded' }}"
+                            href="{{ url('/instructor?view=dashboard') }}">
 
-                                <i class="fa-solid fa-folder me-2"></i>
+                                <i class="fa-solid fa-book me-2"></i>
 
                                 Dashboard
 
                             </a>
 
-        </li>
+                        </li>
 
-        <li class="nav-item mt-2">
+                        <li class="nav-item mt-2">
 
-           <a class="nav-link active bg-primary rounded text-dark bg-light"
+                            <a class="nav-link active bg-primary rounded text-dark bg-light"
                                 href="{{ route('repository')  }}">
 
                                 <i class="fa-solid fa-folder me-2"></i>
@@ -261,8 +261,9 @@
 
                             </a>
 
-        </li>
-      </ul>
+                        </li>
+
+                    </ul>
 
       <hr>
 

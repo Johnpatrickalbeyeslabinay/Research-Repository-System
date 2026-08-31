@@ -50,6 +50,13 @@ Route::get('/instructor', [InstructorController::class, 'index'])
 Route::post('/instructor/store', [InstructorController::class, 'store'])
     ->name('instructor.store');
 
+// ACTION INSTRUCTOR
+Route::post('/research/{id}/approve', [InstructorController::class, 'approve'])
+    ->name('research.approve');
+
+Route::post('/research/{id}/reject', [InstructorController::class, 'reject'])
+    ->name('research.reject');
+
 // home
 Route::get('/home', [HomeController::class, 'index'])->name('home');
 
@@ -65,11 +72,6 @@ Route::get('/view/{id}', [StudentController::class, 'view'])
 // download route
 Route::get('/download/{id}', [StudentController::class, 'download'])
     ->name('file.download');
-
-// ACTION ADMIN
-Route::post('/research/{id}/approve', [AdminController::class, 'approve'])->name('research.approve');
-
-Route::post('/research/{id}/reject', [AdminController::class, 'reject'])->name('research.reject');
 
 // Repository route
 Route::get('/repository', [RepositoryController::class, 'index'])

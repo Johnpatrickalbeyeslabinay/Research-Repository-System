@@ -147,113 +147,22 @@
      <div class="me-5">
         <strong>Student</strong>
         <h5>23-10210</h5>
-        <h5>1X44buKR</h5>
+        <h5>dIhmc7fj</h5>
      </div>
     <div class="me-5">
         <strong>Instructor</strong>
-        <h5>23-01200</h5>
-        <h5>6J68otkT</h5>
+        <h5>20-24680</h5>
+        <h5>o7xN4aDo</h5>
     </div>
     <div>
         <strong>Admin</strong>
-        <h5>20-123456</h5>
-        <h5>rSl2Sx1e</h5>
+        <h5>ADMIN-001</h5>
+        <h5>Admin123</h5>
     </div>
    </div>
 
 
-    <!--<script>
-        document.querySelectorAll('input[name="role"]').forEach(radio => {
 
-            radio.addEventListener('change', function () {
-
-                const btn = document.getElementById('loginBtn');
-
-                const cards = [
-                    document.getElementById('studentCard'),
-                    document.getElementById('instructorCard'),
-                    document.getElementById('adminCard')
-                ];
-
-                const icons = [
-                    document.getElementById('studentIcon'),
-                    document.getElementById('instructorIcon'),
-                    document.getElementById('adminIcon')
-                ];
-
-                // Reset cards
-                cards.forEach(card => {
-                    card.classList.remove(
-                        'border-primary', 'text-primary',
-                        'border-success', 'text-success',
-                        'border-danger', 'text-danger'
-                    );
-                });
-
-                // Reset icons
-                icons.forEach(icon => {
-                    icon.classList.remove(
-                        'text-primary',
-                        'text-success',
-                        'text-danger'
-                    );
-                });
-
-                // Reset button
-                btn.classList.remove(
-                    'btn-primary',
-                    'btn-success',
-                    'btn-danger'
-                );
-
-                if (this.value === 'student') {
-
-                    btn.classList.add('btn-primary');
-
-                    studentCard.classList.add(
-                        'border-primary',
-                        'text-primary'
-                    );
-
-                    studentIcon.classList.add('text-primary');
-
-                }
-
-                if (this.value === 'instructor') {
-
-                    btn.classList.add('btn-success');
-
-                    instructorCard.classList.add(
-                        'border-success',
-                        'text-success'
-                    );
-
-                    instructorIcon.classList.add('text-success');
-
-                }
-
-                if (this.value === 'admin') {
-
-                    btn.classList.add('btn-danger');
-
-                    adminCard.classList.add(
-                        'border-danger',
-                        'text-danger'
-                    );
-
-                    adminIcon.classList.add('text-danger');
-
-                }
-
-                btn.textContent =
-                    'Sign In as ' +
-                    this.value.charAt(0).toUpperCase() +
-                    this.value.slice(1);
-
-            });
-
-        });
-    </script>-->
 
 
 

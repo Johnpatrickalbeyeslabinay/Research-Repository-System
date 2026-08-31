@@ -10,12 +10,38 @@ class InstructorController extends Controller
 {
     public function index()
     {
-        $studFiles = UserFile::where('adviser', Auth::user()->name)
-            ->where('status', 'approved')
+        $view = request('view', 'dashboard');
+
+        // Pending research submissions only
+        $pendingFiles = UserFile::where('adviser', Auth::user()->name)
+            ->where('status', 'pending')
             ->latest()
             ->get();
 
-        return view('instructor', compact('studFiles'));
+        $studFiles = UserFile::where('adviser', Auth::user()->name)
+            ->latest()
+            ->get();
+
+        $approvedCount = UserFile::where('adviser', Auth::user()->name)
+            ->where('status', 'approved')
+            ->count();
+
+        $rejectedCount = UserFile::where('adviser', Auth::user()->name)
+            ->where('status', 'rejected')
+            ->count();
+
+        $pendingCount = UserFile::where('adviser', Auth::user()->name)
+            ->where('status', 'pending')
+            ->count();
+
+        return view('instructor', compact(
+            'view',
+            'studFiles',
+            'pendingFiles',
+            'approvedCount',
+            'rejectedCount',
+            'pendingCount'
+        ));
     }
 
     public function store(Request $request)
@@ -77,5 +103,33 @@ class InstructorController extends Controller
 
         return redirect()->route('instructor')
             ->with('success', 'Research submitted successfully!');
+    }
+
+    // APPROVE RESEARCH
+    public function approve($id)
+    {
+        $file = UserFile::findOrFail($id);
+
+        $file->status = 'approved';
+
+        if ($file->requested_visibility === 'public') {
+            $file->visibility = 'public';
+        }
+
+        $file->save();
+
+        return back()->with('success', 'Research approved successfully.');
+    }
+
+    // REJECT RESEARCH
+    public function reject($id)
+    {
+        $file = UserFile::findOrFail($id);
+
+        $file->status = 'rejected';
+
+        $file->save();
+
+        return back()->with('success', 'Research rejected successfully.');
     }
 }
