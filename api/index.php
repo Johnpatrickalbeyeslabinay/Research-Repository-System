@@ -5,19 +5,19 @@ ini_set('display_errors', '1');
 
 header('Content-Type: text/plain');
 
-require __DIR__.'/../vendor/autoload.php';
+require __DIR__ . '/../vendor/autoload.php';
 
-$app = require_once __DIR__.'/../bootstrap/app.php';
+$app = require_once __DIR__ . '/../bootstrap/app.php';
 
-echo "APP CREATED\n";
+echo "APP CREATED\n\n";
 
-echo 'VIEW BOUND: ';
+echo "VIEW BOUND: ";
 var_dump($app->bound('view'));
 
-echo 'VIEW ALIASED: ';
-var_dump($app->bound('view'));
+echo "\nAPPLICATION PROVIDERS:\n";
 
-if ($app->bound('view')) {
-    echo 'VIEW CLASS: ';
-    var_dump(get_class($app->make('view')));
+$providers = $app->getLoadedProviders();
+
+foreach ($providers as $provider => $loaded) {
+    echo $provider . " => " . ($loaded ? 'LOADED' : 'NOT LOADED') . "\n";
 }
