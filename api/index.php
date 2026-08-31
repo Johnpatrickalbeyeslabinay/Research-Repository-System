@@ -11,13 +11,18 @@ $app = require_once __DIR__ . '/../bootstrap/app.php';
 
 echo "APP CREATED\n\n";
 
-echo "VIEW BOUND: ";
-var_dump($app->bound('view'));
+$manifest = __DIR__ . '/../bootstrap/cache/services.php';
 
-echo "\nAPPLICATION PROVIDERS:\n";
+echo "SERVICES MANIFEST EXISTS: ";
+var_dump(file_exists($manifest));
 
-$providers = $app->getLoadedProviders();
+if (file_exists($manifest)) {
+    echo "\nSERVICES MANIFEST CONTENT:\n";
+    $services = require $manifest;
 
-foreach ($providers as $provider => $loaded) {
-    echo $provider . " => " . ($loaded ? 'LOADED' : 'NOT LOADED') . "\n";
+    echo "PROVIDERS:\n";
+
+    foreach ($services['providers'] ?? [] as $provider) {
+        echo $provider . "\n";
+    }
 }
