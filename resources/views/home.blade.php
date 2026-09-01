@@ -115,8 +115,7 @@
 
                     <div class="rounded-circle bg-success bg-opacity-25
                             d-flex align-items-center justify-content-center
-                            mx-auto" style=" width:80px;
-                height:80px;">
+                            mx-auto" style=" width:80px; height:80px;">
 
                         <span class="fw-bold fs-1 text-success">
                             2

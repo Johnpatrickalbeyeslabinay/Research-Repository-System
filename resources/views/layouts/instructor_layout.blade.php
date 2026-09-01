@@ -209,7 +209,7 @@
         </div>
       </div>
 
-      <button class="btn-close btn-close-white" data-bs-dismiss="offcanvas"></button>
+      <button class="btn-close btn-close-dark" data-bs-dismiss="offcanvas"></button>
 
     </div>
 

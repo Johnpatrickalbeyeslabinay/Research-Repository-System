@@ -5,14 +5,33 @@
 @section('student')
 
 
-    @if(session('success'))
-        <div class="alert alert-success alert-dismissible fade show" role="alert">
-            <i class="bi bi-check-circle-fill me-2"></i>
-            {{ session('success') }}
 
-            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
-        </div>
-    @endif
+
+        <!--NOTIFICATION-->
+        @if(session('success'))
+            <div class="alert alert-success alert-dismissible fade show"
+                role="alert"
+                id="success-alert">
+
+                <i class="bi bi-check-circle-fill me-2"></i>
+                {{ session('success') }}
+
+            </div>
+
+            <script>
+                setTimeout(function () {
+                    const alert = document.getElementById('success-alert');
+
+                    if (alert) {
+                        alert.classList.remove('show');
+
+                        setTimeout(function () {
+                            alert.remove();
+                        }, 150);
+                    }
+                }, 3000);
+            </script>
+        @endif
 
 
 
@@ -492,11 +511,13 @@
 
                                 </button>
 
-                                <button class="view rounded px-2 py-1 mt-3 bg-white update-btn "
-                                    popovertarget="update-sub-{{ $file->id }}">
-                                    <i class="fa-regular fa-pen-to-square me-2"></i>
-                                    Update Submission
-                                </button>
+                                @if($file->status == 'rejected')
+                                    <button class="view rounded px-2 py-1 mt-3 bg-white update-btn"
+                                        popovertarget="update-sub-{{ $file->id }}">
+                                        <i class="fa-regular fa-pen-to-square me-2"></i>
+                                        Update Submission
+                                    </button>
+                                @endif
 
                             </div>
 
@@ -514,7 +535,9 @@
                         <div class="d-flex justify-content-between align-items-center mb-4">
                             <h3 class="fw-bold mb-0">Update Research</h3>
 
-                            <button class="btn-close" popovertarget="update-sub" popovertargetaction="hide"></button>
+                            <button class="btn-close"popovertarget="update-sub-{{ $file->id }}"
+                                popovertargetaction="hide">
+                            </button>
                         </div>
 
                         <form action="{{ route('student.update', $file->id) }}" method="POST" enctype="multipart/form-data">
