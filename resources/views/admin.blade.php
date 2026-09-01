@@ -19,6 +19,7 @@
     </div>
 
 
+
 <!--mga counts ng users etc.-->
    <div class="container-fluid mt-3">
 
@@ -545,8 +546,8 @@
 
         <i class="fa-solid fa-plus"></i>
         Add User
-
     </button>
+
 
 
     <div class="modal fade" id="addUserModal" tabindex="-1">
@@ -578,7 +579,6 @@
 
                                 <option value="student">Student</option>
                                 <option value="instructor">Instructor</option>
-                                <option value="admin">Admin</option>
 
                             </select>
                         </div>
@@ -672,6 +672,103 @@
             </div>
         </div>
     </div>
+
+
+
+
+                        <!-- Import Student Accounts Button -->
+
+                    <button type="button"
+                        class="btn btn-success rounded-3"
+                        data-bs-toggle="modal"
+                        data-bs-target="#importStudentsModal"> <i class="bi bi-file-earmark-excel me-2"></i>
+                    Import Student Accounts </button>
+
+                    <!-- Import Student Accounts Modal -->
+
+                    <div class="modal fade"
+                        id="importStudentsModal"
+                        tabindex="-1"
+                        aria-labelledby="importStudentsModalLabel"
+                        aria-hidden="true">
+
+
+                    <div class="modal-dialog modal-dialog-centered">
+                        <div class="modal-content border-0 shadow rounded-4">
+
+                            <div class="modal-header border-0 px-4 pt-4">
+                                <div>
+                                    <h5 class="modal-title fw-bold" id="importStudentsModalLabel">
+                                        <i class="bi bi-file-earmark-excel text-success me-2"></i>
+                                        Import Student Accounts
+                                    </h5>
+
+                                    <p class="text-muted small mb-0 mt-1">
+                                        Upload the Excel file containing the student information.
+                                    </p>
+                                </div>
+
+                                <button type="button"
+                                        class="btn-close"
+                                        data-bs-dismiss="modal"
+                                        aria-label="Close">
+                                </button>
+                            </div>
+
+
+                            <div class="modal-body px-4 pb-4">
+
+                                <div class="alert alert-info border-0 rounded-3 small">
+                                    <i class="bi bi-info-circle me-2"></i>
+                                    The system will automatically create student accounts and generate temporary passwords.
+                                </div>
+
+                                <form action="{{ route('admin.students.import') }}"
+                                    method="POST"
+                                    enctype="multipart/form-data">
+
+                                    @csrf
+
+                                    <div class="mb-4">
+                                        <label class="form-label fw-semibold">
+                                            Student Excel File
+                                        </label>
+
+                                        <input type="file"
+                                            name="file"
+                                            class="form-control"
+                                            accept=".xlsx,.xls,.csv"
+                                            required>
+
+                                        <div class="form-text">
+                                            Accepted formats: .xlsx
+                                        </div>
+                                    </div>
+
+                                    <div class="d-flex justify-content-end gap-2">
+
+                                        <button type="button"
+                                                class="btn btn-light border rounded-3"
+                                                data-bs-dismiss="modal">
+                                            Cancel
+                                        </button>
+
+                                        <button type="submit"
+                                                class="btn btn-success rounded-3">
+                                            <i class="bi bi-upload me-2"></i>
+                                            Import Students
+                                        </button>
+
+                                    </div>
+
+                                </form>
+
+                            </div>
+
+                        </div>
+                    </div>
+
+                    </div>
 
 
 
@@ -842,9 +939,38 @@
                             <button class="btn btn-outline-primary px-1 py-0">
                             <i class="fa-regular fa-pen-to-square fa-sm"></i>
                             Edit</button>
-                            <button class="btn btn-outline-danger px-1 py-0">
-                            <i class="fa-solid fa-trash fa-sm"></i>
-                            Delete</button>
+
+
+                            @if($user->account_status === 'active') <form action="{{ route('admin.users.toggle-status', $user->id) }}"
+                                method="POST"
+                                class="d-inline">
+                            @csrf
+                            @method('PATCH')
+
+
+                                <button type="submit" class="btn btn-outline-warning px-1 py-0">
+                                    <i class="fa-solid fa-user-slash fa-sm me-1"></i>
+                                    Deactivate
+                                </button>
+                            </form>
+
+
+                            @else <form action="{{ route('admin.users.toggle-status', $user->id) }}"
+                                method="POST"
+                                class="d-inline">
+                            @csrf
+                            @method('PATCH')
+
+
+                                <button type="submit" class="btn btn-outline-success px-1 py-0">
+                                    <i class="fa-solid fa-user-check fa-sm me-1"></i>
+                                    Activate
+                                </button>
+                            </form>
+
+
+                            @endif
+
                         </td>
 
                     </tr>

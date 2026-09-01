@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Imports\StudentImport;
 use App\Mail\repositoryMail;
 use App\Models\User;
 use App\Models\UserFile;
@@ -9,6 +10,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Str;
+use Maatwebsite\Excel\Facades\Excel;
 
 class AdminController extends Controller
 {
@@ -130,6 +132,23 @@ class AdminController extends Controller
 
     }
 
+    public function importStudents(Request $request)
+    {
+        $request->validate([
+            'file' => 'required|mimes:xlsx,xls,csv|max:5120',
+        ]);
+
+        Excel::import(
+            new StudentImport,
+            $request->file('file')
+        );
+
+        return redirect()->back()->with(
+            'success',
+            'Student accounts imported successfully. Login credentials have been sent to their email addresses.'
+        );
+    }
+
     // APPROBE BTN
     public function approve($id)
     {
@@ -155,5 +174,23 @@ class AdminController extends Controller
         $file->save();
 
         return back()->with('success', 'Research rejected successfully.');
+    }
+
+    public function toggleStatus($id)
+    {
+        $user = User::findOrFail($id);
+
+        $user->account_status =
+            $user->account_status === 'active'
+                ? 'deactivated'
+                : 'active';
+
+        $user->save();
+
+        return back()->with(
+            'success',
+            'Account status updated successfully.'
+        );
+
     }
 }

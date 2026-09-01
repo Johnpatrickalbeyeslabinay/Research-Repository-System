@@ -84,12 +84,12 @@ Route::put('/student/submission/{id}', [StudentController::class, 'update'])
 
 // routes/web.php
 
-use App\Http\Controllers\FavoriteController;
+Route::post(
+    '/admin/students/import',
+    [AdminController::class, 'importStudents']
+)->name('admin.students.import');
 
-Route::middleware('auth')->group(function () {
-    Route::post('/favorites/{file}/toggle', [FavoriteController::class, 'toggle'])
-        ->name('favorites.toggle');
-
-    Route::get('/favorites', [FavoriteController::class, 'index'])
-        ->name('favorites.index');
-});
+Route::patch(
+    '/admin/users/{id}/toggle-status',
+    [AdminController::class, 'toggleStatus']
+)->name('admin.users.toggle-status');

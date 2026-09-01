@@ -24,6 +24,7 @@ class UserFile extends Model
         'status',
         'visibility',
         'requested_visibility',
+        'account_status',
     ];
 
     public function user()

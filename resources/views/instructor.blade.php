@@ -120,13 +120,6 @@
 
         </button>
 
-        <!-- Repository -->
-        <button class="nav-link rounded-5 px-1 py-1  d-flex align-items-center gap-2" id="repository-tab" data-bs-toggle="pill"
-            data-bs-target="#repository" type="button" role="tab">
-
-            Repository
-
-        </button>
 
         <!-- Notification -->
         <button class="nav-link rounded-5 px-1 py-1  d-flex align-items-center gap-2" id="notification-tab" data-bs-toggle="pill"
@@ -666,16 +659,6 @@
                     @endif
                 @endforeach
             </div>
-        </div>
-
-
-            <!-- ================= REPOSITORY ================= -->
-        <div class="tab-pane fade" id="repository">
-
-            <div class="row g-4 mt-3">
-                <strong>Repository</strong>
-            </div>
-
         </div>
 
 
