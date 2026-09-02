@@ -37,10 +37,18 @@ Route::get('/admin_dashboard', [AdminController::class, 'index'])
 
 // student routes
 
+// Route::get('/student', [StudentController::class, 'index'])
+// ->name('student');
+
+// Route::post('/student/store', [StudentController::class, 'store'])
+// ->name('student.store');
+
 Route::get('/student', [StudentController::class, 'index'])
+    ->middleware('auth')
     ->name('student');
 
 Route::post('/student/store', [StudentController::class, 'store'])
+    ->middleware('auth')
     ->name('student.store');
 
 // instructor routes

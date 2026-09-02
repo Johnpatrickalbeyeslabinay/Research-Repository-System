@@ -149,12 +149,6 @@
 
         </button>
 
-
-        <button class="nav-link rounded-5 px-2 py-1" id="audit-tab" data-bs-toggle="pill" data-bs-target="#audit"
-            type="button" role="tab">
-            Back up & Restore
-        </button>
-
     </div>
 
 
@@ -615,7 +609,7 @@
 
 
 
-                        <!-- Year Level -->
+                        <!-- Year Level
                         <div class="mb-3" id="yearLevelDiv">
 
                             <label class="form-label fw-semibold">
@@ -633,6 +627,7 @@
                             </select>
 
                         </div>
+                        -->
 
                         <!-- Password -->
                         <div class="alert alert-info d-flex align-items-center">
@@ -907,7 +902,6 @@
                             <th>User ID</th>
                             <th>Email</th>
                             <th>Role</th>
-                            <th>Year</th>
                             <th class="text-end">Actions</th>
                         </tr>
                         </thead>
@@ -932,9 +926,7 @@
                                 {{ ucfirst($user->role) }}
                             </span>
                         </td>
-                        <td style="font-size: 13px;">
-                            {{ $user->year_level ?? '—' }}
-                        </td>
+
                         <td class="text-end" style="font-size: 13px;">
                             <button class="btn btn-outline-primary px-1 py-0">
                             <i class="fa-regular fa-pen-to-square fa-sm"></i>

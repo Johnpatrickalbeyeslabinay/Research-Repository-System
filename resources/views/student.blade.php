@@ -7,7 +7,7 @@
 
 
 
-        <!--NOTIFICATION-->
+        <!--NOTIFICATION ALERT-->
         @if(session('success'))
             <div class="alert alert-success alert-dismissible fade show"
                 role="alert"
@@ -79,9 +79,9 @@
                 </div>
 
                 <div class="bg-info-soft rounded-3 p-3 mb-4">
-                <p class="mb-1 text-info-strong"><strong>Name:</strong> {{ Auth::user()->name }}</p>
+                <p class="mb-1 text-info-strong"><strong>Name:</strong> {{ Auth::user()?->name }}</p>
                 <p class="mb-1 text-info-strong"><strong>User ID:</strong> {{ Auth::user()->user_id }}</p>
-                <p class="mb-0 text-info-strong"><strong>Role:</strong> {{ Auth::user()->role }}</p>
+                <p class="mb-0 text-info-strong"><strong>Role:</strong> {{ Auth::user()->role}}</p>
                 </div>
 
                 <h6 class="fw-bold mb-3">Change Password</h6>
@@ -121,7 +121,6 @@
                 </form>
 
         </div>
-
 
 
 

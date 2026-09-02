@@ -21,10 +21,9 @@
 
         <br><br>
 
-        <h1 class="text-dark fw-bold">Student Research Portal</h1>
+        <h1 class="text-dark fw-bold">Fisheries Research Repository</h1>
         <br>
-        <h5 class="text-secondary w-50 mx-auto text-center">Submit, track, and share your fisheries research with the academic community. Contribute
-            to the growing body of knowledge in marine and aquatic sciences.</h5>
+        <h5 class="text-secondary w-50 mx-auto text-center">Discover, Access, Preserve fisheries in one centralized repository</h5>
     </div>
 
 
@@ -36,32 +35,32 @@
             <div class="col-12 col-lg-3 mb-3">
                 <div class="p-4 border rounded shadow-sm h-100">
                     <i class="fa-solid fa-upload fs-1 mb-3"></i>
-                    <h4 class="fw-bold">Submit Research</h4>
-                    <p>Upload your research papers with comprehensive metadata and documentation</p>
+                    <h4 class="fw-bold">Explore Research</h4>
+                    <p>Browse fisheries studies and theses collected in one digital repository</p>
                 </div>
             </div>
 
             <div class="col-12 col-lg-3 mb-3">
                 <div class="p-4 border rounded shadow-sm h-100">
                     <i class="fa-solid fa-chart-line fs-1 mb-3"></i>
-                    <h4 class="fw-bold">Track Submissions</h4>
-                    <p>Monitor the status of your research submissions in real-time</p>
+                    <h4 class="fw-bold">Find What You Need</h4>
+                    <p>Search research by title, author, keyword, or topic</p>
                 </div>
             </div>
 
             <div class="col-12 col-lg-3 mb-3">
                 <div class="p-4 border rounded shadow-sm h-100">
                     <i class="fa-solid fa-search fs-1 mb-3"></i>
-                    <h4 class="fw-bold">Browse Repository</h4>
-                    <p>Search and explore approved research papers from fellow students</p>
+                    <h4 class="fw-bold">Access  Knowledge</h4>
+                    <p>View and Access available research for learning and academic reference</p>
                 </div>
             </div>
 
             <div class="col-12 col-lg-3 mb-3">
                 <div class="p-4 border rounded shadow-sm h-100">
                     <i class="fa-solid fa-award fs-1 mb-3"></i>
-                    <h4 class="fw-bold">Academic Recognition</h4>
-                    <p>Get your research published and recognized in the university repository</p>
+                    <h4 class="fw-bold">Ask the Research</h4>
+                    <p>Get summaries and related information from repository content</p>
                 </div>
             </div>
 

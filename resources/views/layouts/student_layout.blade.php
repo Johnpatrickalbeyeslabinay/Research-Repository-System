@@ -353,10 +353,10 @@ input[name="visibility"]:checked + label i {
             <!-- USER INFO -->
             <div>
                 <h6 class="fw-bold mb-0">
-                    {{ Auth::user()->name }}
+                    {{ Auth::user()->name}}
                 </h6>
                 <small class="text-secondary">
-                    {{ Auth::user()->role }}
+                    {{ Auth::user()->role}}
                 </small>
             </div>
 
@@ -402,7 +402,7 @@ input[name="visibility"]:checked + label i {
         <form action="{{ route('logout') }}" method="POST">
             @csrf
 
-            <button class="btn btn-outline-danger w-100 text-start">
+            <button class="btn btn-outline-danger mb-2 w-100 text-start">
 
                 <i class="fa-solid fa-right-from-bracket me-2"></i>
 

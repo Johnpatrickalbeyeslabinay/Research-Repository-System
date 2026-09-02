@@ -26,11 +26,12 @@
                     </h3>
 
                     <h4 class="fw-light mb-5">
-                        Fisheries Program
+                        Fishery Program
                     </h4>
 
+
                     <div class="mb-3 fs-5">
-                        📚 Discover academic research
+                        <h5> 📚Where Fisheries Research Comes Together</h5>
                     </div>
 
 

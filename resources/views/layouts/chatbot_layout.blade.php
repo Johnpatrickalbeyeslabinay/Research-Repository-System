@@ -38,8 +38,6 @@
             </div>
 
 
-
-
                     <!-- AI CHATBOT -->
             <div id="popover-"
                 popover
@@ -179,22 +177,7 @@
 
 
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+            <!--icpn--->
             <script src="https://unpkg.com/lucide@latest"></script>
             <script>
                 lucide.createIcons();
