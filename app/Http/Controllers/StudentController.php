@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\Sdg;
 use App\Models\UserFile;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -19,6 +20,12 @@ class StudentController extends Controller
             ->latest()
             ->get();
 
+        // Rejected submissions
+        $rejectedFiles = UserFile::where('user_id', Auth::id())
+            ->where('status', 'Rejected')
+            ->latest()
+            ->get();
+
         $totalUploads = UserFile::where('user_id', Auth::id())->count();
 
         $pendingUploads = UserFile::where('user_id', Auth::id())
@@ -33,14 +40,19 @@ class StudentController extends Controller
             ->where('status', 'Rejected')
             ->count();
 
+        // Get all SDGs
+        $sdgs = Sdg::orderBy('number')->get();
+
         return view('student', compact(
             'view',
             'studFiles',
             'notifications',
+            'rejectedFiles',
             'totalUploads',
             'pendingUploads',
             'approvedUploads',
-            'rejectedUploads'
+            'rejectedUploads',
+            'sdgs'
         ));
     }
 
@@ -51,6 +63,8 @@ class StudentController extends Controller
             'title' => 'required',
             'adviser' => 'required',
             'desc' => 'required',
+            'sdg' => 'required|array|min:1',
+            'sdg.*' => 'exists:sdgs,id',
             'file' => 'required|mimes:pdf|max:10240',
         ], [
             'file.required' => 'Please upload a PDF file.',
@@ -96,7 +110,7 @@ class StudentController extends Controller
         $filePath = 'research_files/'.$originalName;
 
         // Save to database
-        UserFile::create([
+        $fileRecord = UserFile::create([
             'user_id' => Auth::id(),
             'title' => $request->title,
             'name' => Auth::user()->name,
@@ -110,6 +124,8 @@ class StudentController extends Controller
             'visibility' => 'private',
             'requested_visibility' => $request->visibility,
         ]);
+
+        $fileRecord->sdgs()->sync($request->sdg);
 
         return redirect()->route('student')->with('success', 'Research submitted successfully!');
     }
@@ -151,6 +167,8 @@ class StudentController extends Controller
             'title' => 'required|string|max:255',
             'adviser' => 'required|string|max:255',
             'desc' => 'required|string',
+            'sdg' => 'required|array|min:1',
+            'sdg.*' => 'exists:sdgs,id',
             'visibility' => 'required|in:public,private',
             'file' => 'nullable|mimes:pdf|max:10240',
         ]);
@@ -182,6 +200,8 @@ class StudentController extends Controller
         $file->status = 'pending';
 
         $file->save();
+
+        $file->sdgs()->sync($request->sdg);
 
         return redirect()
             ->back()

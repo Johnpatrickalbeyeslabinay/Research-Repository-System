@@ -29,11 +29,11 @@ class AdminController extends Controller
 
         $users = $users->get();
 
-        $studFiles = UserFile::all();
+        $studFiles = UserFile::where('status', 'admin_pending')->get();
 
         $approvedCount = UserFile::where('status', 'approved')->count();
         $rejectedCount = UserFile::where('status', 'rejected')->count();
-        $pendingCount = UserFile::where('status', 'pending')->count();
+        $pendingCount = UserFile::where('status', 'admin_pending')->count();
 
         $year = request('year', date('Y'));
 

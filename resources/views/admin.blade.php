@@ -309,7 +309,7 @@
 
                             <td>
                                 <span class="rounded text-bg-success-subtle text-success px-3 py-2">
-                                   @if(empty($file->status) || $file->status == 'pending')
+                                   @if(empty($file->status) || $file->status == 'admin_pending')
                                         <span class="badge bg-warning text-dark rounded-pill">
                                             Pending
                                         </span>
@@ -465,11 +465,12 @@
                                     <!--ACTION-->
                                     <div class="d-flex gap-3">
 
-                                       @if($file->status == 'pending')
+                                        @if($file->status == 'admin_pending')
                                             <div class="d-flex gap-3">
 
                                                 <form action="{{ route('research.approve', $file->id) }}" method="POST">
                                                     @csrf
+
                                                     <button type="submit" class="btn btn-outline-success">
                                                         <i class="fa-regular fa-circle-check"></i>
                                                         Approve
@@ -478,6 +479,7 @@
 
                                                 <form action="{{ route('research.reject', $file->id) }}" method="POST">
                                                     @csrf
+
                                                     <button type="submit" class="btn btn-outline-danger">
                                                         <i class="fa-regular fa-circle-xmark"></i>
                                                         Reject

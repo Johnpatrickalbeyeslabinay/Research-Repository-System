@@ -99,6 +99,7 @@ class InstructorController extends Controller
             'desc' => $request->desc,
             'file_path' => $filePath,
             'auto_tag' => implode(', ', $tags),
+            'status' => 'pending',
         ]);
 
         return redirect()->route('instructor')
@@ -110,15 +111,15 @@ class InstructorController extends Controller
     {
         $file = UserFile::findOrFail($id);
 
-        $file->status = 'approved';
-
-        if ($file->requested_visibility === 'public') {
-            $file->visibility = 'public';
-        }
+        // Instructor approved → send to Admin
+        $file->status = 'admin_pending';
 
         $file->save();
 
-        return back()->with('success', 'Research approved successfully.');
+        return back()->with(
+            'success',
+            'Research approved and forwarded to Admin.'
+        );
     }
 
     // REJECT RESEARCH
@@ -130,6 +131,9 @@ class InstructorController extends Controller
 
         $file->save();
 
-        return back()->with('success', 'Research rejected successfully.');
+        return back()->with(
+            'success',
+            'Research rejected successfully.'
+        );
     }
 }

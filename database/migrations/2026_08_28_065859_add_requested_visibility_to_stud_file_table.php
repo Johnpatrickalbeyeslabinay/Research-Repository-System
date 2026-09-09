@@ -11,11 +11,13 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::table('stud_file', function (Blueprint $table) {
-            $table->string('requested_visibility')
-                ->default('private')
-                ->after('visibility');
-        });
+        if (! Schema::hasColumn('stud_file', 'requested_visibility')) {
+            Schema::table('stud_file', function (Blueprint $table) {
+                $table->string('requested_visibility')
+                    ->default('private')
+                    ->after('visibility');
+            });
+        }
     }
 
     /**
@@ -23,8 +25,10 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::table('stud_file', function (Blueprint $table) {
-            $table->dropColumn('requested_visibility');
-        });
+        if (Schema::hasColumn('stud_file', 'requested_visibility')) {
+            Schema::table('stud_file', function (Blueprint $table) {
+                $table->dropColumn('requested_visibility');
+            });
+        }
     }
 };

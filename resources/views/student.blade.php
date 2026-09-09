@@ -52,11 +52,6 @@
         <div class="mt-3 mt-md-0">
 
 
-           <button class="rounded-2 px-2 py-1 bg-white border border-secondary"
-                    popovertarget="account">
-                Manage Account
-            </button>
-
             <button class="rounded-2 px-2 py-1 text-white border-0" style="background: #072a89;" popovertarget="popover">
                 <i class=" fa-solid fa-upload me-2"></i>
                 Upload New Research
@@ -69,58 +64,89 @@
         <div class="row g-4">
 
         <!--MANAGE ACCOUNT BTN-->
-        <div id="account" popover class="rounded-4 border-0 shadow p-4"
-                style="width: 520px; max-width: 95vw; min-height: 500px;">
+        <div class="modal fade" id="manageaccount" tabindex="-1" aria-hidden="true">
 
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content rounded-4 border-0 shadow p-4">
 
-                <div class="d-flex justify-content-between align-items-center mb-3">
+            <div class="d-flex justify-content-between align-items-center mb-3">
                 <h5 class="mb-0 fw-bold">Manage Account</h5>
-                <button class="btn-close" popovertarget="account" popovertargetaction="hide"></button>
-                </div>
 
-                <div class="bg-info-soft rounded-3 p-3 mb-4">
-                <p class="mb-1 text-info-strong"><strong>Name:</strong> {{ Auth::user()?->name }}</p>
-                <p class="mb-1 text-info-strong"><strong>User ID:</strong> {{ Auth::user()->user_id }}</p>
-                <p class="mb-0 text-info-strong"><strong>Role:</strong> {{ Auth::user()->role}}</p>
-                </div>
+                <button type="button"
+                        class="btn-close"
+                        data-bs-dismiss="modal">
+                </button>
+            </div>
 
-                <h6 class="fw-bold mb-3">Change Password</h6>
+            <div class="bg-info-soft rounded-3 p-3 mb-4">
+                <p class="mb-1">
+                    <strong>Name:</strong> {{ Auth::user()?->name }}
+                </p>
 
-                <form>
+                <p class="mb-1">
+                    <strong>User ID:</strong> {{ Auth::user()->user_id }}
+                </p>
+
+                <p class="mb-0">
+                    <strong>Role:</strong> {{ Auth::user()->role }}
+                </p>
+            </div>
+
+            <h6 class="fw-bold mb-3">Change Password</h6>
+
+            <form>
+
                 <div class="mb-3">
-                    <label for="currentPassword" class="form-label fw-medium">Current Password</label>
-                    <div class="input-group">
-                    <input type="password" class="rounded-2 form-control" id="currentPassword" placeholder="Enter current password">
-                    <button type="button" class=" toggle-show" onclick="togglePassword('currentPassword', this)">Show</button>
-                    </div>
+                    <label class="form-label fw-medium">
+                        Current Password
+                    </label>
+
+                    <input type="password"
+                           class="form-control"
+                           placeholder="Enter current password">
                 </div>
 
                 <div class="mb-3">
-                    <label for="newPassword" class="form-label fw-medium">New Password</label>
-                    <div class="input-group">
-                    <input type="password" class="rounded-2 form-control" id="newPassword" placeholder="At least 8 characters">
-                    <button type="button" class=" toggle-show" onclick="togglePassword('newPassword', this)">Show</button>
-                    </div>
+                    <label class="form-label fw-medium">
+                        New Password
+                    </label>
+
+                    <input type="password"
+                           class="form-control"
+                           placeholder="At least 8 characters">
                 </div>
 
                 <div class="mb-4">
-                    <label for="confirmPassword" class="form-label fw-medium">Confirm New Password</label>
-                    <div class="input-group">
-                    <input type="password" class="form-control" id="confirmPassword" placeholder="Repeat new password">
-                    <button type="button" class="toggle-show" onclick="togglePassword('confirmPassword', this)">Show</button>
-                    </div>
+                    <label class="form-label fw-medium">
+                        Confirm New Password
+                    </label>
+
+                    <input type="password"
+                           class="form-control"
+                           placeholder="Repeat new password">
                 </div>
 
                 <div class="d-flex gap-3">
-                    <button type="submit" class="text-white rounded-3 border-0 flex-grow-1 fw-bold py-2" style="background: #072a89;">Save New Password</button>
-                    <button type="button" class="btn btn-outline-secondary" popovertarget="account"
-                            popovertargetaction="hide">
-                            Cancel
-                        </button>
+
+                    <button type="submit"
+                            class="text-white rounded-3 border-0 flex-grow-1 fw-bold py-2"
+                            style="background:#072a89;">
+                        Save New Password
+                    </button>
+
+                    <button type="button"
+                            class="btn btn-outline-secondary"
+                            data-bs-dismiss="modal">
+                        Cancel
+                    </button>
+
                 </div>
-                </form>
+
+            </form>
 
         </div>
+    </div>
+</div>
 
 
 
@@ -171,6 +197,99 @@
                         <textarea class="form-control" name="desc" rows="4"
                             placeholder="Provide a comprehensive abstract"></textarea>
                     </div>
+
+                    <!-- SDG's -->
+
+                    <div class="mb-3" id="sdgSection">
+
+    <label class="form-label fw-semibold">
+        Sustainable Development Goals (SDGs)
+        <span class="text-danger">*</span>
+    </label>
+
+    @php
+        $sdgNames = [
+            1 => 'No Poverty',
+            2 => 'Zero Hunger',
+            3 => 'Good Health and Well-being',
+            4 => 'Quality Education',
+            5 => 'Gender Equality',
+            6 => 'Clean Water and Sanitation',
+            7 => 'Affordable and Clean Energy',
+            8 => 'Decent Work and Economic Growth',
+            9 => 'Industry, Innovation and Infrastructure',
+            10 => 'Reduced Inequalities',
+            11 => 'Sustainable Cities and Communities',
+            12 => 'Responsible Consumption and Production',
+            13 => 'Climate Action',
+            14 => 'Life Below Water',
+            15 => 'Life on Land',
+            16 => 'Peace, Justice and Strong Institutions',
+            17 => 'Partnerships for the Goals',
+        ];
+    @endphp
+
+    <div class="dropdown">
+
+        <button
+            type="button"
+            class="btn btn-light border w-100 text-start dropdown-toggle"
+            id="sdgDropdown"
+            data-bs-toggle="dropdown"
+            data-bs-auto-close="outside">
+
+            Select SDG(s)
+
+        </button>
+
+        <div class="dropdown-menu w-100 p-2 overflow-auto"
+             style="max-height: 280px;">
+
+            @foreach($sdgs as $sdg)
+
+                <div class="form-check py-2 px-3">
+
+                    <input
+                        class="form-check-input sdg-checkbox"
+                        type="checkbox"
+                        name="sdg[]"
+                        value="{{ $sdg->id }}"
+                        id="sdg{{ $sdg->id }}">
+
+                    <label
+                        class="form-check-label"
+                        for="sdg{{ $sdg->id }}">
+
+                        <strong>SDG {{ $sdg->number }}</strong>
+                        – {{ $sdgNames[$sdg->number] }}
+
+                    </label>
+
+                </div>
+
+            @endforeach
+
+            <!-- DONE BUTTON -->
+            <div class="border-top mt-2 pt-2">
+                <button
+                    type="button"
+                    class="btn btn-primary w-100"
+                    id="doneSdg">
+
+                    <i class="bi bi-check-lg me-1"></i>
+                    Done
+
+                </button>
+            </div>
+
+        </div>
+    </div>
+
+    <small class="text-muted">
+        Select one or more SDGs related to your research.
+    </small>
+
+</div>
 
                     <!--visibility-->
                     <div class="mb-3">
@@ -380,6 +499,14 @@
             <span class="badge d-flex align-items-center justify-content-center text-danger">
                 <i class="fa-solid fa-comment-dots"></i>
             </span>
+
+        </button>
+
+        <!--Rejected bin-->
+        <button class="nav-link rounded-5 px-2 py-1  d-flex align-items-center gap-2" id="rejectedbin-tab"
+            data-bs-toggle="pill" data-bs-target="#rejectedbin" type="button" role="tab">
+
+            Rejected Bin
 
         </button>
 
@@ -913,6 +1040,76 @@
 
 
 
+<!-- ================= REJECTED BIN ================= -->
+<div class="tab-pane fade" id="rejectedbin">
+
+    <div class="card mt-3 shadow-sm border-0 rounded-4">
+
+        <div class="card-body">
+
+            <strong class="fw-bold mb-4">
+                <i class="fa-regular fa-circle-xmark me-2 text-danger"></i>
+                Rejected Bin
+            </strong><br>
+            <small class="text-muted">Papers rejected by your Instructor or Admin. Review the feedback, make corrections, and resubmit.</small>
+
+            @forelse($rejectedFiles as $file)
+
+                <div class="card border border-danger-subtle rounded-3 mb-3">
+
+                    <div class="card-body d-flex justify-content-between align-items-center">
+
+                        <div>
+                            <h5 class="fw-bold mb-1">
+                                {{ $file->title }}
+                            </h5>
+
+                            <p class="text-muted mb-1">
+                                {{ $file->description }}
+                            </p>
+
+                            <span class="badge bg-danger">
+                                Rejected
+                            </span>
+                        </div>
+
+                        <div>
+                            <a href="{{ route('file.view', $file->id) }}"
+                               class="btn btn-sm btn-outline-primary">
+
+                                <i class="fa-solid fa-eye"></i>
+                                View
+
+                            </a>
+                        </div>
+
+                    </div>
+
+                </div>
+
+            @empty
+
+                <div class="text-center py-5">
+
+                    <i class="fa-regular fa-circle-xmark text-secondary fa-2xl"></i><br>
+
+                    <strong class="text-muted">
+                        No rejected submissions
+                    </strong>
+
+                    <p class="text-muted mb-0">
+                        Papers rejected by your Instructor or Admin will appear here.
+                    </p>
+
+                </div>
+
+            @endforelse
+
+        </div>
+
+    </div>
+
+</div>
 
 
         <!-- ================= BOOKMARKS ================= -->
@@ -943,6 +1140,46 @@
 
     </div>
 @endif
+
+
+       <script>
+document.getElementById('doneSdg').addEventListener('click', function () {
+
+    const selected = document.querySelectorAll('.sdg-checkbox:checked');
+
+    if (selected.length === 0) {
+        alert('Please select at least one SDG.');
+        return;
+    }
+
+    // Close dropdown
+    const dropdownButton = document.getElementById('sdgDropdown');
+
+    bootstrap.Dropdown
+        .getOrCreateInstance(dropdownButton)
+        .hide();
+
+    // Change button text
+    dropdownButton.innerHTML =
+        '<i class="bi bi-check-circle-fill text-success me-2"></i>' +
+        selected.length + ' SDG(s) selected';
+
+    // Focus next input
+    const nextInput = document.getElementById('title');
+
+    if (nextInput) {
+        nextInput.focus();
+
+        nextInput.scrollIntoView({
+            behavior: 'smooth',
+            block: 'center'
+        });
+    }
+
+});
+</script>
+
+
     <script>
         document.getElementById('pdfFile').addEventListener('change', function () {
             const file = this.files[0];

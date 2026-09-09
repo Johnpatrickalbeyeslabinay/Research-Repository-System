@@ -286,6 +286,16 @@ input[name="visibility"]:checked + label i {
                 <!-- Footer -->
                 <div class="border-top p-3">
 
+
+                <button type="button"
+                        class="rounded-2 w-100 bg-white border-0 text-start"
+                        data-bs-toggle="modal"
+                        data-bs-target="#manageaccount">
+
+                    <i class="fa-solid fa-gear fa-sm me-3"></i>
+                    Manage Account
+                </button>
+
                     <form action="{{ route('logout') }}" method="POST" class="mt-3">
                         @csrf
 
@@ -399,18 +409,33 @@ input[name="visibility"]:checked + label i {
 
         </div>
 
-        <form action="{{ route('logout') }}" method="POST">
+        <!-- Footer -->
+        <div class="border-top p-3">
+
+
+        <button type="button"
+                        class="rounded-2 w-100 bg-white border-0 text-start"
+                        data-bs-toggle="modal"
+                        data-bs-target="#manageaccount">
+
+                    <i class="fa-solid fa-gear fa-sm me-3"></i>
+                    Manage Account
+                </button>
+
+          <form action="{{ route('logout') }}" method="POST" class="mt-3">
             @csrf
 
-            <button class="btn btn-outline-danger mb-2 w-100 text-start">
+            <button class="btn btn-outline-danger w-100 text-start">
 
-                <i class="fa-solid fa-right-from-bracket me-2"></i>
+              <i class="fa-solid fa-right-from-bracket me-2"></i>
 
-                Logout
+              Logout
 
             </button>
 
-        </form>
+          </form>
+
+        </div>
 
     </div>
 

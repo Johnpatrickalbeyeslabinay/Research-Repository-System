@@ -31,4 +31,14 @@ class UserFile extends Model
     {
         return $this->belongsTo(User::class);
     }
+
+    public function sdgs()
+    {
+        return $this->belongsToMany(
+            Sdg::class,
+            'stud_file_sdg',
+            'stud_file_id',
+            'sdg_id'
+        );
+    }
 }

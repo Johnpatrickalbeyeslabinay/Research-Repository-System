@@ -16,14 +16,6 @@
             </small>
         </div>
 
-        <div class="mt-3 mt-md-0">
-
-           <button class="rounded-2 px-2 py-1 me-5 bg-white border border-secondary"
-                    popovertarget="account">
-                Manage Account
-            </button>
-        </div>
-
     </div>
 
     <div class="container-fluid py-4">
@@ -97,6 +89,95 @@
 
         </div>
     </div>
+
+
+
+
+
+    <!--MANAGE ACCOUNT BTN-->
+        <div class="modal fade" id="manageaccount" tabindex="-1" aria-hidden="true">
+
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content rounded-4 border-0 shadow p-4">
+
+            <div class="d-flex justify-content-between align-items-center mb-3">
+                <h5 class="mb-0 fw-bold">Manage Account</h5>
+
+                <button type="button"
+                        class="btn-close"
+                        data-bs-dismiss="modal">
+                </button>
+            </div>
+
+            <div class="bg-info-soft rounded-3 p-3 mb-4">
+                <p class="mb-1">
+                    <strong>Name:</strong> {{ Auth::user()?->name }}
+                </p>
+
+                <p class="mb-1">
+                    <strong>User ID:</strong> {{ Auth::user()->user_id }}
+                </p>
+
+                <p class="mb-0">
+                    <strong>Role:</strong> {{ Auth::user()->role }}
+                </p>
+            </div>
+
+            <h6 class="fw-bold mb-3">Change Password</h6>
+
+            <form>
+
+                <div class="mb-3">
+                    <label class="form-label fw-medium">
+                        Current Password
+                    </label>
+
+                    <input type="password"
+                           class="form-control"
+                           placeholder="Enter current password">
+                </div>
+
+                <div class="mb-3">
+                    <label class="form-label fw-medium">
+                        New Password
+                    </label>
+
+                    <input type="password"
+                           class="form-control"
+                           placeholder="At least 8 characters">
+                </div>
+
+                <div class="mb-4">
+                    <label class="form-label fw-medium">
+                        Confirm New Password
+                    </label>
+
+                    <input type="password"
+                           class="form-control"
+                           placeholder="Repeat new password">
+                </div>
+
+                <div class="d-flex gap-3">
+
+                    <button type="submit"
+                            class="text-white rounded-3 border-0 flex-grow-1 fw-bold py-2"
+                            style="background:#072a89;">
+                        Save New Password
+                    </button>
+
+                    <button type="button"
+                            class="btn btn-outline-secondary"
+                            data-bs-dismiss="modal">
+                        Cancel
+                    </button>
+
+                </div>
+
+            </form>
+
+        </div>
+    </div>
+</div>
 
 
     <!-- NAV BUTTONS -->
@@ -446,23 +527,31 @@
                                     <!-- ACTION -->
                                     @if($file->status == 'pending')
 
-                                        <form action="{{ route('research.approve', $file->id) }}" method="POST" class="m-0">
+                                        <form action="{{ route('instructor.research.approve', $file->id) }}"
+                                            method="POST"
+                                            class="m-0">
+
                                             @csrf
 
                                             <button type="submit" class="btn btn-outline-success px-2 py-1">
                                                 <i class="fa-regular fa-circle-check me-1"></i>
                                                 Approve
                                             </button>
+
                                         </form>
 
 
-                                        <form action="{{ route('research.reject', $file->id) }}" method="POST" class="m-0">
+                                        <form action="{{ route('instructor.research.reject', $file->id) }}"
+                                            method="POST"
+                                            class="m-0">
+
                                             @csrf
 
                                             <button type="submit" class="btn btn-outline-danger px-2 py-1">
                                                 <i class="fa-regular fa-circle-xmark me-1"></i>
                                                 Reject
                                             </button>
+
                                         </form>
 
                                     @endif
@@ -623,32 +712,36 @@
                                             </button>
 
 
-                                                <div class="d-flex align-items-center gap-3 mt-3 flex-wrap">
-                                            <!-- ACTION -->
-                                    @if($file->status == 'pending')
+                                            @if($file->status == 'pending')
 
-                                        <form action="{{ route('research.approve', $file->id) }}" method="POST" class="m-0">
-                                            @csrf
+                                            <form action="{{ route('instructor.research.approve', $file->id) }}"
+                                                method="POST"
+                                                class="m-0">
 
-                                            <button type="submit" class="btn btn-outline-success px-2 py-1">
-                                                <i class="fa-regular fa-circle-check me-1"></i>
-                                                Approve
-                                            </button>
-                                        </form>
+                                                @csrf
+
+                                                <button type="submit" class="btn btn-outline-success px-2 py-1">
+                                                    <i class="fa-regular fa-circle-check me-1"></i>
+                                                    Approve
+                                                </button>
+
+                                            </form>
 
 
-                                        <form action="{{ route('research.reject', $file->id) }}" method="POST" class="m-0">
-                                            @csrf
+                                            <form action="{{ route('instructor.research.reject', $file->id) }}"
+                                                method="POST"
+                                                class="m-0">
 
-                                            <button type="submit" class="btn btn-outline-danger px-2 py-1">
-                                                <i class="fa-regular fa-circle-xmark me-1"></i>
-                                                Reject
-                                            </button>
-                                        </form>
+                                                @csrf
 
-                                    @endif
+                                                <button type="submit" class="btn btn-outline-danger px-2 py-1">
+                                                    <i class="fa-regular fa-circle-xmark me-1"></i>
+                                                    Reject
+                                                </button>
 
-                                    </div>
+                                            </form>
+
+                                        @endif
 
                                         </div>
                                     </div>

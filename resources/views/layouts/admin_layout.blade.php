@@ -180,8 +180,18 @@
 
                 </div>
 
-                <!-- Footer -->
+               <!-- Footer -->
                 <div class="border-top p-3">
+
+
+                <button type="button"
+                        class="rounded-2 w-100 bg-white border-0 text-start"
+                        data-bs-toggle="modal"
+                        data-bs-target="#manageaccount">
+
+                    <i class="fa-solid fa-gear fa-sm me-3"></i>
+                    Manage Account
+                </button>
 
                     <form action="{{ route('logout') }}" method="POST" class="mt-3">
                         @csrf
@@ -324,18 +334,33 @@
 
         </div>
 
-        <form action="{{ route('logout') }}" method="POST">
-            @csrf
+        <!-- Footer -->
+                <div class="border-top p-3">
 
-            <button class="btn btn-outline-danger w-100 text-start">
 
-                <i class="fa-solid fa-right-from-bracket me-2"></i>
+                <button type="button"
+                        class="rounded-2 w-100 bg-white border-0 text-start"
+                        data-bs-toggle="modal"
+                        data-bs-target="#manageaccount">
 
-                Logout
+                    <i class="fa-solid fa-gear fa-sm me-3"></i>
+                    Manage Account
+                </button>
 
-            </button>
+                    <form action="{{ route('logout') }}" method="POST" class="mt-3">
+                        @csrf
 
-        </form>
+                        <button class="btn btn-outline-danger w-100 text-start">
+
+                            <i class="fa-solid fa-right-from-bracket me-2"></i>
+
+                            Logout
+
+                        </button>
+
+                    </form>
+
+                </div>
 
     </div>
 

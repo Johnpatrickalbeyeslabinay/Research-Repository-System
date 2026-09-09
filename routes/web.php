@@ -58,11 +58,18 @@ Route::get('/instructor', [InstructorController::class, 'index'])
 Route::post('/instructor/store', [InstructorController::class, 'store'])
     ->name('instructor.store');
 
-// ACTION INSTRUCTOR
-Route::post('/research/{id}/approve', [InstructorController::class, 'approve'])
+// INSTRUCTOR ACTION
+Route::post('/instructor/research/{id}/approve', [InstructorController::class, 'approve'])
+    ->name('instructor.research.approve');
+
+Route::post('/instructor/research/{id}/reject', [InstructorController::class, 'reject'])
+    ->name('instructor.research.reject');
+
+// ADMIN ACTION
+Route::post('/research/{id}/approve', [AdminController::class, 'approve'])
     ->name('research.approve');
 
-Route::post('/research/{id}/reject', [InstructorController::class, 'reject'])
+Route::post('/research/{id}/reject', [AdminController::class, 'reject'])
     ->name('research.reject');
 
 // home
