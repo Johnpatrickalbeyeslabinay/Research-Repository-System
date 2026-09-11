@@ -7,34 +7,41 @@
 
 
 
-        <!--NOTIFICATION ALERT-->
-        @if(session('success'))
-            <div class="alert alert-success alert-dismissible fade show"
-                role="alert"
-                id="success-alert">
+<!--NOTIFICATION ALERT-->
+@if(session('success'))
+    <div class="alert alert-success alert-dismissible fade show"
+        role="alert"
+        id="success-alert">
 
-                <i class="bi bi-check-circle-fill me-2"></i>
-                {{ session('success') }}
+        <i class="bi bi-check-circle-fill me-2"></i>
+        {{ session('success') }}
 
-            </div>
+    </div>
 
-            <script>
+    <script>
+        setTimeout(function () {
+            const alert = document.getElementById('success-alert');
+
+            if (alert) {
+                alert.classList.remove('show');
+
                 setTimeout(function () {
-                    const alert = document.getElementById('success-alert');
-
-                    if (alert) {
-                        alert.classList.remove('show');
-
-                        setTimeout(function () {
-                            alert.remove();
-                        }, 150);
-                    }
-                }, 3000);
-            </script>
-        @endif
+                    alert.remove();
+                }, 150);
+            }
+        }, 3000);
+    </script>
+@endif
 
 
 
+
+
+
+
+
+
+<!--====================DASHBOARD=====================-->
 @if($view == 'dashboard')
 
     <div class="d-flex justify-content-between align-items-center flex-wrap mb-4">
@@ -152,6 +159,13 @@
 
 
 
+
+
+
+
+
+
+<!--======================================================================================================================-->
         <!--Uploadfikes-->
             <div id="popover" popover class="rounded-4 border-0 shadow p-4"
                 style="width: 520px; max-width: 95vw; min-height: 580px;">
