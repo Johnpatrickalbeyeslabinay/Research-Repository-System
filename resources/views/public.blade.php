@@ -20,6 +20,7 @@
         <i class="fa-solid fa-book fa-2xl text-primary mb-3"></i>
         <h1 class="fw-bold">{{ count($studFiles) }}</h1>
         <small>Research Papers</small>
+
     </div>
 
 

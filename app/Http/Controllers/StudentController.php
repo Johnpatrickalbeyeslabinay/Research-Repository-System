@@ -206,5 +206,6 @@ class StudentController extends Controller
         return redirect()
             ->back()
             ->with('success', 'Research submission updated successfully.');
+
     }
 }

@@ -31,7 +31,7 @@
 
 
                     <div class="mb-3 fs-5">
-                        <h5> 📚Where Fisheries Research Comes Together</h5>
+                        <h5> <i class="fa fa-book" aria-hidden="true"></i> Where Fisheries Research Comes Together</h5>
                     </div>
 
 

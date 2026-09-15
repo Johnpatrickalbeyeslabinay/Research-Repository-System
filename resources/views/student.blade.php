@@ -166,7 +166,7 @@
 
 
 <!--======================================================================================================================-->
-        <!--Uploadfikes-->
+        <!--Uploadfiles-->
             <div id="popover" popover class="rounded-4 border-0 shadow p-4"
                 style="width: 520px; max-width: 95vw; min-height: 580px;">
 
@@ -184,7 +184,7 @@
                     <!-- Research Title -->
                     <div class="mb-3">
                         <label class="form-label fw-semibold">
-                            Research Title <span class="text-danger">*</span>
+                            Research Title <span class="text-danger"></span>
                         </label>
 
                         <input type="text" name="title" class="form-control form-control-lg"
@@ -195,7 +195,7 @@
 
                         <div class="col-md-6 mb-3">
                             <label class="form-label fw-semibold">
-                                Research Adviser <span class="text-danger">*</span>
+                                Research Adviser <span class="text-danger"></span>
                             </label>
 
                             <input type="text" name="adviser" class="form-control" placeholder="e.g., Dr. Maria Santos">
@@ -205,12 +205,20 @@
                     <!-- Abstract -->
                     <div class="mb-3">
                         <label class="form-label fw-semibold">
-                            Abstract <span class="text-danger">*</span>
+                            Abstract <span class="text-danger"></span>
                         </label>
 
                         <textarea class="form-control" name="desc" rows="4"
                             placeholder="Provide a comprehensive abstract"></textarea>
                     </div>
+
+                    <!-- Keywords -->
+                    <label class="form-label fw-bold">
+                        Keywords
+
+                        <input type="text" name="Keywords">
+                    </label>
+
 
                     <!-- SDG's -->
 
@@ -218,7 +226,7 @@
 
     <label class="form-label fw-semibold">
         Sustainable Development Goals (SDGs)
-        <span class="text-danger">*</span>
+        <span class="text-danger"></span>
     </label>
 
     @php
@@ -307,7 +315,7 @@
 
                     <!--visibility-->
                     <div class="mb-3">
-                        <label class="form-label fw-semibold">Research Visibility *</label>
+                        <label class="form-label fw-semibold">Research Visibility </label>
 
                         <div class="row g-3">
                             <div class="col-6">
@@ -346,8 +354,7 @@
                         </div>
                     </div>
 
-
-                    <!-- Upload -->
+                     <!-- Upload -->
                     <div class="mb-2">
                         <label class="form-label fw-semibold">
                             Upload PDF Document <span class="text-danger">*</span>
@@ -371,6 +378,7 @@
                             Cancel
                         </button>
                     </div>
+
 
                 </form>
 
@@ -807,6 +815,15 @@
                                     class="form-control"
                                     accept=".pdf">
                             </div>
+
+
+                            <!-- Buttons -->
+                            <form action="{{ route('student.store') }}" method="POST" enctype="multipart/form-data">
+                                @csrf
+                                <button type="submit" class="btn btn-primary">
+                                    Submit
+                                </button>
+                            </form>
 
                             <small class="text-secondary">
                                 Leave blank if you don't want to replace the current PDF.
