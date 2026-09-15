@@ -149,6 +149,32 @@ input[name="visibility"]:checked + label i {
     background-color: #adb5bd !important;
     color: #212529 !important;
 }
+
+    .stats-scroll {
+        -webkit-overflow-scrolling: touch;
+        scrollbar-width: none;
+    }
+
+    .stats-scroll::-webkit-scrollbar {
+        display: none;
+    }
+
+    .stats-scroll > .col-10,
+    .stats-scroll > .col-md-5,
+    .stats-scroll > .col-lg-3,
+    .stats-scroll > .col-xl-3 {
+        flex: 0 0 auto;
+    }
+
+    @media (min-width: 1200px) {
+        .stats-scroll {
+            overflow-x: visible !important;
+        }
+
+        .stats-scroll > .col-xl-3 {
+            flex: 0 0 25%;
+        }
+    }
 </style>
 
 
@@ -162,6 +188,8 @@ input[name="visibility"]:checked + label i {
 }">
 
 
+
+
     <button class="navbar-toggler border-0 me-2 d-lg-none" type="button" data-bs-toggle="offcanvas"
         data-bs-target="#sidebar">
         <span class="navbar-toggler-icon"></span>
@@ -173,14 +201,14 @@ input[name="visibility"]:checked + label i {
     <div class="container-fluid">
         <div class="row">
 
-            <nav class="navbar navbar-light bg-white border-bottom d-lg-none">
+           <nav class="navbar navbar-light bg-white border-bottom d-lg-none">
                 <div class="container-fluid">
 
-
+                    <!-- Logo + Program -->
                     <div class="d-flex align-items-center">
 
                         <i data-lucide="fish" class="me-3 rounded-circle p-2 text-white"
-                        style="width:36px;height:36px;background:linear-gradient(135deg,#1e3a8a,#0d9488);">
+                            style="width:36px;height:36px;background:linear-gradient(135deg,#1e3a8a,#0d9488);">
                         </i>
 
                         <div class="d-flex flex-column">
@@ -189,13 +217,23 @@ input[name="visibility"]:checked + label i {
                         </div>
 
                     </div>
-                    <button class="navbar-toggler border-0" type="button" data-bs-toggle="offcanvas"
-                        data-bs-target="#sidebar">
 
-                        <span class="navbar-toggler-icon"></span>
+                    <!-- Bell + Hamburger -->
+                    <div class="d-flex align-items-center">
 
-                    </button>
+                        <!-- Notification -->
+                        <button class="btn border-0 p-1 me-2" type="button">
+                            <i class="fa-regular fa-bell"></i>
+                        </button>
 
+                        <!-- Hamburger -->
+                        <button class="navbar-toggler border-0 p-1" type="button"
+                            data-bs-toggle="offcanvas"
+                            data-bs-target="#sidebar">
+                            <span class="navbar-toggler-icon"></span>
+                        </button>
+
+                    </div>
 
                 </div>
             </nav>

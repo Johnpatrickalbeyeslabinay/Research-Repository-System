@@ -386,117 +386,105 @@
 
 
 
-            <!-- Total Submissions -->
-            <div class="col-12 col-sm-6 col-xl-3">
+                        <!-- Dashboard Statistics -->
+                <div class="row flex-nowrap overflow-auto g-3 pb-2 stats-scroll">
 
-                <div class="card border-0 shadow-sm rounded-4 h-100">
+                    <!-- Total Submissions -->
+                    <div class="col-10 col-md-5 col-lg-3 col-xl-3">
+                        <div class="card border-0 shadow-sm h-100">
+                            <div class="card-body d-flex align-items-center">
 
-                    <div class="card-body d-flex justify-content-between align-items-center">
+                                <div class="rounded-circle bg-primary bg-opacity-10 p-3 me-3">
+                                    <i class="fa-solid fa-file-lines text-primary fs-4"></i>
+                                </div>
 
-                        <div>
-                            <p class="text-secondary mb-2">
-                                Total Submissions
-                            </p>
+                                <div>
+                                    <p class="text-muted mb-1 small">
+                                        Total Submissions
+                                    </p>
 
-                            <h3 class="fw-normal mb-0">
-                                {{ $totalUploads }}
-                            </h3>
+                                    <h3 class="fw-bold mb-0">
+                                        {{ $totalUploads }}
+                                    </h3>
+                                </div>
+
+                            </div>
                         </div>
+                    </div>
 
-                        <div class="bg-primary bg-opacity-10 rounded-2 p-1">
-                            <i class="fa-regular fa-file-lines text-primary"></i>
+
+                    <!-- Published -->
+                    <div class="col-10 col-md-5 col-lg-3 col-xl-3">
+                        <div class="card border-0 shadow-sm h-100">
+                            <div class="card-body d-flex align-items-center">
+
+                                <div class="rounded-circle bg-success bg-opacity-10 p-3 me-3">
+                                    <i class="fa-solid fa-circle-check text-success fs-4"></i>
+                                </div>
+
+                                <div>
+                                    <p class="text-muted mb-1 small">
+                                        Published
+                                    </p>
+
+                                    <h3 class="fw-bold mb-0">
+                                        {{ $approvedUploads }}
+                                    </h3>
+                                </div>
+
+                            </div>
                         </div>
+                    </div>
 
+
+                    <!-- Pending -->
+                    <div class="col-10 col-md-5 col-lg-3 col-xl-3">
+                        <div class="card border-0 shadow-sm h-100">
+                            <div class="card-body d-flex align-items-center">
+
+                                <div class="rounded-circle bg-warning bg-opacity-10 p-3 me-3">
+                                    <i class="fa-solid fa-clock text-warning fs-4"></i>
+                                </div>
+
+                                <div>
+                                    <p class="text-muted mb-1 small">
+                                        Pending
+                                    </p>
+
+                                    <h3 class="fw-bold mb-0">
+                                        {{ $pendingUploads }}
+                                    </h3>
+                                </div>
+
+                            </div>
+                        </div>
+                    </div>
+
+
+                    <!-- Rejected -->
+                    <div class="col-10 col-md-5 col-lg-3 col-xl-3">
+                        <div class="card border-0 shadow-sm h-100">
+                            <div class="card-body d-flex align-items-center">
+
+                                <div class="rounded-circle bg-danger bg-opacity-10 p-3 me-3">
+                                    <i class="fa-solid fa-circle-xmark text-danger fs-4"></i>
+                                </div>
+
+                                <div>
+                                    <p class="text-muted mb-1 small">
+                                        Rejected
+                                    </p>
+
+                                    <h3 class="fw-bold mb-0">
+                                        {{ $rejectedUploads }}
+                                    </h3>
+                                </div>
+
+                            </div>
+                        </div>
                     </div>
 
                 </div>
-
-            </div>
-
-
-            <!-- Approved -->
-            <div class="col-12 col-sm-6 col-xl-3">
-
-                <div class="card border-0 shadow-sm rounded-4 h-100">
-
-                    <div class="card-body d-flex justify-content-between align-items-center">
-
-                        <div>
-                            <p class="text-secondary mb-2">
-                                Approved
-                            </p>
-
-                            <h3 class="fw-normal mb-0">
-                               {{ $approvedUploads }}
-                            </h3>
-                        </div>
-
-                        <div class="bg-success bg-opacity-10 rounded-2 p-1">
-                            <i class="fa-regular fa-circle-check text-success"></i>
-                        </div>
-
-                    </div>
-
-                </div>
-
-            </div>
-
-            <!-- Pending -->
-            <div class="col-12 col-sm-6 col-xl-3">
-
-                <div class="card border-0 shadow-sm rounded-4 h-100">
-
-                    <div class="card-body d-flex justify-content-between align-items-center">
-
-                        <div>
-                            <p class="text-secondary mb-2">
-                                Pending
-                            </p>
-
-                            <h3 class="fw-normal mb-0">
-                               {{ $pendingUploads }}
-                            </h3>
-                        </div>
-
-                        <div class="bg-warning bg-opacity-10 rounded-2 p-1">
-                            <i class="fa-regular fa-clock text-warning"></i>
-                        </div>
-
-                    </div>
-
-                </div>
-
-            </div>
-
-
-
-            <!-- Rejected -->
-            <div class="col-12 col-sm-6 col-xl-3">
-
-                <div class="card border-0 shadow-sm rounded-4 h-100">
-
-                    <div class="card-body d-flex justify-content-between align-items-center">
-
-                        <div>
-                            <p class="text-secondary mb-2">
-                                Rejected
-                            </p>
-
-                            <h3 class="fw-normal mb-0">
-                               {{ $rejectedUploads }}
-                            </h3>
-                        </div>
-
-                        <div class="bg-warning bg-opacity-10 rounded-2 p-1">
-                            <i class="fa-regular fa-clock text-warning"></i>
-                        </div>
-
-                    </div>
-
-                </div>
-
-            </div>
-
 
 
         </div>
@@ -521,14 +509,6 @@
             <span class="badge d-flex align-items-center justify-content-center text-danger">
                 <i class="fa-solid fa-comment-dots"></i>
             </span>
-
-        </button>
-
-        <!--Rejected bin-->
-        <button class="nav-link rounded-5 px-2 py-1  d-flex align-items-center gap-2" id="rejectedbin-tab"
-            data-bs-toggle="pill" data-bs-target="#rejectedbin" type="button" role="tab">
-
-            Rejected Bin
 
         </button>
 
@@ -561,56 +541,97 @@
 
                                     <div class="col-lg-9">
 
-
-                                       <!-- STATUS & VISIBILITY -->
-                                    <div class="position-absolute top-0 end-0 m-3 d-flex align-items-center gap-2">
-
-                                        <!-- STATUS -->
-                                        @if(empty($file->status) || $file->status == 'pending')
-                                            <span class="badge text-dark rounded-pill px-2 py-1"
-                                                style="background-color: #fff3cd;">
-                                                Pending
-                                            </span>
-
-                                        @elseif($file->status == 'approved')
-                                            <span class="badge text-dark rounded-pill px-2 py-1"
-                                                style="background-color: #d1e7dd;">
-                                                Approved
-                                            </span>
-
-                                        @elseif($file->status == 'rejected')
-                                            <span class="badge text-dark rounded-pill px-2 py-1"
-                                                style="background-color: #f8d7da;">
-                                                Rejected
-                                            </span>
-                                        @endif
-
-
-                                        <!-- VISIBILITY -->
-                                        @if(empty($file->visibility) || $file->visibility == 'private')
-                                            <span class="badge text-dark rounded-pill px-2 py-1"
-                                                style="background-color: #f8f9fa;">
-                                                <i class="fa-solid fa-lock fa-2xs"></i>
-                                                Private
-                                            </span>
-
-                                        @elseif($file->visibility == 'public')
-                                            <span class="badge text-dark rounded-pill px-2 py-1"
-                                                style="background-color: #edf7ef;">
-                                                <i class="fa-solid fa-globe fa-2xs"></i>
-                                                Public
-                                            </span>
-                                        @endif
-
-                                    </div>
-
-
-
-
                                         <h5 class="fw-bold mb-2">
                                             {{ $file->title }}
                                         </h5>
 
+                                        <!-- STATUS & VISIBILITY - MOBILE -->
+                                        <div class="d-flex align-items-center gap-2 flex-wrap mb-3 d-lg-none">
+
+                                            <!-- STATUS -->
+                                            @if(empty($file->status) || $file->status == 'pending')
+                                                <span class="badge text-dark rounded-pill px-2 py-1"
+                                                    style="background-color: #fff3cd;">
+                                                    Pending
+                                                </span>
+
+                                            @elseif($file->status == 'approved')
+                                                <span class="badge text-dark rounded-pill px-2 py-1"
+                                                    style="background-color: #d1e7dd;">
+                                                    Approved
+                                                </span>
+
+                                            @elseif($file->status == 'rejected')
+                                                <span class="badge text-dark rounded-pill px-2 py-1"
+                                                    style="background-color: #f8d7da;">
+                                                    Rejected
+                                                </span>
+                                            @endif
+
+
+                                            <!-- VISIBILITY -->
+                                            @if(empty($file->visibility) || $file->visibility == 'private')
+                                                <span class="badge text-dark rounded-pill px-2 py-1"
+                                                    style="background-color: #f8f9fa;">
+                                                    <i class="fa-solid fa-lock fa-2xs"></i>
+                                                    Private
+                                                </span>
+
+                                            @elseif($file->visibility == 'public')
+                                                <span class="badge text-dark rounded-pill px-2 py-1"
+                                                    style="background-color: #edf7ef;">
+                                                    <i class="fa-solid fa-globe fa-2xs"></i>
+                                                    Public
+                                                </span>
+                                            @endif
+
+                                        </div>
+
+
+                                        <!-- STATUS & VISIBILITY - DESKTOP -->
+                                        <div class="position-absolute top-0 end-0 m-3 d-flex align-items-center gap-2 d-none d-lg-flex">
+
+                                            <!-- STATUS -->
+                                            @if(empty($file->status) || $file->status == 'pending')
+                                                <span class="badge text-dark rounded-pill px-2 py-1"
+                                                    style="background-color: #fff3cd;">
+                                                    Pending
+                                                </span>
+
+                                            @elseif($file->status == 'approved')
+                                                <span class="badge text-dark rounded-pill px-2 py-1"
+                                                    style="background-color: #d1e7dd;">
+                                                    Approved
+                                                </span>
+
+                                            @elseif($file->status == 'rejected')
+                                                <span class="badge text-dark rounded-pill px-2 py-1"
+                                                    style="background-color: #f8d7da;">
+                                                    Rejected
+                                                </span>
+                                            @endif
+
+
+                                            <!-- VISIBILITY -->
+                                            @if(empty($file->visibility) || $file->visibility == 'private')
+                                                <span class="badge text-dark rounded-pill px-2 py-1"
+                                                    style="background-color: #f8f9fa;">
+                                                    <i class="fa-solid fa-lock fa-2xs"></i>
+                                                    Private
+                                                </span>
+
+                                            @elseif($file->visibility == 'public')
+                                                <span class="badge text-dark rounded-pill px-2 py-1"
+                                                    style="background-color: #edf7ef;">
+                                                    <i class="fa-solid fa-globe fa-2xs"></i>
+                                                    Public
+                                                </span>
+                                            @endif
+
+                                        </div>
+
+
+                                        <!-- RESEARCH INFO -->
                                         <div class="d-flex flex-wrap gap-3 text-muted small mb-3">
 
                                             <span>
@@ -636,9 +657,11 @@
 
                                         </div>
 
+
                                         <p class="text-secondary mb-3">
                                             {{ \Illuminate\Support\Str::limit($file->desc, 180) }}
                                         </p>
+
 
                                         @foreach(explode(',', $file->auto_tag) as $tag)
                                             <span class="small rounded me-1 mb-1 px-2 py-1"
@@ -646,6 +669,7 @@
                                                 {{ trim($tag) }}
                                             </span>
                                         @endforeach
+
                                     </div>
 
                                 </div>

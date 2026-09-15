@@ -59,11 +59,11 @@
             <nav class="navbar navbar-light bg-white border-bottom d-lg-none">
                 <div class="container-fluid">
 
-
+                    <!-- Logo + Program -->
                     <div class="d-flex align-items-center">
 
                         <i data-lucide="fish" class="me-3 rounded-circle p-2 text-white"
-                        style="width:36px;height:36px;background:linear-gradient(135deg,#1e3a8a,#0d9488);">
+                            style="width:36px;height:36px;background:linear-gradient(135deg,#1e3a8a,#0d9488);">
                         </i>
 
                         <div class="d-flex flex-column">
@@ -72,13 +72,23 @@
                         </div>
 
                     </div>
-                    <button class="navbar-toggler border-0" type="button" data-bs-toggle="offcanvas"
-                        data-bs-target="#sidebar">
 
-                        <span class="navbar-toggler-icon"></span>
+                    <!-- Bell + Hamburger -->
+                    <div class="d-flex align-items-center">
 
-                    </button>
+                        <!-- Notification -->
+                        <button class="btn border-0 p-1 me-2" type="button">
+                            <i class="fa-regular fa-bell"></i>
+                        </button>
 
+                        <!-- Hamburger -->
+                        <button class="navbar-toggler border-0 p-1" type="button"
+                            data-bs-toggle="offcanvas"
+                            data-bs-target="#sidebar">
+                            <span class="navbar-toggler-icon"></span>
+                        </button>
+
+                    </div>
 
                 </div>
             </nav>

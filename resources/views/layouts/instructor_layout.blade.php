@@ -55,31 +55,41 @@
     <div class="row">
 
       <nav class="navbar navbar-light bg-white border-bottom d-lg-none">
-        <div class="container-fluid">
+                <div class="container-fluid">
 
+                    <!-- Logo + Program -->
+                    <div class="d-flex align-items-center">
 
-          <div class="d-flex align-items-center">
+                        <i data-lucide="fish" class="me-3 rounded-circle p-2 text-white"
+                            style="width:36px;height:36px;background:linear-gradient(135deg,#1e3a8a,#0d9488);">
+                        </i>
 
-            <i data-lucide="fish" class="me-3 rounded-circle p-2 text-white"
-              style="width: 36px; height: 36px; background: linear-gradient(135deg, #1e3a8a, #0d9488);">
-            </i>
+                        <div class="d-flex flex-column">
+                            <h5 class="fw-bold mb-0">CSU APARRI</h5>
+                            <small class="text-secondary">Fisheries Program</small>
+                        </div>
 
-            <div class="d-flex flex-column">
-              <h5 class="fw-bold mb-0">CSU APARRI</h5>
-              <small class="text-secondary">Fisheries Program</small>
-            </div>
+                    </div>
 
-          </div>
+                    <!-- Bell + Hamburger -->
+                    <div class="d-flex align-items-center">
 
-          <button class="navbar-toggler border-0" type="button" data-bs-toggle="offcanvas" data-bs-target="#sidebar">
+                        <!-- Notification -->
+                        <button class="btn border-0 p-1 me-2" type="button">
+                            <i class="fa-regular fa-bell"></i>
+                        </button>
 
-            <span class="navbar-toggler-icon"></span>
+                        <!-- Hamburger -->
+                        <button class="navbar-toggler border-0 p-1" type="button"
+                            data-bs-toggle="offcanvas"
+                            data-bs-target="#sidebar">
+                            <span class="navbar-toggler-icon"></span>
+                        </button>
 
-          </button>
+                    </div>
 
-
-        </div>
-      </nav>
+                </div>
+            </nav>
 
 
       <aside class="col-lg-2 d-none d-lg-flex flex-column bg-white border-end p-0 position-fixed"
