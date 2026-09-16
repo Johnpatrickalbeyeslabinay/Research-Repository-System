@@ -141,32 +141,6 @@
 
 
 
-    <h1 class="text-white">Users</h1>
-
-   <div class="d-flex text-white">
-
-     <div class="me-5">
-        <strong>Student</strong>
-        <h5>23-10210</h5>
-        <h5>dIhmc7fj</h5>
-     </div>
-    <div class="me-5">
-        <strong>Instructor</strong>
-        <h5>20-24680</h5>
-        <h5>o7xN4aDo</h5>
-    </div>
-    <div>
-        <strong>Admin</strong>
-        <h5>ADMIN-001</h5>
-        <h5>Admin123</h5>
-    </div>
-   </div>
-
-
-
-
-
-
    <script>
 document.addEventListener('DOMContentLoaded', function () {
 

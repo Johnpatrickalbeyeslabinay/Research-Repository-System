@@ -175,6 +175,371 @@ input[name="visibility"]:checked + label i {
             flex: 0 0 25%;
         }
     }
+
+    /* Every native <div popover> on this page (Submit/Update Research,
+       file-view panels). Two separate problems, both worked around here
+       rather than left to browser defaults:
+       1. Centering — the UA stylesheet's inset:0 + margin:auto isn't
+          reliably applied in practice, which is what left the wizard
+          stuck near the top-left instead of centered.
+       2. Stacking — an open popover is supposed to render in the
+          browser's top layer, above literally everything else,
+          regardless of z-index. In practice that promotion isn't taking
+          effect here either: the page's own floating chatbot widget
+          (z-index: 1050 — see components/chat/widget.blade.php) was
+          rendering in front of it, and normal page content behind it was
+          winning the stacking order too (the popover has no z-index of
+          its own to compete with, since it was relying entirely on top-
+          layer promotion). An explicit z-index above every other
+          z-indexed element on this page is the fix, same as the explicit
+          position above — don't depend on it "just happening". */
+    [popover] {
+        inset: auto;
+        position: fixed;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+        margin: 0;
+        z-index: 2000;
+    }
+
+    [popover]::backdrop {
+        background: rgba(15, 23, 42, .45);
+        z-index: 1999;
+    }
+
+    /* ==================================================================
+       Submit New Research wizard ("research-wizard") — scoped to the
+       popover so none of this leaks into the dashboard, view panels, or
+       the Update Research form (which keeps its original single-panel
+       layout; only its researcher field and dropzone/tray styling are
+       shared with the wizard via the same component classes below).
+       ================================================================== */
+    .research-wizard {
+        --rw-accent: #072a89;
+        --rw-border: #e5e7eb;
+        --rw-muted: #6b7280;
+        --rw-text: #111827;
+    }
+
+    /* Author-stylesheet rules always win over user-agent ones for the same
+       property, REGARDLESS of specificity — so an unconditional
+       `.research-wizard { display: flex }` here was permanently
+       overriding the browser's own `[popover]:not(:popover-open) {
+       display: none }`, which is what keeps a closed popover hidden.
+       That's what made the wizard render at all times, even without ever
+       clicking "Upload New Research" — the z-index fix just made that
+       permanent presence show up on top instead of buried behind other
+       content. Gating every box-affecting property behind :popover-open
+       means this rule only ever applies once the browser has actually
+       shown it, leaving the hidden state entirely up to the browser. */
+    .research-wizard:popover-open {
+        display: flex;
+        flex-direction: column;
+        padding: 0;
+        background: #fff;
+        overflow: hidden; /* clip to the rounded corners; .rw-body scrolls internally instead */
+    }
+
+    .research-wizard .rw-header {
+        padding: 20px 28px 12px;
+    }
+
+    .research-wizard .rw-stepper {
+        display: flex;
+        align-items: center;
+        padding: 0 28px 16px;
+    }
+
+    .research-wizard .rw-step {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        flex: 0 0 auto;
+    }
+
+    .research-wizard .rw-step-circle {
+        width: 26px;
+        height: 26px;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 12.5px;
+        font-weight: 600;
+        background: var(--rw-border);
+        color: var(--rw-muted);
+        flex: 0 0 auto;
+        transition: background-color .15s, color .15s;
+    }
+
+    .research-wizard .rw-step.is-current .rw-step-circle,
+    .research-wizard .rw-step.is-done .rw-step-circle {
+        background: var(--rw-accent);
+        color: #fff;
+    }
+
+    .research-wizard .rw-step-label {
+        font-size: 13px;
+        color: var(--rw-muted);
+        white-space: nowrap;
+    }
+
+    .research-wizard .rw-step.is-current .rw-step-label {
+        color: var(--rw-accent);
+        font-weight: 600;
+    }
+
+    .research-wizard .rw-step.is-done .rw-step-label {
+        color: var(--rw-text);
+    }
+
+    .research-wizard .rw-step-connector {
+        flex: 1 1 auto;
+        height: 1px;
+        background: var(--rw-border);
+        margin: 0 8px;
+        min-width: 12px;
+    }
+
+    .research-wizard .rw-form {
+        display: flex;
+        flex-direction: column;
+        min-height: 0;
+    }
+
+    .research-wizard .rw-body {
+        padding: 4px 28px 20px;
+        overflow-y: auto;
+        max-height: calc(90vh - 190px);
+    }
+
+    .research-wizard .rw-footer {
+        padding: 14px 28px;
+        border-top: 1px solid var(--rw-border);
+    }
+
+    /* Completed-step summary row — the key scroll-saver: once a step is
+       behind the current one, its full field body collapses to one line. */
+    .research-wizard .rw-summary-row {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        border: 1px solid var(--rw-border);
+        border-radius: 10px;
+        padding: 10px 14px;
+        margin-bottom: 12px;
+        background: #f9fafb;
+        font-size: 14px;
+        color: var(--rw-text);
+    }
+
+    .research-wizard .rw-check {
+        width: 20px;
+        height: 20px;
+        border-radius: 50%;
+        background: var(--rw-accent);
+        color: #fff;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 11px;
+        flex: 0 0 auto;
+    }
+
+    /* Label-above field (Title, Abstract — the long/primary fields). */
+    .research-wizard .rw-field {
+        margin-bottom: 16px;
+    }
+
+    .research-wizard .rw-field label {
+        font-weight: 600;
+        font-size: 13px;
+        margin-bottom: 6px;
+        display: block;
+        color: var(--rw-text);
+    }
+
+    .research-wizard .rw-field .form-control,
+    .research-wizard .rw-field .form-select {
+        border: 1px solid var(--rw-border);
+        border-radius: 10px;
+        padding: 10px 14px;
+        font-size: 14px;
+    }
+
+    .research-wizard .rw-field .form-control:focus,
+    .research-wizard .rw-field .form-select:focus {
+        border-color: var(--rw-accent);
+        box-shadow: 0 0 0 3px rgba(7, 42, 137, .12);
+    }
+
+    .research-wizard textarea[data-abstract-field] {
+        max-height: 140px;
+    }
+
+    /* Label-left, value-right row (Type/Year/Adviser — short fields). */
+    .research-wizard .rw-row {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        border: 1px solid var(--rw-border);
+        border-radius: 10px;
+        padding: 9px 14px;
+        margin-bottom: 12px;
+        background: #fff;
+        transition: border-color .15s, box-shadow .15s;
+    }
+
+    .research-wizard .rw-row:focus-within {
+        border-color: var(--rw-accent);
+        box-shadow: 0 0 0 3px rgba(7, 42, 137, .12);
+    }
+
+    .research-wizard .rw-row-label {
+        font-weight: 600;
+        font-size: 13px;
+        color: var(--rw-text);
+        flex: 0 0 auto;
+        white-space: nowrap;
+    }
+
+    .research-wizard .rw-row select,
+    .research-wizard .rw-row input {
+        border: 0;
+        background: transparent;
+        text-align: right;
+        font-size: 14px;
+        padding: 0;
+        flex: 1 1 auto;
+        color: var(--rw-text);
+        min-width: 0;
+    }
+
+    .research-wizard .rw-row select:focus,
+    .research-wizard .rw-row input:focus {
+        outline: none;
+        box-shadow: none;
+    }
+
+    /* Compact one-line visibility cards (wizard Review step only — the
+       Update Research form keeps the original stacked two-line cards). */
+    .research-wizard .rw-visibility {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        font-size: 13.5px;
+    }
+
+    /* Dashed "click to upload" dropzone — shared with the Update Research
+       form via the same upload-dropzone component. */
+    .research-dropzone {
+        border: 2px dashed #d1d5db;
+        border-radius: 12px;
+        padding: 28px 16px;
+        text-align: center;
+        cursor: pointer;
+        transition: border-color .15s, background-color .15s;
+    }
+
+    .research-dropzone:hover {
+        border-color: var(--rw-accent, #072a89);
+        background: #f5f7ff;
+    }
+
+    .research-dropzone.border-primary {
+        border-color: var(--rw-accent, #072a89) !important;
+        background: #f5f7ff;
+    }
+
+    .research-dropzone.border-danger {
+        border-color: #dc3545 !important;
+    }
+
+    .research-dropzone-icon {
+        color: #9ca3af;
+    }
+
+    .research-dropzone-link {
+        background: none;
+        border: 0;
+        padding: 0;
+        color: var(--rw-accent, #072a89);
+        text-decoration: underline;
+        font-weight: 600;
+        font-size: 14px;
+        cursor: pointer;
+    }
+
+    .rw-abstract-preview {
+        border: 1px dashed var(--rw-border, #e5e7eb);
+        border-radius: 10px;
+        padding: 10px 12px;
+        margin-top: 8px;
+        background: #fafafa;
+    }
+
+    /* AI/extracted suggestion trays — keywords and SDGs, shared between
+       the wizard and the Update Research form. Nothing here is selected
+       until the student clicks it (see research-submission.js). */
+    .keyword-suggestions,
+    .sdg-suggestions {
+        border: 1px dashed var(--rw-border, #e5e7eb);
+        border-radius: 10px;
+        padding: 10px 12px;
+        background: #fafafa;
+    }
+
+    .keyword-suggestion-chip {
+        border: 1px dashed var(--rw-accent, #072a89);
+        background: #eef2ff;
+        border-radius: 999px;
+        font-size: 12.5px;
+        padding: 4px 10px;
+        color: var(--rw-accent, #072a89);
+    }
+
+    .keyword-suggestions-actions {
+        font-size: 12px;
+    }
+
+    .sdg-suggestion-row {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 8px;
+        border: 1px solid var(--rw-border, #e5e7eb);
+        border-radius: 8px;
+        padding: 6px 10px;
+        font-size: 13px;
+        background: #fff;
+    }
+
+    /* Researcher list rows (researcher-input component). */
+    .researcher-row {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        border: 1px solid var(--rw-border, #e5e7eb);
+        border-radius: 10px;
+        padding: 8px 12px;
+        margin-bottom: 6px;
+        background: #fff;
+    }
+
+    .researcher-avatar {
+        width: 26px;
+        height: 26px;
+        border-radius: 50%;
+        background: #eef2ff;
+        color: var(--rw-accent, #072a89);
+        font-size: 11px;
+        font-weight: 700;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        flex: 0 0 auto;
+    }
 </style>
 
 
@@ -222,9 +587,14 @@ input[name="visibility"]:checked + label i {
                     <div class="d-flex align-items-center">
 
                         <!-- Notification -->
-                        <button class="btn border-0 p-1 me-2" type="button">
+                        <a href="{{ route('notifications.index') }}" class="btn border-0 p-1 me-2 position-relative">
                             <i class="fa-regular fa-bell"></i>
-                        </button>
+                            @if(($unreadNotificationsCount ?? 0) > 0)
+                                <span class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger" style="font-size:0.55rem;">
+                                    {{ $unreadNotificationsCount }}
+                                </span>
+                            @endif
+                        </a>
 
                         <!-- Hamburger -->
                         <button class="navbar-toggler border-0 p-1" type="button"
@@ -497,13 +867,13 @@ input[name="visibility"]:checked + label i {
 
 
 
-<div>
-    @include('layouts.chatbot_layout')
-</div>
+<x-chat.widget />
 
     <!-- Bootstrap JS -->
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
 <script src="https://unpkg.com/lucide@latest"></script>
+
+    @vite(['resources/js/research-submission.js', 'resources/js/chat.js'])
 
   <script>
     lucide.createIcons();

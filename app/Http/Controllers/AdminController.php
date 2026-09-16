@@ -6,7 +6,11 @@ use App\Imports\StudentImport;
 use App\Mail\repositoryMail;
 use App\Models\User;
 use App\Models\UserFile;
+use App\Notifications\AccountCreated;
+use App\Notifications\ResearchReviewedByAdmin;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Str;
@@ -14,12 +18,20 @@ use Maatwebsite\Excel\Facades\Excel;
 
 class AdminController extends Controller
 {
+    // Short-TTL cache for the dashboard's stat counts + chart data — see
+    // index() for why (Supabase is remote; the win is cutting round trips,
+    // not raw cache-backend speed). Explicitly busted by approve()/reject()
+    // and StudentController's submit/update, so admins never wait out the
+    // TTL to see their own action reflected.
+    private const DASHBOARD_CACHE_TTL = 60;
+
     public function index()
     {
         $view = request('view', 'dashboard');
 
         // Role filter
         $role = request('role');
+        $search = request('search');
 
         $users = User::query();
 
@@ -27,67 +39,129 @@ class AdminController extends Controller
             $users->where('role', $role);
         }
 
+        if ($search) {
+            $users->where(fn ($q) => $q->where('name', 'ilike', "%{$search}%")
+                ->orWhere('email', 'ilike', "%{$search}%")
+                ->orWhere('user_id', 'ilike', "%{$search}%"));
+        }
+
+        // Deliberately not cached — search/role-filter results must stay live.
         $users = $users->get();
 
-        $studFiles = UserFile::where('status', 'admin_pending')->get();
+        // Was UserFile::where('status', 'admin_pending')->get() — no eager
+        // loading (meta.blade.php would N+1 across the list), no
+        // ordering, no pagination, and admin_pending only, which made
+        // the already-approved/already-rejected badge branches in
+        // admin.blade.php unreachable: there was no way to look at a
+        // past decision again. ?status= defaults to the original
+        // behavior; 'all' or a specific status opens up the rest.
+        $statusFilter = request('status', 'admin_pending');
 
+        $studFilesQuery = UserFile::with(['authors', 'keywords', 'sdgs'])->latest();
+
+        if ($statusFilter !== 'all') {
+            $studFilesQuery->where('status', $statusFilter);
+        }
+
+        $studFiles = $studFilesQuery->paginate(10)->withQueryString();
+
+        $year = request('year', date('Y'));
+
+        $stats = Cache::remember(
+            "admin_dashboard_stats:{$year}",
+            self::DASHBOARD_CACHE_TTL,
+            fn () => $this->computeDashboardStats($year)
+        );
+
+        $unreadNotificationsCount = Auth::user()->unreadNotifications()->count();
+
+        return view('admin', array_merge(compact(
+            'view',
+            'users',
+            'role',
+            'search',
+            'studFiles',
+            'statusFilter',
+            'year',
+            'unreadNotificationsCount'
+        ), $stats));
+    }
+
+    /**
+     * All the dashboard's aggregate numbers, computed in ~10 queries total
+     * instead of the ~50 this used to run — the four month-by-month chart
+     * arrays previously fired one query per month each (48 queries alone);
+     * now each is a single GROUP BY query, and the loop below just
+     * reassembles the array from already-fetched data with zero DB calls.
+     *
+     * @return array{totalResearch:int, approvedCount:int, rejectedCount:int, pendingCount:int, uploadData:array, approvalData:array, viewData:array, downloadData:array}
+     */
+    private function computeDashboardStats(int $year): array
+    {
+        $totalResearch = UserFile::count();
         $approvedCount = UserFile::where('status', 'approved')->count();
         $rejectedCount = UserFile::where('status', 'rejected')->count();
         $pendingCount = UserFile::where('status', 'admin_pending')->count();
 
-        $year = request('year', date('Y'));
+        $monthlyUploads = UserFile::whereYear('created_at', $year)
+            ->selectRaw('EXTRACT(MONTH FROM created_at)::int as month, COUNT(*) as total')
+            ->groupBy('month')->pluck('total', 'month');
+
+        $monthlyApprovals = UserFile::where('status', 'approved')
+            ->whereYear('created_at', $year)
+            ->selectRaw('EXTRACT(MONTH FROM created_at)::int as month, COUNT(*) as total')
+            ->groupBy('month')->pluck('total', 'month');
+
+        $monthlyViews = UserFile::whereYear('created_at', $year)
+            ->selectRaw('EXTRACT(MONTH FROM created_at)::int as month, SUM(views) as total')
+            ->groupBy('month')->pluck('total', 'month');
+
+        $monthlyDownloads = UserFile::whereYear('created_at', $year)
+            ->selectRaw('EXTRACT(MONTH FROM created_at)::int as month, SUM(downloads) as total')
+            ->groupBy('month')->pluck('total', 'month');
 
         $uploadData = [];
         $approvalData = [];
-
-        for ($month = 1; $month <= 12; $month++) {
-
-            $uploadData[] = UserFile::whereYear('created_at', $year)
-                ->whereMonth('created_at', $month)
-                ->count();
-
-            $approvalData[] = UserFile::where('status', 'approved')
-                ->whereYear('created_at', $year)
-                ->whereMonth('created_at', $month)
-                ->count();
-        }
-
         $viewData = [];
         $downloadData = [];
 
         for ($month = 1; $month <= 12; $month++) {
-
-            $viewData[] = UserFile::whereYear('created_at', $year)
-                ->whereMonth('created_at', $month)
-                ->sum('views');
-
-            $downloadData[] = UserFile::whereYear('created_at', $year)
-                ->whereMonth('created_at', $month)
-                ->sum('downloads');
+            $uploadData[] = (int) ($monthlyUploads[$month] ?? 0);
+            $approvalData[] = (int) ($monthlyApprovals[$month] ?? 0);
+            $viewData[] = (int) ($monthlyViews[$month] ?? 0);
+            $downloadData[] = (int) ($monthlyDownloads[$month] ?? 0);
         }
 
-        return view('admin', compact(
-            'view',
-            'users',
-            'role',
-            'studFiles',
+        return compact(
+            'totalResearch',
             'approvedCount',
             'rejectedCount',
             'pendingCount',
             'uploadData',
             'approvalData',
             'viewData',
-            'downloadData',
-            'year'
-        ));
+            'downloadData'
+        );
+    }
+
+    /**
+     * Busts the admin dashboard's stat cache for this record's submission
+     * year. The repository/public listings no longer cache their result
+     * set at all (RepositoryController::listing() — paginated + filtered
+     * results aren't a good fit for a single unconditional cache key), so
+     * there's nothing left to bust there.
+     */
+    private static function forgetResearchCaches(UserFile $file): void
+    {
+        Cache::forget('admin_dashboard_stats:'.$file->created_at->year);
     }
 
     public function store(Request $request)
     {
 
         $request->validate([
-            'user_id' => 'required',
-            'email' => 'required|email',
+            'user_id' => 'required|unique:users,user_id',
+            'email' => 'required|email|unique:users,email',
             'role' => 'required',
             'name' => 'required',
             'year_level' => 'nullable|string',
@@ -100,7 +174,7 @@ class AdminController extends Controller
             symbols: false
         );
 
-        User::create([
+        $user = User::create([
             'user_id' => $request->user_id,
             'email' => $request->email,
             'role' => $request->role,
@@ -121,6 +195,8 @@ class AdminController extends Controller
             )
         );
 
+        $user->notify(new AccountCreated($user));
+
         // return 'Email sent successfully!';
 
         return redirect()->back()->with([
@@ -130,6 +206,29 @@ class AdminController extends Controller
             'generated_user_id' => $request->user_id,
         ]);
 
+    }
+
+    public function updateUser(Request $request, $id)
+    {
+        $request->validate([
+            'user_id' => 'required|unique:users,user_id,'.$id,
+            'email' => 'required|email|unique:users,email,'.$id,
+            'role' => 'required',
+            'name' => 'required',
+            'year_level' => 'nullable|string',
+        ]);
+
+        $user = User::findOrFail($id);
+
+        $user->update([
+            'user_id' => $request->user_id,
+            'email' => $request->email,
+            'role' => $request->role,
+            'name' => $request->name,
+            'year_level' => $request->role === 'student' ? $request->year_level : null,
+        ]);
+
+        return back()->with('success', 'User updated successfully.');
     }
 
     public function importStudents(Request $request)
@@ -154,6 +253,14 @@ class AdminController extends Controller
     {
         $file = UserFile::findOrFail($id);
 
+        // Previously unguarded — findOrFail() with no status check meant
+        // any file id could be "approved" via a direct POST regardless of
+        // where it actually was in the review pipeline (still with the
+        // instructor, already approved, already rejected). The UI only
+        // shows this button for admin_pending rows; now the server
+        // agrees.
+        abort_if($file->status !== 'admin_pending', 409, 'This research is not awaiting admin review.');
+
         $file->status = 'approved';
 
         if ($file->requested_visibility === 'public') {
@@ -161,6 +268,10 @@ class AdminController extends Controller
         }
 
         $file->save();
+
+        self::forgetResearchCaches($file);
+
+        $file->user->notify(new ResearchReviewedByAdmin($file, 'approved'));
 
         return back()->with('success', 'Research approved successfully.');
     }
@@ -170,8 +281,14 @@ class AdminController extends Controller
     {
         $file = UserFile::findOrFail($id);
 
+        abort_if($file->status !== 'admin_pending', 409, 'This research is not awaiting admin review.');
+
         $file->status = 'rejected';
         $file->save();
+
+        self::forgetResearchCaches($file);
+
+        $file->user->notify(new ResearchReviewedByAdmin($file, 'rejected'));
 
         return back()->with('success', 'Research rejected successfully.');
     }

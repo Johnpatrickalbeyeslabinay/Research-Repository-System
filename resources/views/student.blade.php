@@ -101,7 +101,8 @@
 
             <h6 class="fw-bold mb-3">Change Password</h6>
 
-            <form>
+            <form action="{{ route('account.password.update') }}" method="POST">
+                @csrf
 
                 <div class="mb-3">
                     <label class="form-label fw-medium">
@@ -109,8 +110,13 @@
                     </label>
 
                     <input type="password"
-                           class="form-control"
+                           name="current_password"
+                           class="form-control @error('current_password') is-invalid @enderror"
                            placeholder="Enter current password">
+
+                    @error('current_password')
+                        <div class="invalid-feedback">{{ $message }}</div>
+                    @enderror
                 </div>
 
                 <div class="mb-3">
@@ -119,8 +125,13 @@
                     </label>
 
                     <input type="password"
-                           class="form-control"
+                           name="new_password"
+                           class="form-control @error('new_password') is-invalid @enderror"
                            placeholder="At least 8 characters">
+
+                    @error('new_password')
+                        <div class="invalid-feedback">{{ $message }}</div>
+                    @enderror
                 </div>
 
                 <div class="mb-4">
@@ -129,6 +140,7 @@
                     </label>
 
                     <input type="password"
+                           name="new_password_confirmation"
                            class="form-control"
                            placeholder="Repeat new password">
                 </div>
@@ -167,218 +179,266 @@
 
 <!--======================================================================================================================-->
         <!--Uploadfiles-->
-            <div id="popover" popover class="rounded-4 border-0 shadow p-4"
-                style="width: 520px; max-width: 95vw; min-height: 580px;">
+            @php
+                // Which step to land on when this popover reopens after a
+                // failed submission — the first step containing a field the
+                // server rejected, not always step 1. Gated the same way as
+                // the error alert below (errors are a single session-wide
+                // bag shared with the Update Research forms).
+                $wizardStepFields = [
+                    1 => ['title', 'research_type', 'publication_year', 'adviser_id'],
+                    2 => ['researchers'],
+                    3 => ['file', 'desc', 'keywords', 'keyword_sources', 'sdg'],
+                    4 => ['visibility'],
+                ];
+                $createErrorStep = null;
+                if ($errors->any() && old('_popover_target', 'popover') === 'popover') {
+                    foreach ($errors->keys() as $errorKey) {
+                        foreach ($wizardStepFields as $step => $fields) {
+                            foreach ($fields as $field) {
+                                if ($errorKey === $field || str_starts_with($errorKey, $field.'.')) {
+                                    $createErrorStep = $createErrorStep === null ? $step : min($createErrorStep, $step);
+                                }
+                            }
+                        }
+                    }
+                }
+                $createErrorStep = $createErrorStep ?? 1;
+            @endphp
 
+            <div id="popover" popover="manual" class="research-wizard rounded-4 border-0 shadow"
+                data-wizard data-wizard-error-step="{{ $createErrorStep }}"
+                style="width: 720px; max-width: 95vw; max-height: 90vh;">
 
-                <div class="d-flex justify-content-between align-items-center mb-4">
+                <div class="rw-header d-flex justify-content-between align-items-center">
                     <h3 class="fw-bold mb-0">Submit New Research</h3>
 
                     <button class="btn-close" popovertarget="popover" popovertargetaction="hide"></button>
                 </div>
 
-                <form action="{{ route('student.store') }}" method="POST" enctype="multipart/form-data">
+                {{-- Errors are shared across every form on the page (one session error
+                     bag), so this is gated by _popover_target below — otherwise a
+                     failed Update Research submission would also render its errors
+                     here, in a popover the user never opened. --}}
+                @if ($errors->any() && old('_popover_target', 'popover') === 'popover')
+                    <div class="alert alert-danger mx-4 mt-3 mb-0">
+                        <ul class="mb-0 ps-3">
+                            @foreach ($errors->all() as $error)
+                                <li>{{ $error }}</li>
+                            @endforeach
+                        </ul>
+                    </div>
+                @endif
+
+                <nav class="rw-stepper" data-wizard-steps>
+                    <div class="rw-step" data-step-indicator="1">
+                        <div class="rw-step-circle">1</div>
+                        <div class="rw-step-label">Details</div>
+                    </div>
+                    <div class="rw-step-connector"></div>
+                    <div class="rw-step" data-step-indicator="2">
+                        <div class="rw-step-circle">2</div>
+                        <div class="rw-step-label">Researchers</div>
+                    </div>
+                    <div class="rw-step-connector"></div>
+                    <div class="rw-step" data-step-indicator="3">
+                        <div class="rw-step-circle">3</div>
+                        <div class="rw-step-label">Document</div>
+                    </div>
+                    <div class="rw-step-connector"></div>
+                    <div class="rw-step" data-step-indicator="4">
+                        <div class="rw-step-circle">4</div>
+                        <div class="rw-step-label">Review</div>
+                    </div>
+                </nav>
+
+                <form action="{{ route('student.store') }}" method="POST" enctype="multipart/form-data" class="rw-form">
 
                     @csrf
+                    <input type="hidden" name="_popover_target" value="popover">
 
-                    <!-- Research Title -->
-                    <div class="mb-3">
-                        <label class="form-label fw-semibold">
-                            Research Title <span class="text-danger"></span>
-                        </label>
+                    <div class="rw-body">
 
-                        <input type="text" name="title" class="form-control form-control-lg"
-                            placeholder="Enter the title of your research">
-                    </div>
-
-                    <div class="row">
-
-                        <div class="col-md-6 mb-3">
-                            <label class="form-label fw-semibold">
-                                Research Adviser <span class="text-danger"></span>
-                            </label>
-
-                            <input type="text" name="adviser" class="form-control" placeholder="e.g., Dr. Maria Santos">
-                        </div>
-                    </div>
-
-                    <!-- Abstract -->
-                    <div class="mb-3">
-                        <label class="form-label fw-semibold">
-                            Abstract <span class="text-danger"></span>
-                        </label>
-
-                        <textarea class="form-control" name="desc" rows="4"
-                            placeholder="Provide a comprehensive abstract"></textarea>
-                    </div>
-
-                    <!-- Keywords -->
-                    <label class="form-label fw-bold">
-                        Keywords
-
-                        <input type="text" name="Keywords">
-                    </label>
-
-
-                    <!-- SDG's -->
-
-                    <div class="mb-3" id="sdgSection">
-
-    <label class="form-label fw-semibold">
-        Sustainable Development Goals (SDGs)
-        <span class="text-danger"></span>
-    </label>
-
-    @php
-        $sdgNames = [
-            1 => 'No Poverty',
-            2 => 'Zero Hunger',
-            3 => 'Good Health and Well-being',
-            4 => 'Quality Education',
-            5 => 'Gender Equality',
-            6 => 'Clean Water and Sanitation',
-            7 => 'Affordable and Clean Energy',
-            8 => 'Decent Work and Economic Growth',
-            9 => 'Industry, Innovation and Infrastructure',
-            10 => 'Reduced Inequalities',
-            11 => 'Sustainable Cities and Communities',
-            12 => 'Responsible Consumption and Production',
-            13 => 'Climate Action',
-            14 => 'Life Below Water',
-            15 => 'Life on Land',
-            16 => 'Peace, Justice and Strong Institutions',
-            17 => 'Partnerships for the Goals',
-        ];
-    @endphp
-
-    <div class="dropdown">
-
-        <button
-            type="button"
-            class="btn btn-light border w-100 text-start dropdown-toggle"
-            id="sdgDropdown"
-            data-bs-toggle="dropdown"
-            data-bs-auto-close="outside">
-
-            Select SDG(s)
-
-        </button>
-
-        <div class="dropdown-menu w-100 p-2 overflow-auto"
-             style="max-height: 280px;">
-
-            @foreach($sdgs as $sdg)
-
-                <div class="form-check py-2 px-3">
-
-                    <input
-                        class="form-check-input sdg-checkbox"
-                        type="checkbox"
-                        name="sdg[]"
-                        value="{{ $sdg->id }}"
-                        id="sdg{{ $sdg->id }}">
-
-                    <label
-                        class="form-check-label"
-                        for="sdg{{ $sdg->id }}">
-
-                        <strong>SDG {{ $sdg->number }}</strong>
-                        – {{ $sdgNames[$sdg->number] }}
-
-                    </label>
-
-                </div>
-
-            @endforeach
-
-            <!-- DONE BUTTON -->
-            <div class="border-top mt-2 pt-2">
-                <button
-                    type="button"
-                    class="btn btn-primary w-100"
-                    id="doneSdg">
-
-                    <i class="bi bi-check-lg me-1"></i>
-                    Done
-
-                </button>
-            </div>
-
-        </div>
-    </div>
-
-    <small class="text-muted">
-        Select one or more SDGs related to your research.
-    </small>
-
-</div>
-
-                    <!--visibility-->
-                    <div class="mb-3">
-                        <label class="form-label fw-semibold">Research Visibility </label>
-
-                        <div class="row g-3">
-                            <div class="col-6">
-                                <input type="radio" class="btn-check" name="visibility"
-                                    id="public" value="public">
-
-                                <label class="visibility-option border border-1 border-success rounded-3 w-100 p-2 text-dark" for="public">
-                                    <div class="d-flex align-items-center gap-2">
-                                        <div class="text-center">
-                                            <i class="fa-solid fa-globe fa-lg"></i>
-                                        </div>
-                                        <div>
-                                            <strong>Public</strong><br>
-                                            <small class="text-muted">Visible in repository</small>
-                                        </div>
-                                    </div>
-                                </label>
+                        <section class="rw-step-panel" data-wizard-step="1">
+                            <div class="rw-summary-row" data-step-summary="1" hidden>
+                                <div class="d-flex align-items-center gap-2">
+                                    <span class="rw-check"><i class="bi bi-check-lg"></i></span>
+                                    <span data-step-summary-text>—</span>
+                                </div>
+                                <button type="button" class="btn btn-link btn-sm p-0" data-step-edit="1">Edit</button>
                             </div>
 
-                            <div class="col-6">
-                                <input type="radio" class="btn-check" name="visibility"
-                                    id="private" value="private">
+                            <div data-step-body="1">
+                                <div class="rw-field">
+                                    <label>Research Title <span class="text-danger">*</span></label>
+                                    <input type="text" name="title" class="form-control" required
+                                        value="{{ old('title') }}"
+                                        placeholder="Enter the title of your research">
+                                </div>
 
-                                <label class="visibility-private border border-1 border-secondary rounded-3 w-100 p-2" for="private">
-                                    <div class="d-flex align-items-center gap-2">
-                                        <div class="text-center">
-                                            <i class="fa-solid fa-lock fa-lg"></i>
-                                        </div>
-                                        <div>
-                                            <strong>Private</strong><br>
-                                            <small class="text-muted">Only you, adviser & admins</small>
+                                <div class="row g-2">
+                                    <div class="col-6">
+                                        <div class="rw-row">
+                                            <span class="rw-row-label">Type</span>
+                                            <select name="research_type" class="form-select form-select-sm">
+                                                <option value="">Select</option>
+                                                @foreach(['Thesis', 'Capstone', 'Case Study', 'Other'] as $type)
+                                                    <option value="{{ $type }}" {{ old('research_type') === $type ? 'selected' : '' }}>{{ $type }}</option>
+                                                @endforeach
+                                            </select>
                                         </div>
                                     </div>
-                                </label>
+
+                                    <div class="col-6">
+                                        <div class="rw-row">
+                                            <span class="rw-row-label">Year</span>
+                                            <select name="publication_year" class="form-select form-select-sm">
+                                                @php $currentYear = (int) date('Y'); @endphp
+                                                @for ($year = $currentYear; $year >= $currentYear - 10; $year--)
+                                                    <option value="{{ $year }}" {{ (int) old('publication_year', $currentYear) === $year ? 'selected' : '' }}>{{ $year }}</option>
+                                                @endfor
+                                            </select>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div class="rw-row">
+                                    <span class="rw-row-label">Adviser <span class="text-danger">*</span></span>
+                                    <select name="adviser_id" class="form-select form-select-sm" required>
+                                        <option value="">Select adviser</option>
+                                        @foreach($instructors as $instructor)
+                                            <option value="{{ $instructor->id }}" {{ (int) old('adviser_id') === $instructor->id ? 'selected' : '' }}>
+                                                {{ $instructor->name }}
+                                            </option>
+                                        @endforeach
+                                    </select>
+                                </div>
                             </div>
+                        </section>
+
+                        <section class="rw-step-panel" data-wizard-step="2">
+                            <div class="rw-summary-row" data-step-summary="2" hidden>
+                                <div class="d-flex align-items-center gap-2">
+                                    <span class="rw-check"><i class="bi bi-check-lg"></i></span>
+                                    <span data-step-summary-text>—</span>
+                                </div>
+                                <button type="button" class="btn btn-link btn-sm p-0" data-step-edit="2">Edit</button>
+                            </div>
+
+                            <div data-step-body="2">
+                                <x-research.researcher-input prefix="create" :otherStudents="$otherStudents" />
+                            </div>
+                        </section>
+
+                        <section class="rw-step-panel" data-wizard-step="3">
+                            <div class="rw-summary-row" data-step-summary="3" hidden>
+                                <div class="d-flex align-items-center gap-2">
+                                    <span class="rw-check"><i class="bi bi-check-lg"></i></span>
+                                    <span data-step-summary-text>—</span>
+                                </div>
+                                <button type="button" class="btn btn-link btn-sm p-0" data-step-edit="3">Edit</button>
+                            </div>
+
+                            <div data-step-body="3">
+                                <x-research.upload-dropzone prefix="create" />
+
+                                <div class="rw-field">
+                                    <label>Abstract <span class="text-danger">*</span></label>
+
+                                    <textarea class="form-control" name="desc" rows="3" required data-abstract-field
+                                        placeholder="Provide a comprehensive abstract">{{ old('desc') }}</textarea>
+
+                                    <small class="d-none" data-abstract-badge></small>
+
+                                    <div class="rw-abstract-preview d-none" data-abstract-preview>
+                                        <p class="small text-muted mb-1">We found this text in your PDF — is this your abstract?</p>
+                                        <p class="small fw-semibold mb-2" data-abstract-preview-text></p>
+                                        <button type="button" class="btn btn-sm btn-outline-primary" data-abstract-preview-use>Use this</button>
+                                        <button type="button" class="btn btn-sm btn-outline-secondary" data-abstract-preview-dismiss>Write my own</button>
+                                    </div>
+                                </div>
+
+                                <div class="mb-3">
+                                    <button type="button" class="btn btn-outline-primary btn-sm" data-analyze-btn="create" data-analyze-url="{{ route('research.analyze') }}" disabled>
+                                        <i class="bi bi-stars me-1"></i>
+                                        Suggest keywords &amp; SDGs from my abstract
+                                    </button>
+
+                                    <div data-analyze-status class="small mt-2"></div>
+
+                                    <div data-analyze-stale class="alert alert-warning py-2 px-3 mt-2 mb-0 d-none">
+                                        Research content changed.
+                                        <button type="button" class="btn btn-link btn-sm p-0 align-baseline" data-analyze-btn="create" data-analyze-url="{{ route('research.analyze') }}">
+                                            Regenerate AI suggestions?
+                                        </button>
+                                    </div>
+
+                                    <input type="hidden" name="ai_analysis_fingerprint" data-ai-fingerprint-field value="">
+                                    <input type="hidden" name="ai_model_used" data-ai-model-field value="">
+                                    <input type="hidden" data-fallback-excerpt-field value="">
+                                </div>
+
+                                <x-research.keyword-input prefix="create" />
+
+                                <x-research.sdg-selector prefix="create" :sdgs="$sdgs" />
+                            </div>
+                        </section>
+
+                        <section class="rw-step-panel" data-wizard-step="4">
+                            <div data-step-body="4">
+                                <div class="mb-3">
+                                    <label class="form-label fw-semibold">Research Visibility</label>
+
+                                    <div class="row g-2">
+                                        <div class="col-6">
+                                            <input type="radio" class="btn-check" name="visibility"
+                                                id="public" value="public">
+
+                                            <label class="visibility-option rw-visibility border border-1 border-success rounded-3 w-100 p-2 text-dark" for="public">
+                                                <i class="fa-solid fa-globe"></i>
+                                                <span><strong>Public</strong> <small class="text-muted">— visible in repository</small></span>
+                                            </label>
+                                        </div>
+
+                                        <div class="col-6">
+                                            <input type="radio" class="btn-check" name="visibility"
+                                                id="private" value="private" checked>
+
+                                            <label class="visibility-private rw-visibility border border-1 border-secondary rounded-3 w-100 p-2" for="private">
+                                                <i class="fa-solid fa-lock"></i>
+                                                <span><strong>Private</strong> <small class="text-muted">— you, adviser &amp; admins</small></span>
+                                            </label>
+                                        </div>
+                                    </div>
+                                    <small class="text-muted d-block mt-1">Public visibility takes effect once an admin approves it.</small>
+                                </div>
+
+                                <x-research.review-summary prefix="create" :expanded="true" />
+                            </div>
+                        </section>
+
+                    </div>
+
+                    <div class="rw-footer d-flex justify-content-between align-items-center">
+                        <button type="button" class="btn btn-outline-secondary" data-wizard-back hidden>
+                            <i class="bi bi-arrow-left me-1"></i> Back
+                        </button>
+
+                        <div class="d-flex gap-2 ms-auto">
+                            <button type="button" class="btn btn-outline-secondary" popovertarget="popover"
+                                popovertargetaction="hide">
+                                Cancel
+                            </button>
+
+                            <button type="button" class="rounded-2 px-3 py-2 text-white border-0" style="background: var(--rw-accent);" data-wizard-next>
+                                Next <i class="bi bi-arrow-right ms-1"></i>
+                            </button>
+
+                            <button type="submit" class="rounded-2 px-3 py-2 text-white border-0 d-none" style="background: var(--rw-accent);" data-wizard-submit data-submit-btn>
+                                Submit Research
+                            </button>
                         </div>
                     </div>
-
-                     <!-- Upload -->
-                    <div class="mb-2">
-                        <label class="form-label fw-semibold">
-                            Upload PDF Document <span class="text-danger">*</span>
-                        </label>
-
-                        <input type="file" id="pdfFile" name="file" class="form-control" accept=".pdf">
-                    </div>
-
-                    <small class="text-secondary">
-                        Accepted formats: PDF
-                    </small>
-
-                    <!-- Buttons -->
-                    <div class="d-flex gap-2 mt-4">
-                        <button class="rounded-2 p-2 text-white border-0" style="background: #072a89;">
-                            Submit Research
-                        </button>
-
-                        <button type="button" class="btn btn-outline-secondary" popovertarget="popover"
-                            popovertargetaction="hide">
-                            Cancel
-                        </button>
-                    </div>
-
 
                 </form>
 
@@ -585,6 +645,18 @@
                                                 </span>
                                             @endif
 
+                                            {{-- store()/update() always persist visibility='private' first and
+                                                 keep the student's real choice in requested_visibility — public
+                                                 only takes effect once an admin approves it. Without this, a
+                                                 student who asked for Public just sees "Private" with nothing
+                                                 explaining why. --}}
+                                            @if($file->requested_visibility === 'public' && $file->visibility === 'private')
+                                                <span class="badge text-dark rounded-pill px-2 py-1" style="background-color: #fff3cd;">
+                                                    <i class="fa-solid fa-globe fa-2xs"></i>
+                                                    Public requested — pending approval
+                                                </span>
+                                            @endif
+
                                         </div>
 
 
@@ -628,6 +700,13 @@
                                                 </span>
                                             @endif
 
+                                            @if($file->requested_visibility === 'public' && $file->visibility === 'private')
+                                                <span class="badge text-dark rounded-pill px-2 py-1" style="background-color: #fff3cd;">
+                                                    <i class="fa-solid fa-globe fa-2xs"></i>
+                                                    Public requested
+                                                </span>
+                                            @endif
+
                                         </div>
 
 
@@ -657,18 +736,25 @@
 
                                         </div>
 
+                                        {{-- Researchers/type/publication-year/curated-keywords/SDGs — collected
+                                             at submission, previously shown nowhere on this card at all (only
+                                             the auto-generated title-word tags below stood in for "keywords"). --}}
+                                        <x-research.meta :file="$file" compact
+                                            :show="['researchers', 'type', 'year', 'keywords', 'sdgs']" />
 
                                         <p class="text-secondary mb-3">
                                             {{ \Illuminate\Support\Str::limit($file->desc, 180) }}
                                         </p>
 
-
-                                        @foreach(explode(',', $file->auto_tag) as $tag)
-                                            <span class="small rounded me-1 mb-1 px-2 py-1"
-                                                style="background-color:#EFF6FF; color:#3B5FBF;">
-                                                {{ trim($tag) }}
-                                            </span>
-                                        @endforeach
+                                        @if($file->instructor_feedback)
+                                            <div class="rounded-3 p-2 mt-2" style="background-color:#FFF8E1;">
+                                                <small class="fw-semibold text-secondary d-block mb-1">
+                                                    <i class="bi bi-chat-left-text me-1"></i>
+                                                    Adviser Feedback
+                                                </small>
+                                                <small>{{ $file->instructor_feedback }}</small>
+                                            </div>
+                                        @endif
 
                                     </div>
 
@@ -701,22 +787,33 @@
 
 
                     <!--POPOVER-UPDATE-->
-                    <div id="update-sub-{{ $file->id }}" popover class="rounded-4 border-0 shadow p-4"
-                        style="width: 520px; max-width: 95vw; min-height: 580px;">
+                    @php $upfx = 'update-'.$file->id; @endphp
+                    <div id="update-sub-{{ $file->id }}" popover="manual" class="rounded-4 border-0 shadow p-4"
+                        style="width: 560px; max-width: 95vw; max-height: 90vh; overflow-y: auto;">
 
                         <div class="d-flex justify-content-between align-items-center mb-4">
                             <h3 class="fw-bold mb-0">Update Research</h3>
 
-                            <button class="btn-close"popovertarget="update-sub-{{ $file->id }}"
+                            <button class="btn-close" popovertarget="update-sub-{{ $file->id }}"
                                 popovertargetaction="hide">
                             </button>
                         </div>
+
+                        @if ($errors->any() && old('_popover_target') === 'update-sub-'.$file->id)
+                            <div class="alert alert-danger">
+                                <ul class="mb-0 ps-3">
+                                    @foreach ($errors->all() as $error)
+                                        <li>{{ $error }}</li>
+                                    @endforeach
+                                </ul>
+                            </div>
+                        @endif
 
                         <form action="{{ route('student.update', $file->id) }}" method="POST" enctype="multipart/form-data">
 
                             @csrf
                             @method('PUT')
-
+                            <input type="hidden" name="_popover_target" value="update-sub-{{ $file->id }}">
 
                             <!-- Research Title -->
                             <div class="mb-3">
@@ -734,21 +831,54 @@
                             </div>
 
                             <div class="row">
+                                <div class="col-md-6 mb-3">
+                                    <label class="form-label fw-semibold">Research Type</label>
+
+                                    <select name="research_type" class="form-select">
+                                        <option value="">Select type</option>
+                                        @foreach(['Thesis', 'Capstone', 'Case Study', 'Other'] as $type)
+                                            <option value="{{ $type }}" {{ old('research_type', $file->research_type) === $type ? 'selected' : '' }}>{{ $type }}</option>
+                                        @endforeach
+                                    </select>
+                                </div>
 
                                 <div class="col-md-6 mb-3">
-                                    <label class="form-label fw-semibold">
-                                        Research Adviser <span class="text-danger">*</span>
-                                    </label>
+                                    <label class="form-label fw-semibold">Publication Year</label>
 
-                                    <input
-                                        type="text"
-                                        name="adviser"
-                                        class="form-control"
-                                        value="{{ old('adviser', $file->adviser) }}"
-                                        placeholder="e.g., Dr. Maria Santos"
-                                        required>
+                                    <select name="publication_year" class="form-select">
+                                        @php $currentYear = (int) date('Y'); @endphp
+                                        @for ($year = $currentYear; $year >= $currentYear - 10; $year--)
+                                            <option value="{{ $year }}" {{ (int) old('publication_year', $file->publication_year ?? $currentYear) === $year ? 'selected' : '' }}>{{ $year }}</option>
+                                        @endfor
+                                    </select>
                                 </div>
                             </div>
+
+                            <x-research.researcher-input :prefix="$upfx" :otherStudents="$otherStudents"
+                                :seed="$file->authors->map(fn ($a) => ['name' => $a->author_name, 'user_id' => $a->user_id])" />
+
+                            <div class="mb-3">
+                                <label class="form-label fw-semibold">
+                                    Research Adviser <span class="text-danger">*</span>
+                                </label>
+
+                                <select name="adviser_id" class="form-select" required>
+                                    <option value="">Select adviser</option>
+                                    @foreach($instructors as $instructor)
+                                        <option value="{{ $instructor->id }}" {{ (int) old('adviser_id', $file->adviser_id) === $instructor->id ? 'selected' : '' }}>
+                                            {{ $instructor->name }}
+                                        </option>
+                                    @endforeach
+                                </select>
+                            </div>
+
+                            <hr class="my-4">
+
+                            <x-research.upload-dropzone :prefix="$upfx" :required="false" />
+
+                            <small class="text-secondary d-block mt-n2 mb-3">
+                                Current file: {{ basename($file->file_path) }} — leave blank to keep it.
+                            </small>
 
                             <!-- Abstract -->
                             <div class="mb-3">
@@ -761,8 +891,34 @@
                                     name="desc"
                                     rows="4"
                                     placeholder="Provide a comprehensive abstract"
-                                    required>{{ old('desc', $file->desc) }}</textarea>
+                                    required
+                                    data-abstract-field>{{ old('desc', $file->desc) }}</textarea>
+
+                                <small class="d-none" data-abstract-badge></small>
                             </div>
+
+                            <div class="mb-3">
+                                <button type="button" class="btn btn-outline-primary btn-sm" data-analyze-btn="{{ $upfx }}" data-analyze-url="{{ route('research.analyze') }}">
+                                    <i class="bi bi-stars me-1"></i>
+                                    Analyze Research
+                                </button>
+
+                                <div data-analyze-status class="small mt-2"></div>
+
+                                <div data-analyze-stale class="alert alert-warning py-2 px-3 mt-2 mb-0 d-none">
+                                    Research content changed.
+                                    <button type="button" class="btn btn-link btn-sm p-0 align-baseline" data-analyze-btn="{{ $upfx }}" data-analyze-url="{{ route('research.analyze') }}">
+                                        Regenerate AI suggestions?
+                                    </button>
+                                </div>
+
+                                <input type="hidden" name="ai_analysis_fingerprint" data-ai-fingerprint-field value="">
+                                <input type="hidden" name="ai_model_used" data-ai-model-field value="">
+                            </div>
+
+                            <x-research.keyword-input :prefix="$upfx" :seed="$file->keywords->pluck('display_name')->all()" />
+
+                            <x-research.sdg-selector :prefix="$upfx" :sdgs="$sdgs" :selected="$file->sdgs->pluck('id')->all()" />
 
                             <!--visibility-->
                             <div class="mb-3">
@@ -823,39 +979,14 @@
                                         </label>
                                     </div>
                                 </div>
+                                <small class="text-muted d-block mt-1">Public visibility takes effect once an admin approves it.</small>
                             </div>
 
-
-                            <!-- Upload -->
-                            <div class="mb-2">
-                                <label class="form-label fw-semibold">
-                                    Upload PDF Document <span class="text-danger">*</span>
-                                </label>
-
-                                <input
-                                    type="file"
-                                    id="pdfFile-{{ $file->id }}"
-                                    name="file"
-                                    class="form-control"
-                                    accept=".pdf">
-                            </div>
-
-
-                            <!-- Buttons -->
-                            <form action="{{ route('student.store') }}" method="POST" enctype="multipart/form-data">
-                                @csrf
-                                <button type="submit" class="btn btn-primary">
-                                    Submit
-                                </button>
-                            </form>
-
-                            <small class="text-secondary">
-                                Leave blank if you don't want to replace the current PDF.
-                            </small>
+                            <x-research.review-summary :prefix="$upfx" />
 
                             <!-- Buttons -->
                             <div class="d-flex gap-2 mt-4">
-                                <button class="rounded-2 p-2 text-white border-0" style="background: #072a89;">
+                                <button type="submit" class="rounded-2 p-2 text-white border-0" style="background: #072a89;" data-submit-btn>
                                     Update Research
                                 </button>
 
@@ -884,69 +1015,32 @@
                                 <div class="card-body p-4 p-md-5">
                                     <h5 class="fw-bold mb-2"> {{ $file->title }} </h5>
 
-                                    <div class="text-muted small mb-4"> <span class="me-3">
-                                            <span> <i class="bi bi-download"></i>
-                                                {{ $file->downloads ?? 0 }} </span>
+                                    {{-- Was: an unclosed <span> (views never actually shown, only
+                                         downloads), "Author" = $file->name only (hid every co-author),
+                                         "Year Published" = the upload date (not publication_year), and
+                                         "Keywords" = a count of auto-generated title words rather than
+                                         the curated keyword list. meta.blade.php fixes all four. --}}
+                                    <div class="d-flex align-items-center gap-2 flex-wrap mb-3">
+                                        @if($file->status == 'approved')
+                                            <span class="badge text-dark rounded-pill px-2 py-1" style="background-color: #d1e7dd;">Approved</span>
+                                        @elseif($file->status == 'rejected')
+                                            <span class="badge text-dark rounded-pill px-2 py-1" style="background-color: #f8d7da;">Rejected</span>
+                                        @else
+                                            <span class="badge text-dark rounded-pill px-2 py-1" style="background-color: #fff3cd;">Pending</span>
+                                        @endif
+
+                                        @if($file->visibility === 'public')
+                                            <span class="badge text-dark rounded-pill px-2 py-1" style="background-color: #edf7ef;"><i class="fa-solid fa-globe fa-2xs"></i> Public</span>
+                                        @else
+                                            <span class="badge text-dark rounded-pill px-2 py-1" style="background-color: #f8f9fa;"><i class="fa-solid fa-lock fa-2xs"></i> Private</span>
+                                        @endif
                                     </div>
 
-                                    <div class="row g-4 mb-4">
+                                    <x-research.meta :file="$file" />
 
-                                        <div class="col-md-6">
-                                            <div class="d-flex align-items-center gap-3">
-                                                <div class="bg-primary bg-opacity-10 rounded-2 py-2 px-1 d-flex justify-content-center align-items-center"
-                                                    style="width:45px; height:45px; background-color: #EFF6FF;">
-                                                    <i class="fa-regular fa-user text-primary"></i>
-                                                </div>
-
-                                                <div>
-                                                    <strong>Author</strong><br>
-                                                    {{ $file->name }}
-                                                </div>
-                                            </div>
-                                        </div>
-
-                                        <div class="col-md-6">
-                                            <div class="d-flex align-items-center gap-3">
-                                                <div class="bg-success bg-opacity-10 rounded-2 py-2 px-1 d-flex justify-content-center align-items-center"
-                                                    style="width:45px; height:45px;">
-                                                    <i class="fa-regular fa-calendar text-success"></i>
-                                                </div>
-
-                                                <div>
-                                                    <strong>Year Published</strong><br>
-                                                    {{ $file->created_at->format('Y') }}
-                                                </div>
-                                            </div>
-                                        </div>
-
-                                        <div class="col-md-6">
-                                            <div class="d-flex align-items-center gap-3">
-                                                <div class="bg-primary bg-opacity-10 rounded-2 py-2 px-1 d-flex justify-content-center align-items-center"
-                                                    style="width:45px; height:45px;">
-                                                    <i class="fa-regular fa-calendar-check text-primary"></i>
-                                                </div>
-
-                                                <div>
-                                                    <strong>Submitted</strong><br>
-                                                    {{ $file->created_at->format('M j, Y') }}
-                                                </div>
-                                            </div>
-                                        </div>
-
-                                        <div class="col-md-6">
-                                            <div class="d-flex align-items-center gap-3">
-                                                <div class="bg-success bg-opacity-10 rounded-2 py-2 px-1 d-flex justify-content-center align-items-center"
-                                                    style="width:45px; height:45px;">
-                                                    <i class="fa-solid fa-tags text-success"></i>
-                                                </div>
-
-                                                <div>
-                                                    <strong>Keywords</strong><br>
-                                                    {{ count(array_filter(explode(',', $file->auto_tag))) }} tags
-                                                </div>
-                                            </div>
-                                        </div>
-
+                                    <div class="mb-4">
+                                        <span class="text-muted">Submitted:</span>
+                                        {{ $file->created_at->format('M j, Y') }}
                                     </div>
 
                                     <h6 class="fw-bold">Abstract</h6>
@@ -954,13 +1048,15 @@
                                         {{ $file->desc ?? 'No abstract available.' }}
                                     </p>
 
-                                    <h6 class="fw-bold mt-4">Keywords</h6>
-                                    @foreach(explode(',', $file->auto_tag) as $tag)
-                                        <span class="small rounded me-1 mb-1 px-2 py-1"
-                                            style="background-color:#EFF6FF; color:#3B5FBF;">
-                                            {{ trim($tag) }}
-                                        </span>
-                                    @endforeach
+                                    @if($file->instructor_feedback)
+                                        <div class="rounded-3 p-3 mt-3" style="background-color:#FFF8E1;">
+                                            <small class="fw-semibold text-secondary d-block mb-1">
+                                                <i class="bi bi-chat-left-text me-1"></i>
+                                                Adviser Feedback
+                                            </small>
+                                            {{ $file->instructor_feedback }}
+                                        </div>
+                                    @endif
 
                                     <div
                                         class="alert alert-primary d-flex justify-content-between align-items-center mt-5 flex-wrap">
@@ -1120,8 +1216,14 @@
                             </h5>
 
                             <p class="text-muted mb-1">
-                                {{ $file->description }}
+                                {{ \Illuminate\Support\Str::limit($file->desc, 180) }}
                             </p>
+
+                            @if($file->instructor_feedback)
+                                <p class="small text-secondary mb-1">
+                                    <i class="bi bi-chat-left-text me-1"></i>{{ $file->instructor_feedback }}
+                                </p>
+                            @endif
 
                             <span class="badge bg-danger">
                                 Rejected
@@ -1197,59 +1299,26 @@
 @endif
 
 
-       <script>
-document.getElementById('doneSdg').addEventListener('click', function () {
+    <!-- The SDG "Done" button and PDF dropzone behavior for the redesigned
+         submission form are now handled by resources/js/research-submission.js
+         (initSdgDoneButtons / initDropzone), loaded from student_layout via Vite. -->
 
-    const selected = document.querySelectorAll('.sdg-checkbox:checked');
-
-    if (selected.length === 0) {
-        alert('Please select at least one SDG.');
-        return;
-    }
-
-    // Close dropdown
-    const dropdownButton = document.getElementById('sdgDropdown');
-
-    bootstrap.Dropdown
-        .getOrCreateInstance(dropdownButton)
-        .hide();
-
-    // Change button text
-    dropdownButton.innerHTML =
-        '<i class="bi bi-check-circle-fill text-success me-2"></i>' +
-        selected.length + ' SDG(s) selected';
-
-    // Focus next input
-    const nextInput = document.getElementById('title');
-
-    if (nextInput) {
-        nextInput.focus();
-
-        nextInput.scrollIntoView({
-            behavior: 'smooth',
-            block: 'center'
-        });
-    }
-
-});
-</script>
-
-
+@if ($errors->any())
     <script>
-        document.getElementById('pdfFile').addEventListener('change', function () {
-            const file = this.files[0];
-
-            if (!file) return;
-
-            const allowedTypes = ['application/pdf'];
-
-            if (!allowedTypes.includes(file.type)) {
-                alert('Only PDF files are allowed. DOC and DOCX files are not accepted.');
-                this.value = '';
+        // A failed Submit/Update Research validation returns the user to
+        // this page via back()->withErrors() — but the form itself lives in
+        // a `popover="manual"` panel that is closed by default, so without
+        // this the errors rendered above are in the DOM but never seen.
+        // _popover_target (set on each form) says which panel to reopen.
+        document.addEventListener('DOMContentLoaded', () => {
+            const target = @json(old('_popover_target', 'popover'));
+            const panel = document.getElementById(target);
+            if (panel && typeof panel.showPopover === 'function') {
+                panel.showPopover();
             }
         });
     </script>
-
+@endif
 
 <!--js manage-->
 <script>

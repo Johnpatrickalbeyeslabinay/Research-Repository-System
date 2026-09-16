@@ -35,4 +35,16 @@ return [
         ],
     ],
 
+    // Used by App\Services\Ai\MetadataAnalysisService (keyword/SDG
+    // suggestions from title+abstract) and App\Services\Research\EmbeddingService
+    // (document chunk embeddings for RAG). Models are configurable here
+    // rather than hardcoded so they can change without touching business logic.
+    'openai' => [
+        'api_key' => env('OPENAI_API_KEY'),
+        'metadata_model' => env('OPENAI_METADATA_MODEL', 'gpt-4o-mini'),
+        'embedding_model' => env('OPENAI_EMBEDDING_MODEL', 'text-embedding-3-small'),
+        'metadata_max_input_tokens' => env('OPENAI_METADATA_MAX_INPUT_TOKENS', 2000),
+        'metadata_max_output_tokens' => env('OPENAI_METADATA_MAX_OUTPUT_TOKENS', 300),
+    ],
+
 ];

@@ -6,6 +6,104 @@
 
 
 
+<!--MANAGE ACCOUNT BTN-->
+<div class="modal fade" id="manageaccount" tabindex="-1" aria-hidden="true">
+
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content rounded-4 border-0 shadow p-4">
+
+            <div class="d-flex justify-content-between align-items-center mb-3">
+                <h5 class="mb-0 fw-bold">Manage Account</h5>
+
+                <button type="button"
+                        class="btn-close"
+                        data-bs-dismiss="modal">
+                </button>
+            </div>
+
+            <div class="bg-info-soft rounded-3 p-3 mb-4">
+                <p class="mb-1">
+                    <strong>Name:</strong> {{ Auth::user()?->name }}
+                </p>
+
+                <p class="mb-1">
+                    <strong>User ID:</strong> {{ Auth::user()->user_id }}
+                </p>
+
+                <p class="mb-0">
+                    <strong>Role:</strong> {{ Auth::user()->role }}
+                </p>
+            </div>
+
+            <h6 class="fw-bold mb-3">Change Password</h6>
+
+            <form action="{{ route('account.password.update') }}" method="POST">
+                @csrf
+
+                <div class="mb-3">
+                    <label class="form-label fw-medium">
+                        Current Password
+                    </label>
+
+                    <input type="password"
+                           name="current_password"
+                           class="form-control @error('current_password') is-invalid @enderror"
+                           placeholder="Enter current password">
+
+                    @error('current_password')
+                        <div class="invalid-feedback">{{ $message }}</div>
+                    @enderror
+                </div>
+
+                <div class="mb-3">
+                    <label class="form-label fw-medium">
+                        New Password
+                    </label>
+
+                    <input type="password"
+                           name="new_password"
+                           class="form-control @error('new_password') is-invalid @enderror"
+                           placeholder="At least 8 characters">
+
+                    @error('new_password')
+                        <div class="invalid-feedback">{{ $message }}</div>
+                    @enderror
+                </div>
+
+                <div class="mb-4">
+                    <label class="form-label fw-medium">
+                        Confirm New Password
+                    </label>
+
+                    <input type="password"
+                           name="new_password_confirmation"
+                           class="form-control"
+                           placeholder="Repeat new password">
+                </div>
+
+                <div class="d-flex gap-3">
+
+                    <button type="submit"
+                            class="text-white rounded-3 border-0 flex-grow-1 fw-bold py-2"
+                            style="background:#072a89;">
+                        Save New Password
+                    </button>
+
+                    <button type="button"
+                            class="btn btn-outline-secondary"
+                            data-bs-dismiss="modal">
+                        Cancel
+                    </button>
+
+                </div>
+
+            </form>
+
+        </div>
+    </div>
+</div>
+
+
 
 <!--DASHBOARD-->
 @if($view == 'dashboard')
@@ -111,7 +209,7 @@
 
                     <div class="mt-2">
                         <small class="text-secondary">Total Research</small>
-                        <h4 class="fw-bold mb-0">{{ count($studFiles) }}</h4>
+                        <h4 class="fw-bold mb-0">{{ $totalResearch }}</h4>
                     </div>
 
                 </div>
@@ -281,6 +379,21 @@
 
     </div>
 
+    {{-- Was UserFile::where('status', 'admin_pending')->get() with no
+         other option — once approved/rejected, a submission fell out of
+         this list permanently, making the Approved/Rejected badge
+         branches below unreachable. --}}
+    <form method="GET" class="mb-3">
+        <select name="status" class="form-select form-select-sm d-inline-block" style="max-width: 220px;"
+            onchange="this.form.submit()">
+            <option value="admin_pending" {{ $statusFilter === 'admin_pending' ? 'selected' : '' }}>Awaiting admin review</option>
+            <option value="approved" {{ $statusFilter === 'approved' ? 'selected' : '' }}>Approved</option>
+            <option value="rejected" {{ $statusFilter === 'rejected' ? 'selected' : '' }}>Rejected</option>
+            <option value="pending" {{ $statusFilter === 'pending' ? 'selected' : '' }}>With adviser</option>
+            <option value="all" {{ $statusFilter === 'all' ? 'selected' : '' }}>All statuses</option>
+        </select>
+    </form>
+
     <!-- Table -->
 <div class="table-responsive">
 
@@ -291,12 +404,13 @@
                 <tr>
 
                     <th>Title</th>
-                    <th>Author</th>
+                    <th>Researchers</th>
                     <th>Adviser</th>
                     <th>Submitted</th>
                     <th>Views</th>
                     <th>Downloads</th>
                     <th>Status</th>
+                    <th>Visibility</th>
                     <th class="text-end">Actions</th>
 
                 </tr>
@@ -317,8 +431,11 @@
                     </td>
 
 
-                    <!--NAME-->
-                    <td>{{ $file->name }}</td>
+                    <!--RESEARCHERS-->
+                    {{-- Was $file->name — the submitter only. Every co-author
+                         and guest researcher added through the researcher
+                         picker was invisible to the admin. --}}
+                    <td>{{ implode(', ', $file->researcherNames()) }}</td>
 
 
                     <!--ADVISER-->
@@ -366,6 +483,19 @@
                         </span>
                     </td>
 
+                    {{-- Was never shown at all — approve() silently publishes
+                         to the repository whenever requested_visibility is
+                         'public', with nothing here telling the admin that
+                         was even asked for. --}}
+                    <td>
+                        @if($file->visibility === 'public')
+                            <span class="badge bg-success-subtle text-success rounded-pill"><i class="fa-solid fa-globe fa-2xs"></i> Public</span>
+                        @elseif($file->requested_visibility === 'public')
+                            <span class="badge bg-warning-subtle text-dark rounded-pill">Public requested</span>
+                        @else
+                            <span class="badge bg-light text-dark rounded-pill"><i class="fa-solid fa-lock fa-2xs"></i> Private</span>
+                        @endif
+                    </td>
 
                     <td class="text-end">
 
@@ -395,76 +525,23 @@
             <div class=" p-2 p-md-2">
                 <h5 class="fw-bold text-start mb-2"> {{ $file->title }} </h5>
 
-                <div class="text-muted text-start small mb-4">
-                        <span class="me-3">
-                            <i class="bi bi-eye"></i>
-                            {{ $file->views ?? 0 }}
-                    </span>
+                {{-- Was: Author = $file->name only, Year Published = the
+                     upload date, Keywords = a count of auto-generated
+                     title words. The admin makes the final publish
+                     decision on this data. --}}
+                @if($file->requested_visibility === 'public' && $file->visibility !== 'public')
+                    <div class="alert alert-warning py-2 px-3 text-start small mb-3">
+                        <i class="fa-solid fa-globe me-1"></i>
+                        This student requested <strong>Public</strong> visibility. Approving will publish it to the repository immediately.
+                    </div>
+                @endif
 
-                    <span class="me-3">
-                            <i class="bi bi-download"></i>
-                            {{ $file->downloads ?? 0 }}
-                    </span>
+                <div class="text-start">
+                    <x-research.meta :file="$file" />
                 </div>
 
-                <div class="row g-4 mb-4">
-
-                    <div class="col-md-6">
-                        <div class="d-flex align-items-center gap-3">
-                            <div class="bg-primary bg-opacity-10 rounded-2 py-2 px-1 d-flex justify-content-center align-items-center"
-                                style="width:45px; height:45px; background-color: #EFF6FF;">
-                                <i class="fa-regular fa-user text-primary"></i>
-                            </div>
-
-                            <div class="text-start">
-                                <strong>Author</strong><br>
-                                {{ $file->name }}
-                            </div>
-                        </div>
-                    </div>
-
-                    <div class="col-md-6">
-                        <div class="d-flex align-items-center gap-3">
-                            <div class="bg-success bg-opacity-10 rounded-2 py-2 px-1 d-flex justify-content-center align-items-center"
-                                style="width:45px; height:45px;">
-                                <i class="fa-regular fa-calendar text-success"></i>
-                            </div>
-
-                            <div class="text-start">
-                                <strong>Year Published</strong><br>
-                                {{ $file->created_at->format('Y') }}
-                            </div>
-                        </div>
-                    </div>
-
-                    <div class="col-md-6">
-                        <div class="d-flex align-items-center gap-3">
-                            <div class="bg-primary bg-opacity-10 rounded-2 py-2 px-1 d-flex justify-content-center align-items-center"
-                                style="width:45px; height:45px;">
-                                <i class="fa-regular fa-calendar-check text-primary"></i>
-                            </div>
-
-                            <div class="text-start">
-                                <strong>Submitted</strong><br>
-                                {{ $file->created_at->format('M j, Y') }}
-                            </div>
-                        </div>
-                    </div>
-
-                    <div class="col-md-6">
-                        <div class="d-flex align-items-center gap-3">
-                            <div class="bg-success bg-opacity-10 rounded-2 py-2 px-1 d-flex justify-content-center align-items-center"
-                                style="width:45px; height:45px;">
-                                <i class="fa-solid fa-tags text-success"></i>
-                            </div>
-
-                            <div class="text-start">
-                                <strong>Keywords</strong><br>
-                                {{ count(array_filter(explode(',', $file->auto_tag))) }} tags
-                            </div>
-                        </div>
-                    </div>
-
+                <div class="text-start mb-4">
+                    <span class="text-muted">Submitted:</span> {{ $file->created_at->format('M j, Y') }}
                 </div>
 
                 <h6 class="fw-bold text-start">Abstract</h6>
@@ -472,15 +549,13 @@
                     {{ $file->desc ?? 'No abstract available.' }}
                 </p>
 
-                <h6 class="fw-bold mt-4 text-start">Keywords</h6>
-                <div class="text-start">
-                    @foreach(explode(',', $file->auto_tag) as $tag)
-                    <span class="small text-start rounded me-1 mb-1 px-2 py-1"
-                        style="background-color:#EFF6FF; color:#3B5FBF;">
-                        {{ trim($tag) }}
-                    </span>
-                @endforeach
-                </div>
+                @if($file->instructor_feedback)
+                    {{-- Was shown to the instructor only — the admin made the
+                         final call with no visibility into what the adviser
+                         actually said about the paper. --}}
+                    <h6 class="fw-bold mt-4 text-start">Adviser Feedback</h6>
+                    <p class="text-muted text-start">{{ $file->instructor_feedback }}</p>
+                @endif
 
                 <div
                     class="alert alert-primary d-flex justify-content-between align-items-center mt-5 flex-wrap">
@@ -551,6 +626,10 @@
             </tbody>
 
             </table>
+
+            <div class="d-flex justify-content-center mt-3">
+                {{ $studFiles->links() }}
+            </div>
 
             </div>
 
@@ -747,6 +826,101 @@
         </div>
     </div>
 
+    <!-- Edit User modal — single shared instance, populated via JS from the
+         clicked row's data-* attributes (see script below) rather than one
+         modal per row. -->
+    <div class="modal fade" id="editUserModal" tabindex="-1">
+        <div class="modal-dialog modal-dialog-centered modal-lg">
+            <div class="modal-content border-0 rounded-4 shadow">
+
+                <div class="modal-header border-0 px-4 pt-4">
+                    <h3 class="fw-bold">Edit User</h3>
+
+                    <button type="button" class="btn-close" data-bs-dismiss="modal">
+                    </button>
+                </div>
+
+                <div class="modal-body px-4 pb-4">
+
+                    <form id="editUserForm" method="POST">
+                        @csrf
+                        @method('PATCH')
+
+                        <div class="mb-3">
+                            <label class="form-label fw-semibold">
+                                Role <span class="text-danger">*</span>
+                            </label>
+
+                            <select name="role" id="editUserRole" class="form-select form-select-lg rounded-3">
+                                <option value="student">Student</option>
+                                <option value="instructor">Instructor</option>
+                                <option value="admin">Admin</option>
+                            </select>
+                        </div>
+
+                        <div class="mb-3">
+                            <label class="form-label fw-semibold">
+                                Email <span class="text-danger">*</span>
+                            </label>
+
+                            <input type="email" name="email" id="editUserEmail" class="form-control form-control-lg rounded-3" required>
+                        </div>
+
+                        <div class="mb-3">
+                            <label class="form-label fw-semibold">
+                                User ID <span class="text-danger">*</span>
+                            </label>
+
+                            <input type="text" name="user_id" id="editUserUserId" class="form-control form-control-lg rounded-3" required>
+                        </div>
+
+                        <div class="mb-3">
+                            <label class="form-label fw-semibold">
+                                Full Name <span class="text-danger">*</span>
+                            </label>
+
+                            <input type="text" name="name" id="editUserName" class="form-control form-control-lg rounded-3" required>
+                        </div>
+
+                        <div class="mb-3">
+                            <label class="form-label fw-semibold">
+                                Year Level
+                            </label>
+
+                            <input type="text" name="year_level" id="editUserYearLevel" class="form-control form-control-lg rounded-3">
+                        </div>
+
+                        <div class="d-flex gap-3">
+                            <button type="submit" class="btn btn-primary flex-fill py-3 rounded-3 fw-semibold">
+                                Save Changes
+                            </button>
+
+                            <button type="button" class="btn btn-outline-secondary px-4 rounded-3" data-bs-dismiss="modal">
+                                Cancel
+                            </button>
+                        </div>
+
+                    </form>
+
+                </div>
+
+            </div>
+        </div>
+    </div>
+
+    <script>
+        document.getElementById('editUserModal')?.addEventListener('show.bs.modal', function (event) {
+            const btn = event.relatedTarget;
+            const form = document.getElementById('editUserForm');
+
+            form.action = '/admin/users/' + btn.dataset.id;
+            document.getElementById('editUserRole').value = btn.dataset.role;
+            document.getElementById('editUserEmail').value = btn.dataset.email;
+            document.getElementById('editUserUserId').value = btn.dataset.userId;
+            document.getElementById('editUserName').value = btn.dataset.name;
+            document.getElementById('editUserYearLevel').value = btn.dataset.yearLevel === 'null' ? '' : btn.dataset.yearLevel;
+        });
+    </script>
 
 
 
@@ -949,15 +1123,22 @@
                 <div class="d-flex flex-column flex-lg-row gap-2 align-items-stretch align-items-lg-center">
 
                     <!-- Search -->
-                    <div class="input-group" style="max-width: 750px;">
+                    <form method="GET" action="{{ route('admin') }}" class="input-group" style="max-width: 750px;">
+                        <input type="hidden" name="view" value="user">
+                        <input type="hidden" name="role" value="{{ $role }}">
+
                         <span class="input-group-text bg-light border-0 text-secondary px-2 py-1">
                             <i class="fa-solid fa-magnifying-glass"></i>
                         </span>
 
                         <input type="text"
+                            name="search"
+                            value="{{ $search }}"
                             class="form-control bg-light border-0 px-2 py-1"
-                            placeholder="Search by name, email, ID, or department...">
-                    </div>
+                            placeholder="Search by name, email, or ID...">
+
+                        <button type="submit" class="btn btn-outline-secondary border-0 bg-light">Search</button>
+                    </form>
 
 
                     <!-- Role Filters -->
@@ -987,7 +1168,7 @@
                 </div>
 
 
-                    <p class="text-secondary small mt-3 mb-2">Showing 12 of 58 users</p>
+                    <p class="text-secondary small mt-3 mb-2">Showing {{ $users->count() }} user{{ $users->count() === 1 ? '' : 's' }}</p>
 
                     <!-- Table -->
                     <div class="table-responsive">
@@ -1024,7 +1205,15 @@
                         </td>
 
                         <td class="text-end" style="font-size: 13px;">
-                            <button class="btn btn-outline-primary px-1 py-0">
+                            <button type="button" class="btn btn-outline-primary px-1 py-0"
+                                data-bs-toggle="modal"
+                                data-bs-target="#editUserModal"
+                                data-id="{{ $user->id }}"
+                                data-name="{{ $user->name }}"
+                                data-email="{{ $user->email }}"
+                                data-user-id="{{ $user->user_id }}"
+                                data-role="{{ $user->role }}"
+                                data-year-level="{{ $user->year_level }}">
                             <i class="fa-regular fa-pen-to-square fa-sm"></i>
                             Edit</button>
 
@@ -1345,17 +1534,5 @@ window.addEventListener('resize', function () {
 
 <!--list of users-->
 <script src="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.3/js/bootstrap.bundle.min.js"></script>
-<script>
-  document.querySelectorAll('.btn-group .btn').forEach(btn => {
-    btn.addEventListener('click', () => {
-      document.querySelectorAll('.btn-group .btn').forEach(b => {
-        b.classList.remove('btn-primary');
-        b.classList.add('btn-outline-secondary');
-      });
-      btn.classList.remove('btn-outline-secondary');
-      btn.classList.add('btn-primary');
-    });
-  });
-</script>
 
 @endsection

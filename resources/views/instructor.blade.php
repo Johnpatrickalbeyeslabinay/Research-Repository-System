@@ -125,7 +125,8 @@
 
             <h6 class="fw-bold mb-3">Change Password</h6>
 
-            <form>
+            <form action="{{ route('account.password.update') }}" method="POST">
+                @csrf
 
                 <div class="mb-3">
                     <label class="form-label fw-medium">
@@ -133,8 +134,13 @@
                     </label>
 
                     <input type="password"
-                           class="form-control"
+                           name="current_password"
+                           class="form-control @error('current_password') is-invalid @enderror"
                            placeholder="Enter current password">
+
+                    @error('current_password')
+                        <div class="invalid-feedback">{{ $message }}</div>
+                    @enderror
                 </div>
 
                 <div class="mb-3">
@@ -143,8 +149,13 @@
                     </label>
 
                     <input type="password"
-                           class="form-control"
+                           name="new_password"
+                           class="form-control @error('new_password') is-invalid @enderror"
                            placeholder="At least 8 characters">
+
+                    @error('new_password')
+                        <div class="invalid-feedback">{{ $message }}</div>
+                    @enderror
                 </div>
 
                 <div class="mb-4">
@@ -153,6 +164,7 @@
                     </label>
 
                     <input type="password"
+                           name="new_password_confirmation"
                            class="form-control"
                            placeholder="Repeat new password">
                 </div>
@@ -353,7 +365,7 @@
                                                             </strong>
 
                                                             <small class="text-secondary d-block text-truncate">
-                                                                {{ $file->name }}
+                                                                {{ implode(', ', $file->researcherNames()) }}
                                                             </small>
 
                                                         </div>
@@ -412,7 +424,13 @@
 
                 @foreach($studFiles as $file)
 
-                @if($file->adviser == Auth::user()->name)
+                {{-- $studFiles is already scoped to this adviser by adviser_id in
+                     InstructorController::index() — this used to re-filter by a
+                     string comparison ($file->adviser == Auth::user()->name)
+                     instead, which silently blanked this whole tab for any
+                     adviser whose display name had since changed. Kept as a
+                     defensive check, now against the actual FK. --}}
+                @if($file->adviser_id === Auth::id())
 
                     <!-- CARD -->
                     <div class="col-12">
@@ -583,84 +601,22 @@
 
                                     <h5 class="fw-bold mb-2"> {{ $file->title }} </h5>
 
-                                    <div class="text-muted small mb-4"> <span class="me-3">
-                                            <span> <i class="bi bi-download"></i>
-                                                {{ $file->downloads ?? 0 }} </span>
-                                    </div>
+                                    {{-- Was: "Author" = $file->name only (every co-author invisible),
+                                         "Year Published" = the upload date (not publication_year),
+                                         "Keywords" = a count of auto-generated title words. This adviser
+                                         is making an approve/reject decision on incomplete, sometimes
+                                         wrong, information without it. --}}
+                                    <x-research.meta :file="$file" />
 
-                                    <div class="row g-4 mb-4">
-
-                                        <div class="col-md-6">
-                                            <div class="d-flex align-items-center gap-3">
-                                                <div class="bg-primary bg-opacity-10 rounded-2 py-2 px-1 d-flex justify-content-center align-items-center"
-                                                    style="width:45px; height:45px background-color: #EFF6FF;">
-                                                    <i class="fa-regular fa-user text-primary"></i>
-                                                </div>
-
-                                                <div>
-                                                    <strong>Author</strong><br>
-                                                    {{ $file->name }}
-                                                </div>
-                                            </div>
-                                        </div>
-
-                                        <div class="col-md-6">
-                                            <div class="d-flex align-items-center gap-3">
-                                                <div class="bg-success bg-opacity-10 rounded-2 py-2 px-1 d-flex justify-content-center align-items-center"
-                                                    style="width:45px; height:45px;">
-                                                    <i class="fa-regular fa-calendar text-success"></i>
-                                                </div>
-
-                                                <div>
-                                                    <strong>Year Published</strong><br>
-                                                    {{ $file->created_at->format('Y') }}
-                                                </div>
-                                            </div>
-                                        </div>
-
-                                        <div class="col-md-6">
-                                            <div class="d-flex align-items-center gap-3">
-                                                <div class="bg-primary bg-opacity-10 rounded-2 py-2 px-1 d-flex justify-content-center align-items-center"
-                                                    style="width:45px; height:45px;">
-                                                    <i class="fa-regular fa-calendar-check text-primary"></i>
-                                                </div>
-
-                                                <div>
-                                                    <strong>Submitted</strong><br>
-                                                    {{ $file->created_at->format('M j, Y') }}
-                                                </div>
-                                            </div>
-                                        </div>
-
-                                        <div class="col-md-6">
-                                            <div class="d-flex align-items-center gap-3">
-                                                <div class="bg-success bg-opacity-10 rounded-2 py-2 px-1 d-flex justify-content-center align-items-center"
-                                                    style="width:45px; height:45px;">
-                                                    <i class="fa-solid fa-tags text-success"></i>
-                                                </div>
-
-                                                <div>
-                                                    <strong>Keywords</strong><br>
-                                                    {{ count(array_filter(explode(',', $file->auto_tag))) }} tags
-                                                </div>
-                                            </div>
-                                        </div>
-
+                                    <div class="mb-4">
+                                        <span class="text-muted">Submitted:</span>
+                                        {{ $file->created_at->format('M j, Y') }}
                                     </div>
 
                                     <h6 class="fw-bold">Abstract</h6>
                                     <p class="text-muted" style="text-align: justify;">
                                         {{ $file->desc ?? 'No abstract available.' }}
                                     </p>
-
-                                    <h6 class="fw-bold mt-4">Keywords</h6>
-                                    @foreach(explode(',', $file->auto_tag) as $tag)
-                                        <span class="small rounded me-1 mb-1 px-2 py-1"
-                                            style="background-color:#EFF6FF; color:#3B5FBF;">
-                                            {{ trim($tag) }}
-                                        </span>
-                                    @endforeach
-
 
                                     <!--file-->
                                     <div
@@ -694,22 +650,23 @@
                                                 Add Feedback / Comment
                                             </h5>
 
+                                            <form action="{{ route('instructor.research.feedback', $file->id) }}" method="POST">
+                                                @csrf
 
-                                            <!-- Comment -->
-                                            <div class="mb-3">
-                                                <textarea class="form-control form-control-sm" rows="4"
-                                                    placeholder="Enter your feedback, comments, or revision instructions..."></textarea>
-                                            </div>
+                                                <!-- Comment -->
+                                                <div class="mb-3">
+                                                    <textarea name="feedback" class="form-control form-control-sm" rows="4"
+                                                        placeholder="Enter your feedback, comments, or revision instructions...">{{ old('feedback', $file->instructor_feedback) }}</textarea>
+                                                </div>
 
+                                                <!-- Button -->
+                                                <button type="submit" class="rounded py-1 mt-3 text-white border-0"
+                                                    style="max-width:200px; width:100%; background: #072a89;">
 
-
-                                            <!-- Button -->
-                                            <button type="submit" class="rounded py-1 mt-3 text-white border-0"
-                                                style="max-width:200px; width:100%; background: #072a89;">
-
-                                                <i class="bi bi-chat-left me-2"></i>
-                                                Post Feedback
-                                            </button>
+                                                    <i class="bi bi-chat-left me-2"></i>
+                                                    Post Feedback
+                                                </button>
+                                            </form>
 
 
                                             @if($file->status == 'pending')
@@ -761,8 +718,25 @@
              <!-- ================= NOTIFICATION ================= -->
         <div class="tab-pane fade" id="notification">
 
-            <div class="row g-4 mt-3">
-                <strong>Notification</strong>
+            <div class="card mt-3 shadow-sm border-0 rounded-4">
+                <div class="card-body">
+                    <h5 class="fw-bold">Notifications</h5>
+
+                    @forelse($notifications as $notification)
+                        <div class="border-bottom py-3">
+                            <div class="fw-semibold {{ $notification->read_at ? 'text-secondary' : 'text-primary' }}">
+                                <i class="fa-solid fa-upload"></i>
+                                {{ $notification->data['message'] ?? 'Notification' }}
+                            </div>
+
+                            <small class="text-muted">
+                                {{ $notification->created_at->diffForHumans() }}
+                            </small>
+                        </div>
+                    @empty
+                        <p class="text-secondary">No notifications yet.</p>
+                    @endforelse
+                </div>
             </div>
 
         </div>

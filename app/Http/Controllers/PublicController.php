@@ -2,16 +2,18 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\UserFile;
-
+/**
+ * The public-facing /public listing is the exact same query and view
+ * logic as /repository, restricted to visitors who aren't even logged
+ * in — see RepositoryController::listing() for the shared implementation.
+ * Both controllers used to duplicate the same search/year-filter code
+ * (and the same bugs) independently; this just picks the "anonymous"
+ * branch of that one implementation.
+ */
 class PublicController extends Controller
 {
     public function index()
     {
-        $studFiles = UserFile::where('visibility', 'public')
-            ->where('status', 'approved')
-            ->get();
-
-        return view('public', compact('studFiles'));
+        return app(RepositoryController::class)->listing(publicOnly: true, view: 'public');
     }
 }

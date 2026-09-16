@@ -77,9 +77,14 @@
                     <div class="d-flex align-items-center">
 
                         <!-- Notification -->
-                        <button class="btn border-0 p-1 me-2" type="button">
+                        <a href="{{ route('notifications.index') }}" class="btn border-0 p-1 me-2 position-relative">
                             <i class="fa-regular fa-bell"></i>
-                        </button>
+                            @if(($unreadNotificationsCount ?? 0) > 0)
+                                <span class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger" style="font-size:0.55rem;">
+                                    {{ $unreadNotificationsCount }}
+                                </span>
+                            @endif
+                        </a>
 
                         <!-- Hamburger -->
                         <button class="navbar-toggler border-0 p-1" type="button"
@@ -311,19 +316,6 @@
 
                         <li class="nav-item mt-2">
 
-                            <a class="nav-link {{ request()->query('view') === 'research' ? 'text-white bg-primary rounded' : 'text-dark bg-light rounded' }}"
-                                href="{{ url('/admin?view=research') }}">
-
-                                <i class="fa-regular fa-file me-2"></i>
-
-                                Research Submissions
-
-                            </a>
-
-                        </li>
-
-                        <li class="nav-item mt-2">
-
                              <a class="nav-link active bg-primary rounded text-dark bg-light"
                                 href="{{ route('repository')  }}">
 
@@ -399,9 +391,13 @@
 
 
 
+<x-chat.widget />
+
     <!-- Bootstrap JS -->
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
 <script src="https://unpkg.com/lucide@latest"></script>
+
+    @vite(['resources/js/chat.js'])
 
   <script>
     lucide.createIcons();
