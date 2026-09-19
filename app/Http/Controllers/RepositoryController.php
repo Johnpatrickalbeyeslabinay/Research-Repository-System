@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\Sdg;
 use App\Models\UserFile;
+use App\Support\ResearchAccess;
 use Illuminate\Support\Facades\Auth;
 
 /**
@@ -64,12 +65,24 @@ class RepositoryController extends Controller
     public function show($id)
     {
         $file = UserFile::with(['authors', 'keywords', 'sdgs', 'adviserUser'])
-            // Private/pending research is hidden from the repository
-            // entirely (matches the listing's baseQuery()) — a direct
-            // guess at another id can't reach it either.
-            ->where('status', 'approved')
-            ->where('visibility', 'public')
             ->findOrFail($id);
+
+        // Delegated to App\Support\ResearchAccess rather than re-deriving
+        // the rule with a hardcoded approved+public filter, which was
+        // STRICTER than the app's actual access rule and contradicted every
+        // other surface. A student opening their own pending submission —
+        // or an adviser opening one they're reviewing, or an admin opening
+        // anything — got a 404 for research they are explicitly allowed to
+        // read. The AI assistant made that visible: it correctly cites
+        // research the asking user may access (VectorSearchService applies
+        // this same predicate inside its SQL), and every one of those
+        // citations linked here and 404'd.
+        //
+        // This does NOT widen public access: ResearchAccess::allows(null,
+        // $file) is true only for approved+public, so an anonymous visitor
+        // still sees exactly what they saw before, and a guessed id still
+        // can't reach anyone else's private research.
+        abort_unless(ResearchAccess::allows(Auth::user(), $file), 404);
 
         // /research/{id} is not behind the 'auth' middleware (see
         // routes/web.php) — /public visitors are anonymous by design.
