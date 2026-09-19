@@ -42,12 +42,27 @@ return [
     'retrieval' => [
         // Rows pulled from pgvector before reranking narrows them down.
         'candidates' => (int) env('CHAT_CANDIDATES', 24),
-        // Chunks that actually reach the LLM after reranking.
+        // Chunks that reach the LLM for a question that needs BREADTH —
+        // a comparison across studies, or broad discovery.
         'final_chunks' => (int) env('CHAT_FINAL_CHUNKS', 8),
+        // The cheaper default for an ordinary factual question, which is
+        // answered from one or two passages of a single study: the last
+        // couple of chunks there are near-duplicates that cost tokens
+        // without adding evidence. See ChunkReranker::chunkBudget().
+        'final_chunks_focused' => (int) env('CHAT_FINAL_CHUNKS_FOCUSED', 6),
         'max_per_document' => (int) env('CHAT_MAX_PER_DOC', 3),
         'max_documents' => (int) env('CHAT_MAX_DOCS', 5),
         // Applied in PHP after the query — NOT as a SQL WHERE on the
         // distance expression, which would defeat the HNSW index.
+        // Deliberately ONE threshold, not one per intent. A looser bar for
+        // broad questions was tried and measured worse on both axes: it
+        // never improved recall (every broad fixture already answered
+        // "grounded, cited" at 0.25), and it pulled out-of-corpus questions
+        // like "what studies discuss blockchain?" off the zero-token
+        // no-evidence path and into a ~2,000-token LLM call that only
+        // declined anyway. Broad DISCOVERY questions are handled by
+        // App\Services\Retrieval\CatalogService now, which is what actually
+        // fixed them — so the chunk path can afford to stay strict.
         'min_similarity' => (float) env('CHAT_MIN_SIMILARITY', 0.25),
         // Must only ever be set via `SET LOCAL` inside a DB::transaction() —
         // the app connects through PgBouncer in transaction pooling mode
@@ -105,14 +120,43 @@ return [
 
     /*
     |--------------------------------------------------------------------------
+    | Follow-up condensing
+    |--------------------------------------------------------------------------
+    |
+    | App\Services\Chat\QueryCondenser rewrites "which one used CNN?" into a
+    | standalone query before it is embedded — without this, retrieval
+    | embeds the pronoun and fetches the wrong chunks, which is what made
+    | the chatbot feel stateless even though history was already in the
+    | prompt. The deterministic path costs nothing; 'llm_fallback' only
+    | fires for ordinal/contrastive references ("the second one", "compare
+    | them") that a prefix genuinely cannot resolve, and is capped at 40
+    | output tokens.
+    |
+    */
+
+    'condenser' => [
+        'llm_fallback' => (bool) env('CHAT_CONDENSER_LLM_FALLBACK', true),
+    ],
+
+    /*
+    |--------------------------------------------------------------------------
     | Context / prompt budget
     |--------------------------------------------------------------------------
+    |
+    | 'history_messages' is 8 (4 turns) rather than the original 4 (2 turns)
+    | because two turns is not a conversation. The token cost of the extra
+    | turns is paid for by 'max_history_assistant_chars': a prior assistant
+    | answer is resent only as a short reminder of what was said, not in
+    | full. Net prompt size is roughly unchanged; conversational reach
+    | doubles.
+    |
     */
 
     'context' => [
         'max_evidence_tokens' => (int) env('CHAT_MAX_EVIDENCE_TOKENS', 4000),
         'max_chunk_chars' => (int) env('CHAT_MAX_CHUNK_CHARS', 1600),
-        'history_messages' => (int) env('CHAT_HISTORY_MESSAGES', 4),
+        'history_messages' => (int) env('CHAT_HISTORY_MESSAGES', 8),
+        'max_history_assistant_chars' => (int) env('CHAT_MAX_HISTORY_ASSISTANT_CHARS', 400),
         'max_question_chars' => 1000,
     ],
 

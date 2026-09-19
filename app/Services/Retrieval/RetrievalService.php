@@ -4,6 +4,7 @@ namespace App\Services\Retrieval;
 
 use App\Models\User;
 use App\Models\UserFile;
+use App\Services\Chat\QueryCondenser;
 use App\Services\Research\EmbeddingService;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Cache;
@@ -24,6 +25,7 @@ class RetrievalService
         private EmbeddingService $embedder,
         private HybridSearchService $hybridSearch,
         private ChunkReranker $reranker,
+        private QueryCondenser $condenser,
     ) {}
 
     /**
@@ -39,10 +41,25 @@ class RetrievalService
     ): RetrievalResult {
         $plan = $this->planner->plan($question, $activeContext, $pinnedStudFileId);
 
-        $queryVector = $this->cachedQueryEmbedding($plan['topic']);
+        // Resolve the follow-up BEFORE embedding. A pinned single-research
+        // chat is already scoped to one document, so there is nothing
+        // ambiguous to resolve and nothing to gain from rewriting.
+        $condensed = $pinnedStudFileId === null
+            ? $this->condenser->condense($plan['topic'], $activeContext)
+            : ['topic' => $plan['topic'], 'is_follow_up' => false, 'method' => 'none'];
+
+        // Only the SEARCH text changes. $plan['topic'] stays as the planner
+        // derived it from the user's literal words, and the answer prompt
+        // still receives the real question — a rewritten query must never
+        // become a rewritten question.
+        $searchText = $condensed['topic'];
+        $plan['is_follow_up'] = $condensed['is_follow_up'];
+        $plan['condense_method'] = $condensed['method'];
+
+        $queryVector = $this->cachedQueryEmbedding($searchText);
 
         $candidates = (int) config('chat.retrieval.candidates', 24);
-        $searchResult = $this->hybridSearch->search($queryVector, $plan['topic'], $user, $plan, $candidates);
+        $searchResult = $this->hybridSearch->search($queryVector, $searchText, $user, $plan, $candidates);
 
         $reranked = $this->reranker->rerank($searchResult['chunks'], $plan['is_comparison'], $plan['is_broad']);
 

@@ -52,7 +52,28 @@ class ChunkReranker
             ? $this->pullOneRepresentativePerDocumentToFront($weighted)
             : $weighted;
 
-        return $this->select($ordered);
+        return $this->select($ordered, $this->chunkBudget($isComparison, $isBroad));
+    }
+
+    /**
+     * How many chunks this question actually needs.
+     *
+     * A comparison or broad-discovery question spends its budget across
+     * several documents, so it keeps the full allowance. An ordinary
+     * factual question is answered from one or two passages of a single
+     * study, where the 7th and 8th chunks are near-duplicates that cost
+     * tokens without adding evidence — config('chat.retrieval.final_chunks')
+     * stays the ceiling, and 'final_chunks_focused' is the cheaper default.
+     */
+    private function chunkBudget(bool $isComparison, bool $isBroad): int
+    {
+        $max = (int) config('chat.retrieval.final_chunks', 8);
+
+        if ($isComparison || $isBroad) {
+            return $max;
+        }
+
+        return min($max, (int) config('chat.retrieval.final_chunks_focused', 6));
     }
 
     private function applySectionWeights(array $chunks): array
@@ -92,9 +113,8 @@ class ChunkReranker
         return array_merge($representatives, $rest);
     }
 
-    private function select(array $ordered): array
+    private function select(array $ordered, int $maxChunks): array
     {
-        $maxChunks = (int) config('chat.retrieval.final_chunks', 8);
         $maxPerDoc = (int) config('chat.retrieval.max_per_document', 3);
         $maxDocs = (int) config('chat.retrieval.max_documents', 5);
         $maxTokens = (int) config('chat.context.max_evidence_tokens', 4000);

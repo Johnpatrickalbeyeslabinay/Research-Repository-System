@@ -6,6 +6,7 @@ use App\Models\ChatConversation;
 use App\Models\User;
 use App\Services\Chat\ChatAnswerService;
 use App\Services\Chat\CitationBuilder;
+use App\Services\Chat\ConversationContext;
 use App\Services\Chat\IntentDetector;
 use App\Services\Chat\PromptBuilder;
 use App\Services\Retrieval\CatalogService;
@@ -66,6 +67,23 @@ class EvaluateChatbotCommand extends Command
 
             if ($runningAs === null) {
                 $rows[] = [$fixture['type'], Str::limit($fixture['question'], 45), '—', '—', 'skipped: no probe user'];
+
+                continue;
+            }
+
+            if ($fixture['type'] === 'conversation') {
+                foreach ($this->evaluateConversationFixture(
+                    $fixture,
+                    $runningAs,
+                    $retrieval,
+                    $prompts,
+                    $answerer,
+                    $citations,
+                    $answeredCount,
+                    $noEvidenceCount
+                ) as $row) {
+                    $rows[] = $row;
+                }
 
                 continue;
             }
@@ -140,7 +158,7 @@ class EvaluateChatbotCommand extends Command
             $conversation->delete();
         }
 
-        $this->table(['Type', 'Question', 'Evidence?', 'Citations', 'Outcome'], $rows);
+        $this->table(['Type', 'Question', 'Evidence / scope', 'Citations', 'Outcome'], $rows);
         $this->newLine();
         $this->line("Answered with evidence: {$answeredCount}");
         $this->line("No-evidence (zero-token) responses: {$noEvidenceCount}");
@@ -236,6 +254,104 @@ class EvaluateChatbotCommand extends Command
     }
 
     /**
+     * A multi-turn fixture: several questions down ONE conversation, with
+     * active_context carried between turns exactly as
+     * ChatController::message() does.
+     *
+     * Single-question fixtures structurally cannot catch the statelessness
+     * failure this exists to measure — a follow-up only misbehaves in the
+     * presence of a previous turn. What matters per turn is whether
+     * retrieval found the RIGHT documents, so the row reports the scope
+     * each turn resolved to.
+     *
+     * @param  array{type: string, turns: string[]}  $fixture
+     * @return array<int, array<int, string|int>>  one table row per turn
+     */
+    private function evaluateConversationFixture(
+        array $fixture,
+        User $runningAs,
+        RetrievalService $retrieval,
+        PromptBuilder $prompts,
+        ChatAnswerService $answerer,
+        CitationBuilder $citations,
+        int &$answeredCount,
+        int &$noEvidenceCount
+    ): array {
+        $context = app(ConversationContext::class);
+        $conversation = ChatConversation::create(['user_id' => $runningAs->id]);
+        $rows = [];
+
+        foreach ($fixture['turns'] as $i => $question) {
+            $conversation->refresh();
+
+            $conversation->messages()->create(['role' => 'user', 'content' => $question]);
+
+            $result = $retrieval->retrieve(
+                question: $question,
+                user: $runningAs,
+                activeContext: $conversation->active_context,
+            );
+
+            $isFollowUp = $result->filters['is_follow_up'] ?? false;
+            $scoped = ! empty($result->filters['stud_file_ids']);
+            $citationCount = 0;
+            $answerText = '';
+
+            if ($result->isEmpty()) {
+                $noEvidenceCount++;
+                $outcome = 'no evidence';
+            } else {
+                $answeredCount++;
+
+                try {
+                    $prompt = $prompts->build($conversation, $result, $question);
+                    $answer = $answerer->answer($prompt['messages']);
+                    $built = $citations->build($answer['content'], $prompt['evidence_order'], $result->files);
+                    $citationCount = count($built['citations']);
+                    $answerText = $built['text'];
+                    $outcome = $citationCount > 0 ? 'grounded, cited' : 'answered, NO citations';
+
+                    $conversation->messages()->create([
+                        'role' => 'assistant',
+                        'content' => $answerText,
+                    ]);
+
+                    $this->showAnswer($question, $answerText, $answer['prompt_tokens'], $answer['completion_tokens']);
+                } catch (\Throwable $e) {
+                    $outcome = 'error: '.Str::limit($e->getMessage(), 30);
+                }
+            }
+
+            $context->update($conversation, $result, $isFollowUp);
+
+            // The signal that continuity actually worked: a follow-up should
+            // be detected as one AND resolve to a document scope, rather
+            // than silently re-searching the whole corpus.
+            $marks = [];
+            $marks[] = $isFollowUp ? 'follow-up' : 'fresh';
+            if ($scoped) {
+                $marks[] = 'scoped('.count($result->filters['stud_file_ids']).')';
+            }
+            if (($result->filters['condense_method'] ?? 'none') !== 'none') {
+                $marks[] = $result->filters['condense_method'];
+            }
+
+            $rows[] = [
+                $i === 0 ? $fixture['type'] : '  ↳ turn '.($i + 1),
+                Str::limit($question, 45),
+                implode(' ', $marks),
+                $citationCount ?: '—',
+                $outcome,
+            ];
+        }
+
+        $conversation->messages()->delete();
+        $conversation->delete();
+
+        return $rows;
+    }
+
+    /**
      * fixtureQuestions() narrowed by --filter, so a single category can be
      * iterated on without paying for (or waiting on) the whole set.
      *
@@ -251,8 +367,9 @@ class EvaluateChatbotCommand extends Command
 
         return array_values(array_filter(
             $this->fixtureQuestions(),
+            // A 'conversation' fixture carries 'turns', not 'question'.
             fn ($f) => Str::contains($f['type'], $filter, ignoreCase: true)
-                || Str::contains($f['question'], $filter, ignoreCase: true)
+                || Str::contains($f['question'] ?? implode(' ', $f['turns'] ?? []), $filter, ignoreCase: true)
         ));
     }
 
@@ -331,6 +448,18 @@ class EvaluateChatbotCommand extends Command
             // exactly where a permission model tends to spring a leak.
             ['type' => 'catalog-permission-probe', 'question' => 'list repository available', 'disallowed_stud_file_ids' => [26, 29, 30, 33]],
 
+            // Multi-turn continuity — the "the chatbot is stateless"
+            // complaint. Each ↳ turn is a follow-up that carries no topic of
+            // its own and must resolve against the previous turn's
+            // documents (see App\Services\Chat\QueryCondenser and
+            // ConversationContext).
+            ['type' => 'conversation', 'turns' => [
+                'What research is available about seaweed diversity?',
+                'what methodology did it use?',
+                'summarize the findings of this research',
+                'why did the results differ between seasons?',
+            ]],
+
             ['type' => 'topic-discovery', 'question' => 'What research is available about seaweed diversity?'],
             ['type' => 'methodology', 'question' => 'What methodology was used to survey the seaweed sites?'],
             ['type' => 'findings', 'question' => 'What were the key findings about seaweed species dominance?'],
@@ -339,11 +468,18 @@ class EvaluateChatbotCommand extends Command
             ['type' => 'sdg-filter', 'question' => 'Which studies support SDG 4?'],
             ['type' => 'year-filter', 'question' => 'What studies were published in 2026?'],
             ['type' => 'author-filter', 'question' => 'What research did John Patrick Labinay work on?'],
-            // Deliberately out-of-corpus — the correct behavior is
-            // "no evidence found", not a hallucinated answer.
-            ['type' => 'unanswerable', 'question' => 'What research is available about rice disease detection using AI?'],
+            // Deliberately out-of-corpus. The correct behavior is to
+            // decline — ideally via the zero-token no-evidence path, but
+            // an explicit "the evidence doesn't cover this" is equally
+            // correct and simply costs more. What must NEVER happen is a
+            // confident answer, or a citation to an unrelated study.
+            //
+            // These are pinned to the research path on purpose: the catalog
+            // path has its own out-of-corpus fixtures above, and this is
+            // where chunk-level grounding honesty is measured.
             ['type' => 'unanswerable', 'question' => 'What studies discuss blockchain applications in supply chains?'],
             ['type' => 'unanswerable', 'question' => 'Summarize the findings on renewable energy adoption.'],
+            ['type' => 'catalog', 'question' => 'find research about rice disease detection'],
             // stud_file_id 26 is private+pending, owned by user id 2 — the
             // probe user has no relation to it at all and must never
             // retrieve chunks from it, by any path (vector or lexical).

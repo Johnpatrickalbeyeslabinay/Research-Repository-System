@@ -266,12 +266,27 @@ class PromptBuilder
             ->reverse()
             ->values();
 
-        return $recent->map(function ($message) {
-            $content = $message->role === 'assistant'
-                ? preg_replace('/\[\d+\]/', '', $message->content)
-                : $message->content;
+        $maxAssistantChars = (int) config('chat.context.max_history_assistant_chars', 400);
 
-            return ['role' => $message->role, 'content' => trim((string) $content)];
+        return $recent->map(function ($message) use ($maxAssistantChars) {
+            if ($message->role !== 'assistant') {
+                // User turns are short and carry the actual intent — never
+                // truncated.
+                return ['role' => $message->role, 'content' => trim((string) $message->content)];
+            }
+
+            $content = trim((string) preg_replace('/\[\d+\]/', '', $message->content));
+
+            // A prior answer is resent as a REMINDER of what was said, not
+            // as a transcript — the model needs to know the thread, not to
+            // re-read three paragraphs of it. This truncation is what pays
+            // for doubling history_messages (4 -> 8) at roughly unchanged
+            // prompt size.
+            if (mb_strlen($content) > $maxAssistantChars) {
+                $content = mb_substr($content, 0, $maxAssistantChars).'…';
+            }
+
+            return ['role' => $message->role, 'content' => $content];
         })->all();
     }
 
@@ -302,7 +317,32 @@ class PromptBuilder
             $bits[] = 'filters: '.implode('; ', $filterBits);
         }
 
-        return empty($bits) ? null : 'Conversation context (from earlier in this chat, not evidence): '.implode('; ', $bits).'.';
+        if (empty($bits) && empty($activeContext['documents'])) {
+            return null;
+        }
+
+        $line = 'Conversation context (from earlier in this chat, not evidence): '
+            .(empty($bits) ? '' : implode('; ', $bits).'.');
+
+        // Naming the documents already discussed is what lets the model
+        // resolve "the second one" or "the seaweed study". Lettered, never
+        // numbered: [n] markers are reserved for THIS turn's citable
+        // evidence, and reusing them here would collide with
+        // App\Services\Chat\CitationBuilder's marker parsing.
+        if (! empty($activeContext['documents'])) {
+            $letter = 'A';
+            $named = [];
+
+            foreach ($activeContext['documents'] as $title) {
+                $named[] = "({$letter}) \"{$title}\"";
+                $letter++;
+            }
+
+            $line .= ' Studies discussed earlier, in order: '.implode('; ', $named)
+                .'. Refer to them by title, and cite them only from this turn\'s evidence.';
+        }
+
+        return trim($line);
     }
 
     /**

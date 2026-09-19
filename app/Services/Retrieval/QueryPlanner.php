@@ -2,6 +2,7 @@
 
 namespace App\Services\Retrieval;
 
+use App\Services\Chat\QueryCondenser;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
 
@@ -21,10 +22,16 @@ class QueryPlanner
 {
     private const COMPARISON_PATTERN = '/\b(compare|comparison|versus|vs\.?|difference between|which one|both studies)\b/i';
 
-    // Only consulted when NO other filter matched at all — see plan().
-    // Deliberately includes generic pronouns ("it", "them"); that's safe
-    // specifically because it only fires alongside that precondition.
-    private const BACK_REFERENCE_PATTERN = '/\b(which one|that study|these studies|those studies|this one|the study|it|them)\b/i';
+    // Shared with App\Services\Chat\QueryCondenser so the two can never
+    // disagree about what counts as a follow-up: the condenser rewrites the
+    // query text and this class narrows the retrieval scope, and a question
+    // that gets one treatment but not the other produces exactly the
+    // confusing half-resolved answers this pairing exists to prevent.
+    //
+    // Deliberately includes generic pronouns ("it", "them"); that stays safe
+    // because scope only widens to prior documents when there IS prior
+    // context to widen to (see resolveScope()).
+    private const BACK_REFERENCE_PATTERN = QueryCondenser::BACK_REFERENCE_PATTERN;
 
     private const AUTHOR_PATTERN = '/\b(?:by|authored by|written by)\s+([A-Z][\w.\'-]+(?:\s+[A-Z][\w.\'-]+){0,3})/u';
 
@@ -63,7 +70,7 @@ class QueryPlanner
 
         $isComparison = (bool) preg_match(self::COMPARISON_PATTERN, $question);
 
-        $studFileIds = $this->resolveScope($pinnedStudFileId, $hasAnyFilter, $activeContext, $question);
+        $studFileIds = $this->resolveScope($pinnedStudFileId, $activeContext, $question);
 
         $topic = trim(preg_replace('/\s+/', ' ', $topic));
         $topic = $topic === '' ? trim($question) : $topic;
@@ -87,25 +94,41 @@ class QueryPlanner
     }
 
     /**
-     * Single-research chat always wins. Otherwise, only reuse the
-     * previous turn's research ids as a retrieval scope when THIS question
-     * carries no filter of its own and contains a back-reference — e.g.
-     * "show me studies about rice disease" (no scope) then "which one used
-     * CNN?" (no filters of its own, but "which one" + prior research_ids
+     * Single-research chat always wins. Otherwise, reuse the documents
+     * already under discussion as a retrieval scope whenever THIS question
+     * refers back to them — e.g. "show me studies about rice disease" (no
+     * scope) then "which one used CNN?" ("which one" + prior research_ids
      * means: search within those, not the whole corpus).
+     *
+     * A back-reference now keeps the prior scope even when the question
+     * ALSO carries a filter. The original rule bailed out entirely on any
+     * filter, so "of those, which are from 2025?" silently abandoned "those"
+     * and re-searched the whole corpus by year — the opposite of what was
+     * asked. RetrievalFilterSql::build() already ANDs stud_file_ids with
+     * the other filters, so narrowing *within* the scope composes for free;
+     * and clearNarrowFilters() deliberately preserves stud_file_ids, so a
+     * starvation retry can't quietly widen it back out.
+     *
+     * Falls back from this turn's documents to the rolling window when the
+     * former is empty — a back-reference can outlive a single no-evidence
+     * turn (see App\Services\Chat\ConversationContext).
      *
      * @return int[]
      */
-    private function resolveScope(?int $pinnedStudFileId, bool $hasAnyFilter, ?array $activeContext, string $question): array
+    private function resolveScope(?int $pinnedStudFileId, ?array $activeContext, string $question): array
     {
         if ($pinnedStudFileId !== null) {
             return [$pinnedStudFileId];
         }
 
+        if (! preg_match(self::BACK_REFERENCE_PATTERN, $question)) {
+            return [];
+        }
+
         $priorIds = $activeContext['research_ids'] ?? [];
 
-        if ($hasAnyFilter || empty($priorIds) || ! preg_match(self::BACK_REFERENCE_PATTERN, $question)) {
-            return [];
+        if (empty($priorIds)) {
+            $priorIds = $activeContext['recent_research_ids'] ?? [];
         }
 
         return array_values(array_map('intval', $priorIds));

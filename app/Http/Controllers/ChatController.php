@@ -124,6 +124,7 @@ class ChatController extends Controller
 
         $suggestedResearch = [];
         $result = null;
+        $catalogResult = null;
 
         // Zero-token, zero-latency path — "hi" or "thanks" is not a
         // research question, and running it through retrieval just
@@ -216,7 +217,7 @@ class ChatController extends Controller
                 ? null
                 : $this->retrieval->topicVector($plan['topic']);
 
-            $catalog = $this->catalog->browse(Auth::user(), $plan, $queryVector);
+            $catalog = $catalogResult = $this->catalog->browse(Auth::user(), $plan, $queryVector);
 
             if ($catalog->isEmpty()) {
                 // Zero-token path — nothing to describe, so nothing worth
@@ -419,13 +420,20 @@ class ChatController extends Controller
             }
         }
 
-        // Only a real retrieval turn has anything worth folding into the
-        // conversation's active_context — a greeting/acknowledgement
-        // leaves whatever topic/filters/research_ids were already there
-        // alone (see ConversationContext::update()'s no-evidence handling
-        // for the same reasoning).
+        // Only a real retrieval or catalog turn has anything worth folding
+        // into the conversation's active_context — a greeting/
+        // acknowledgement leaves whatever topic/filters/research_ids were
+        // already there alone (see ConversationContext::update()'s
+        // no-evidence handling for the same reasoning).
+        //
+        // is_follow_up matters here: it tells ConversationContext to keep
+        // the PRIOR topic rather than overwrite it with this turn's
+        // pronoun-shaped one ("which one", "summarize it"), which is what
+        // lets a third turn still resolve against the real subject.
         if ($result !== null) {
-            $this->context->update($conversation, $result);
+            $this->context->update($conversation, $result, $result->filters['is_follow_up'] ?? false);
+        } elseif ($catalogResult !== null) {
+            $this->context->updateFromCatalog($conversation, $catalogResult);
         }
 
         if ($conversation->message_count === 0) {

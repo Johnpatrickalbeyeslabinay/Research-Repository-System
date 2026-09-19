@@ -19,6 +19,102 @@ function safeInit(label, fn) {
     }
 }
 
+// --- Minimal markdown rendering -------------------------------------------
+//
+// The model emits **bold** and numbered/bulleted lists, especially on
+// catalog turns (App\Services\Retrieval\CatalogService), which answer with
+// a list of studies. Those were previously set via .textContent and showed
+// up as literal "**Title:**" and "1. " runs of text.
+//
+// Everything below builds DOM NODES — never innerHTML. Model output is
+// untrusted (it restates text extracted from user-uploaded PDFs), so the
+// original XSS posture of .textContent is preserved exactly: no string of
+// model output is ever parsed as HTML. Deliberately tiny: bold, italic,
+// inline code, lists, paragraphs. No links, images, tables or raw HTML —
+// nothing here needs them, and each one is another way to be wrong.
+
+const INLINE_PATTERN = /(\*\*[^*]+\*\*|__[^_]+__|\*[^*\n]+\*|`[^`\n]+`)/g;
+
+function appendInline(parent, text) {
+    for (const part of text.split(INLINE_PATTERN)) {
+        if (!part) continue;
+
+        let el = null;
+
+        if (part.length > 4 && part.startsWith('**') && part.endsWith('**')) {
+            el = document.createElement('strong');
+            el.textContent = part.slice(2, -2);
+        } else if (part.length > 4 && part.startsWith('__') && part.endsWith('__')) {
+            el = document.createElement('strong');
+            el.textContent = part.slice(2, -2);
+        } else if (part.length > 2 && part.startsWith('*') && part.endsWith('*')) {
+            el = document.createElement('em');
+            el.textContent = part.slice(1, -1);
+        } else if (part.length > 2 && part.startsWith('`') && part.endsWith('`')) {
+            el = document.createElement('code');
+            el.textContent = part.slice(1, -1);
+        }
+
+        parent.appendChild(el || document.createTextNode(part));
+    }
+}
+
+// Groups consecutive list lines into one <ul>/<ol> and everything else into
+// <p>, so a list doesn't render as a stack of one-item lists.
+function renderMarkdownInto(container, text) {
+    container.textContent = '';
+
+    const lines = String(text ?? '').replace(/\r\n/g, '\n').split('\n');
+    let list = null;
+    let paragraph = null;
+
+    const closeList = () => { list = null; };
+    const closeParagraph = () => { paragraph = null; };
+
+    for (const line of lines) {
+        const bullet = line.match(/^\s*[-*+]\s+(.*)$/);
+        const numbered = line.match(/^\s*\d+[.)]\s+(.*)$/);
+
+        if (bullet || numbered) {
+            closeParagraph();
+            const wanted = bullet ? 'UL' : 'OL';
+
+            if (!list || list.tagName !== wanted) {
+                list = document.createElement(bullet ? 'ul' : 'ol');
+                list.className = 'mb-2 ps-4';
+                container.appendChild(list);
+            }
+
+            const li = document.createElement('li');
+            appendInline(li, (bullet ? bullet[1] : numbered[1]).trim());
+            list.appendChild(li);
+            continue;
+        }
+
+        closeList();
+
+        if (line.trim() === '') {
+            closeParagraph();
+            continue;
+        }
+
+        if (!paragraph) {
+            paragraph = document.createElement('p');
+            paragraph.className = 'mb-2';
+            container.appendChild(paragraph);
+        } else {
+            // A soft line break inside the same paragraph.
+            paragraph.appendChild(document.createElement('br'));
+        }
+
+        appendInline(paragraph, line.trim());
+    }
+
+    // Drop the trailing margin so the sources list sits tight under the text.
+    const last = container.lastElementChild;
+    if (last) last.classList.remove('mb-2');
+}
+
 function initChatWidget(root) {
     const csrfInput = document.getElementById('ai-chat-csrf');
     const storeUrl = root.dataset.storeUrl;
@@ -112,7 +208,9 @@ function initChatWidget(root) {
 
     function renderAssistantMessage(content, citations, question, suggestedResearch) {
         const node = tplAssistant.content.firstElementChild.cloneNode(true);
-        node.querySelector('[data-role="content"]').textContent = content;
+        // Markdown for assistant turns only — the model is the only source
+        // that emits it. User text and error text stay literal.
+        renderMarkdownInto(node.querySelector('[data-role="content"]'), content);
 
         const sourcesEl = node.querySelector('[data-role="sources"]');
         (citations || []).forEach((citation) => {
@@ -161,7 +259,11 @@ function initChatWidget(root) {
 
     function renderErrorAsAssistantTurn(message, question) {
         const node = renderAssistantMessage(message, [], question);
-        node.querySelector('[data-role="content"]').classList.add('text-danger');
+        const contentEl = node.querySelector('[data-role="content"]');
+        // Error copy is ours, not the model's — render it literally rather
+        // than letting a stray asterisk in an upstream message be styled.
+        contentEl.textContent = message;
+        contentEl.classList.add('text-danger');
         return node;
     }
 
