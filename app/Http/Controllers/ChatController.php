@@ -11,8 +11,11 @@ use App\Services\Chat\ChatAnswerService;
 use App\Services\Chat\CitationBuilder;
 use App\Services\Chat\ConversationContext;
 use App\Services\Chat\GreetingDetector;
+use App\Services\Chat\IntentDetector;
 use App\Services\Chat\PlatformQuestionDetector;
 use App\Services\Chat\PromptBuilder;
+use App\Services\Retrieval\CatalogService;
+use App\Services\Retrieval\QueryPlanner;
 use App\Services\Retrieval\RetrievalService;
 use App\Support\ChatLlmCallTracker;
 use App\Support\ChatQuota;
@@ -38,6 +41,9 @@ class ChatController extends Controller
         private ChatLlmCallTracker $llmCallTracker,
         private GreetingDetector $greetings,
         private PlatformQuestionDetector $platformQuestions,
+        private IntentDetector $intents,
+        private QueryPlanner $planner,
+        private CatalogService $catalog,
     ) {}
 
     /** Last 20 conversations, most recently active first. */
@@ -191,6 +197,118 @@ class ChatController extends Controller
                 'chunks_retrieved' => 0,
                 'success' => true,
             ]);
+        } elseif ($conversation->stud_file_id === null && $this->intents->isCatalogQuestion($question)) {
+            // Document-level path: "what research is available?", "recommend
+            // papers about fish", "how many studies are there?". These ask
+            // what EXISTS, and the answer lives in stud_file metadata — no
+            // chunk of any PDF contains a list of the repository's contents,
+            // so running these through chunk retrieval matched nothing above
+            // min_similarity and always produced the no-evidence reply
+            // (verified live against a fully indexed corpus). Skipped
+            // entirely for a pinned single-research chat, which has nothing
+            // to browse. See App\Services\Retrieval\CatalogService.
+            $plan = $this->planner->plan($question, $conversation->active_context, null);
+
+            // A bare inventory question ("list repository available") has no
+            // real topic — embedding it produces a meaningless vector, so
+            // skip the semantic arm and the embedding call with it.
+            $queryVector = $this->intents->isBareInventory($question)
+                ? null
+                : $this->retrieval->topicVector($plan['topic']);
+
+            $catalog = $this->catalog->browse(Auth::user(), $plan, $queryVector);
+
+            if ($catalog->isEmpty()) {
+                // Zero-token path — nothing to describe, so nothing worth
+                // asking the LLM to describe. Deliberately does NOT mark
+                // ChatLlmCallTracker, so it never burns the daily quota.
+                $assistantMessage = $conversation->messages()->create([
+                    'role' => 'assistant',
+                    'content' => $this->catalog->emptyMessage($plan),
+                    'retrieval_meta' => [
+                        'skipped' => 'catalog_empty',
+                        'intent' => IntentDetector::CATALOG,
+                        'filters' => $plan,
+                    ],
+                ]);
+
+                AiUsageLog::record([
+                    'user_id' => Auth::id(),
+                    'conversation_id' => $conversation->id,
+                    'request_id' => $requestId,
+                    'operation' => 'catalog',
+                    'model' => 'none',
+                    'chunks_retrieved' => 0,
+                    'success' => true,
+                ]);
+            } else {
+                $prompt = $this->prompts->buildCatalog($conversation, $catalog, $question);
+
+                try {
+                    $answer = $this->answerer->answer(
+                        $prompt['messages'],
+                        (int) config('chat.catalog.max_output_tokens', 450)
+                    );
+                    $this->llmCallTracker->markCalled();
+                } catch (ChatUnavailableException $e) {
+                    AiUsageLog::record([
+                        'user_id' => Auth::id(),
+                        'conversation_id' => $conversation->id,
+                        'request_id' => $requestId,
+                        'operation' => 'catalog',
+                        'model' => config('chat.models.answer'),
+                        'chunks_retrieved' => $catalog->documents->count(),
+                        'success' => false,
+                        'error_code' => class_basename($e),
+                    ]);
+
+                    return response()->json(['success' => false, 'message' => $e->getMessage()], 503);
+                }
+
+                // CitationBuilder consumes the catalog's synthetic
+                // evidence_order exactly as it does a research turn's real
+                // chunks — see PromptBuilder::buildCatalog().
+                $built = $this->citations->build($answer['content'], $prompt['evidence_order'], $catalog->files());
+
+                // Same guarantee as the research path: if the model listed
+                // studies without citing them, the user still gets something
+                // clickable rather than an un-actionable wall of titles.
+                if (empty($built['citations'])) {
+                    $suggestedResearch = $this->suggestedResearchCards($catalog->documentIds());
+                }
+
+                $assistantMessage = $conversation->messages()->create([
+                    'role' => 'assistant',
+                    'content' => $built['text'],
+                    'citations' => $built['citations'],
+                    'retrieval_meta' => [
+                        'intent' => IntentDetector::CATALOG,
+                        'documents_shown' => $catalog->documents->count(),
+                        'documents_total' => $catalog->total,
+                        'semantic' => $catalog->semantic,
+                        'filters' => $plan,
+                        'prompt_version' => PromptBuilder::PROMPT_VERSION,
+                    ],
+                    'model' => $answer['model'],
+                    'prompt_tokens' => $answer['prompt_tokens'],
+                    'completion_tokens' => $answer['completion_tokens'],
+                    'latency_ms' => $answer['latency_ms'],
+                ]);
+
+                AiUsageLog::record([
+                    'user_id' => Auth::id(),
+                    'conversation_id' => $conversation->id,
+                    'request_id' => $requestId,
+                    'operation' => 'catalog',
+                    'model' => $answer['model'],
+                    'prompt_tokens' => $answer['prompt_tokens'],
+                    'completion_tokens' => $answer['completion_tokens'],
+                    'total_tokens' => ($answer['prompt_tokens'] ?? 0) + ($answer['completion_tokens'] ?? 0),
+                    'latency_ms' => $answer['latency_ms'],
+                    'chunks_retrieved' => $catalog->documents->count(),
+                    'success' => true,
+                ]);
+            }
         } else {
             $searchStart = microtime(true);
             $result = $this->retrieval->retrieve(

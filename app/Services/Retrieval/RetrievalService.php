@@ -59,6 +59,22 @@ class RetrievalService
     }
 
     /**
+     * The query embedding for a topic, sharing this service's cache.
+     *
+     * Exposed for App\Services\Retrieval\CatalogService, which needs a
+     * query vector but not the rest of the chunk pipeline: a catalog
+     * question ("recommend papers about fish") and a research question
+     * about the same topic should hit the same cached embedding rather
+     * than paying for two identical API calls.
+     *
+     * @return float[]
+     */
+    public function topicVector(string $topic): array
+    {
+        return $this->cachedQueryEmbedding($topic);
+    }
+
+    /**
      * Cached by a hash of the normalized topic + embedding model, not the
      * raw question — repeated or similarly-phrased questions (across any
      * user; permissions are enforced later, in VectorSearchService, not

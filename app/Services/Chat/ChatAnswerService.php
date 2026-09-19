@@ -20,11 +20,15 @@ class ChatAnswerService
 {
     /**
      * @param  array<int, array{role: string, content: string}>  $messages  from PromptBuilder::build()['messages']
+     * @param  ?int  $maxOutputTokens  overrides
+     *         config('chat.models.max_output_tokens') for this call — a
+     *         catalog turn answers with a short list and doesn't need the
+     *         full research-answer ceiling (see config('chat.catalog')).
      * @return array{content: string, model: string, prompt_tokens: ?int, completion_tokens: ?int, latency_ms: int}
      *
      * @throws ChatUnavailableException
      */
-    public function answer(array $messages): array
+    public function answer(array $messages, ?int $maxOutputTokens = null): array
     {
         $apiKey = config('services.openai.api_key');
 
@@ -40,7 +44,7 @@ class ChatAnswerService
                 ->timeout((int) config('chat.models.timeout', 45))
                 ->post('https://api.openai.com/v1/chat/completions', [
                     'model' => $model,
-                    'max_tokens' => (int) config('chat.models.max_output_tokens', 700),
+                    'max_tokens' => $maxOutputTokens ?? (int) config('chat.models.max_output_tokens', 700),
                     'temperature' => 0.2,
                     'messages' => $messages,
                 ]);

@@ -75,6 +75,36 @@ return [
 
     /*
     |--------------------------------------------------------------------------
+    | Catalog (discovery / recommendation)
+    |--------------------------------------------------------------------------
+    |
+    | Backs App\Services\Retrieval\CatalogService — the document-level path
+    | for "what research is available?", "recommend papers about fish",
+    | "how many studies are there?". These questions are answered from
+    | stud_file metadata, never from chunk prose: no chunk contains a list
+    | of the repository's contents, so chunk search returns nothing above
+    | min_similarity and the question dead-ends in the no-evidence reply.
+    |
+    | 'min_similarity' is deliberately far looser than the retrieval block's:
+    | a recommendation is offered as "you might find these relevant", not
+    | asserted as a fact needing a citation-grade match. The semantic arm
+    | searches ONLY section='metadata' chunks (one per document), so a loose
+    | threshold costs breadth, not accuracy.
+    |
+    */
+
+    'catalog' => [
+        'max_documents' => (int) env('CHAT_CATALOG_MAX_DOCS', 10),
+        'min_similarity' => (float) env('CHAT_CATALOG_MIN_SIMILARITY', 0.12),
+        // Metadata lines are short; a smaller ceiling than the research
+        // answer's 700 keeps a list answer from rambling past the list.
+        'max_output_tokens' => (int) env('CHAT_CATALOG_MAX_OUTPUT_TOKENS', 450),
+        // Characters of each document's abstract included per catalog entry.
+        'abstract_chars' => (int) env('CHAT_CATALOG_ABSTRACT_CHARS', 180),
+    ],
+
+    /*
+    |--------------------------------------------------------------------------
     | Context / prompt budget
     |--------------------------------------------------------------------------
     */

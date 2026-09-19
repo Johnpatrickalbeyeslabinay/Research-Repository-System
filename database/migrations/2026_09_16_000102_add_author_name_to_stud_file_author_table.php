@@ -30,7 +30,17 @@ return new class extends Migration
             $table->dropForeign(['user_id']);
         });
 
-        DB::statement('ALTER TABLE stud_file_author ALTER COLUMN user_id DROP NOT NULL');
+        // Postgres-only DDL, guarded the same way
+        // 2026_09_15_230000_enable_pgvector_extension.php guards its own:
+        // sqlite has no ALTER COLUMN and would abort the whole migration
+        // run, which is what made every Feature test error out before the
+        // suite could reach a single assertion. On sqlite user_id simply
+        // stays NOT NULL — guest (account-less) authors are a Postgres-only
+        // capability there, which is fine for a test database that never
+        // exercises them.
+        if (DB::getDriverName() === 'pgsql') {
+            DB::statement('ALTER TABLE stud_file_author ALTER COLUMN user_id DROP NOT NULL');
+        }
 
         Schema::table('stud_file_author', function (Blueprint $table) {
             $table->foreign('user_id')->references('id')->on('users')->nullOnDelete();
@@ -41,10 +51,17 @@ return new class extends Migration
 
         // Backfill existing rows (all currently linked to a real user)
         // so author_name is never null for data written before this
-        // migration.
-        DB::statement(
-            'UPDATE stud_file_author sa SET author_name = u.name FROM users u WHERE u.id = sa.user_id AND sa.author_name IS NULL'
-        );
+        // migration. UPDATE ... FROM is Postgres syntax; sqlite needs the
+        // correlated-subquery form.
+        if (DB::getDriverName() === 'pgsql') {
+            DB::statement(
+                'UPDATE stud_file_author sa SET author_name = u.name FROM users u WHERE u.id = sa.user_id AND sa.author_name IS NULL'
+            );
+        } else {
+            DB::statement(
+                'UPDATE stud_file_author SET author_name = (SELECT u.name FROM users u WHERE u.id = stud_file_author.user_id) WHERE author_name IS NULL'
+            );
+        }
     }
 
     public function down(): void
@@ -55,7 +72,10 @@ return new class extends Migration
         });
 
         DB::statement('DELETE FROM stud_file_author WHERE user_id IS NULL');
-        DB::statement('ALTER TABLE stud_file_author ALTER COLUMN user_id SET NOT NULL');
+
+        if (DB::getDriverName() === 'pgsql') {
+            DB::statement('ALTER TABLE stud_file_author ALTER COLUMN user_id SET NOT NULL');
+        }
 
         Schema::table('stud_file_author', function (Blueprint $table) {
             $table->foreign('user_id')->references('id')->on('users')->cascadeOnDelete();

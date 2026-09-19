@@ -6,7 +6,10 @@ use App\Models\ChatConversation;
 use App\Models\User;
 use App\Services\Chat\ChatAnswerService;
 use App\Services\Chat\CitationBuilder;
+use App\Services\Chat\IntentDetector;
 use App\Services\Chat\PromptBuilder;
+use App\Services\Retrieval\CatalogService;
+use App\Services\Retrieval\QueryPlanner;
 use App\Services\Retrieval\RetrievalService;
 use Illuminate\Console\Command;
 use Illuminate\Support\Str;
@@ -27,7 +30,9 @@ class EvaluateChatbotCommand extends Command
 {
     protected $signature = 'research:eval-chat
         {--user= : User id to run the (non-probe) questions as — defaults to the first admin}
-        {--probe-user= : User id with NO relation to the permission-probe document — a throwaway account is created and cleaned up if omitted}';
+        {--probe-user= : User id with NO relation to the permission-probe document — a throwaway account is created and cleaned up if omitted}
+        {--show : Print each answer in full, plus its token counts — the summary table says whether a turn was cited, not whether it read well}
+        {--filter= : Only run fixtures whose type or question contains this string}';
 
     protected $description = 'Run a fixture set of questions through the chatbot pipeline and report retrieval/citation/groundedness/permission results';
 
@@ -52,8 +57,12 @@ class EvaluateChatbotCommand extends Command
         $noEvidenceCount = 0;
         $answeredCount = 0;
 
-        foreach ($this->fixtureQuestions() as $fixture) {
-            $runningAs = $fixture['type'] === 'permission-probe' ? $probeUser : $user;
+        foreach ($this->selectedFixtures() as $fixture) {
+            // Every probe type must run as the unrelated throwaway user —
+            // running one as the admin (who legitimately sees everything)
+            // would report a leak that isn't one.
+            $isProbe = str_ends_with($fixture['type'], 'permission-probe');
+            $runningAs = $isProbe ? $probeUser : $user;
 
             if ($runningAs === null) {
                 $rows[] = [$fixture['type'], Str::limit($fixture['question'], 45), '—', '—', 'skipped: no probe user'];
@@ -62,6 +71,31 @@ class EvaluateChatbotCommand extends Command
             }
 
             $conversation = ChatConversation::create(['user_id' => $runningAs->id]);
+
+            // Catalog fixtures exercise the document-level path
+            // (App\Services\Retrieval\CatalogService), not chunk retrieval —
+            // mirroring ChatController::message()'s branching, so this
+            // harness measures what the chatbot actually does rather than
+            // what it would do if every question were a research question.
+            if (in_array($fixture['type'], ['catalog', 'catalog-permission-probe'], true)) {
+                $rows[] = $this->evaluateCatalogFixture(
+                    $fixture,
+                    $runningAs,
+                    $conversation,
+                    $retrieval,
+                    $prompts,
+                    $answerer,
+                    $citations,
+                    $permissionViolations,
+                    $answeredCount,
+                    $noEvidenceCount
+                );
+
+                $conversation->messages()->delete();
+                $conversation->delete();
+
+                continue;
+            }
 
             $result = $retrieval->retrieve($fixture['question'], $runningAs);
             $hasEvidence = ! $result->isEmpty();
@@ -86,6 +120,7 @@ class EvaluateChatbotCommand extends Command
                     $built = $citations->build($answer['content'], $prompt['evidence_order'], $result->files);
                     $citationCount = count($built['citations']);
                     $outcome = $citationCount > 0 ? 'grounded, cited' : 'answered, NO citations';
+                    $this->showAnswer($fixture['question'], $built['text'], $answer['prompt_tokens'], $answer['completion_tokens']);
                 } catch (\Throwable $e) {
                     $outcome = 'error: '.Str::limit($e->getMessage(), 40);
                 }
@@ -121,6 +156,118 @@ class EvaluateChatbotCommand extends Command
         }
 
         return $permissionViolations === 0 ? self::SUCCESS : self::FAILURE;
+    }
+
+    /**
+     * One catalog fixture through the real document-level path. Counters
+     * are by-reference so the summary totals stay accurate across both
+     * evaluation styles.
+     *
+     * @param  array{type: string, question: string, disallowed_stud_file_ids?: int[]}  $fixture
+     * @return array<int, string|int>  one table row
+     */
+    private function evaluateCatalogFixture(
+        array $fixture,
+        User $runningAs,
+        ChatConversation $conversation,
+        RetrievalService $retrieval,
+        PromptBuilder $prompts,
+        ChatAnswerService $answerer,
+        CitationBuilder $citations,
+        int &$permissionViolations,
+        int &$answeredCount,
+        int &$noEvidenceCount
+    ): array {
+        $intents = app(IntentDetector::class);
+        $planner = app(QueryPlanner::class);
+        $catalogService = app(CatalogService::class);
+
+        $question = $fixture['question'];
+
+        // A catalog fixture that the detector doesn't even classify as one
+        // is a failure worth seeing in the table — the rest of the path
+        // would never run for it in production either.
+        if (! $intents->isCatalogQuestion($question)) {
+            return [$fixture['type'], Str::limit($question, 45), 'n/a', '—', 'NOT detected as catalog'];
+        }
+
+        $plan = $planner->plan($question, null, null);
+        $vector = $intents->isBareInventory($question) ? null : $retrieval->topicVector($plan['topic']);
+        $catalog = $catalogService->browse($runningAs, $plan, $vector);
+
+        if ($fixture['type'] === 'catalog-permission-probe') {
+            $leaked = array_intersect($catalog->documentIds(), $fixture['disallowed_stud_file_ids'] ?? []);
+
+            if (! empty($leaked)) {
+                $permissionViolations++;
+
+                return [$fixture['type'], Str::limit($question, 45), 'yes', '—', 'LEAK: doc '.implode(',', $leaked).' listed'];
+            }
+
+            return [$fixture['type'], Str::limit($question, 45), 'no', '—', 'correctly excluded'];
+        }
+
+        if ($catalog->isEmpty()) {
+            $noEvidenceCount++;
+
+            return [$fixture['type'], Str::limit($question, 45), 'no', '—', 'empty catalog (zero-token)'];
+        }
+
+        $answeredCount++;
+
+        try {
+            $prompt = $prompts->buildCatalog($conversation, $catalog, $question);
+            $answer = $answerer->answer($prompt['messages'], (int) config('chat.catalog.max_output_tokens', 450));
+            $built = $citations->build($answer['content'], $prompt['evidence_order'], $catalog->files());
+            $citationCount = count($built['citations']);
+
+            $this->showAnswer($question, $built['text'], $answer['prompt_tokens'], $answer['completion_tokens']);
+
+            return [
+                $fixture['type'],
+                Str::limit($question, 45),
+                $catalog->documents->count().' docs',
+                $citationCount ?: '—',
+                $citationCount > 0 ? 'listed, cited' : 'listed, NO citations',
+            ];
+        } catch (\Throwable $e) {
+            return [$fixture['type'], Str::limit($question, 45), 'yes', '—', 'error: '.Str::limit($e->getMessage(), 40)];
+        }
+    }
+
+    /**
+     * fixtureQuestions() narrowed by --filter, so a single category can be
+     * iterated on without paying for (or waiting on) the whole set.
+     *
+     * @return array<int, array{type: string, question: string, disallowed_stud_file_ids?: int[]}>
+     */
+    private function selectedFixtures(): array
+    {
+        $filter = $this->option('filter');
+
+        if (! $filter) {
+            return $this->fixtureQuestions();
+        }
+
+        return array_values(array_filter(
+            $this->fixtureQuestions(),
+            fn ($f) => Str::contains($f['type'], $filter, ignoreCase: true)
+                || Str::contains($f['question'], $filter, ignoreCase: true)
+        ));
+    }
+
+    /** Prints a full answer under --show; a no-op otherwise. */
+    private function showAnswer(string $question, string $text, ?int $promptTokens, ?int $completionTokens): void
+    {
+        if (! $this->option('show')) {
+            return;
+        }
+
+        $this->newLine();
+        $this->line("<fg=cyan>Q:</> {$question}");
+        $this->line("<fg=gray>tokens in/out: {$promptTokens}/{$completionTokens}</>");
+        $this->line($text);
+        $this->line(str_repeat('-', 70));
     }
 
     private function resolveUser(): ?User
@@ -166,6 +313,24 @@ class EvaluateChatbotCommand extends Command
     private function fixtureQuestions(): array
     {
         return [
+            // Catalog / discovery — document-level questions that chunk
+            // retrieval structurally cannot answer (no chunk contains a
+            // list of the repository's contents). Before
+            // App\Services\Retrieval\CatalogService existed, every one of
+            // these returned the no-evidence reply.
+            ['type' => 'catalog', 'question' => 'list repository available'],
+            ['type' => 'catalog', 'question' => 'What research is available?'],
+            ['type' => 'catalog', 'question' => 'How many studies are in the repository?'],
+            ['type' => 'catalog', 'question' => 'What topics are covered?'],
+            ['type' => 'catalog', 'question' => 'recommend papers related to fish'],
+            ['type' => 'catalog', 'question' => 'suggest studies about aquaculture'],
+            ['type' => 'catalog', 'question' => 'Which studies are related to SDG 14?'],
+            ['type' => 'catalog', 'question' => 'What studies were published from 2024 to 2026?'],
+            // Catalog must honour ResearchAccess exactly as chunk retrieval
+            // does — a second, independent way into the same corpus is
+            // exactly where a permission model tends to spring a leak.
+            ['type' => 'catalog-permission-probe', 'question' => 'list repository available', 'disallowed_stud_file_ids' => [26, 29, 30, 33]],
+
             ['type' => 'topic-discovery', 'question' => 'What research is available about seaweed diversity?'],
             ['type' => 'methodology', 'question' => 'What methodology was used to survey the seaweed sites?'],
             ['type' => 'findings', 'question' => 'What were the key findings about seaweed species dominance?'],
