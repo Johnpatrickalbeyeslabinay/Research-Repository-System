@@ -19,6 +19,20 @@ return Application::configure(basePath: dirname(__DIR__))
             'role' => EnsureRole::class,
             'chat.quota' => ChatDailyQuota::class,
         ]);
+
+        // The serverless queue drain (routes/web.php) is called by a cron,
+        // which has no session and therefore no CSRF token. Its POST form
+        // would otherwise 419 in production while passing every test —
+        // Laravel skips CSRF verification under `php artisan test`, so this
+        // is a failure mode the suite structurally cannot catch.
+        //
+        // Safe to exempt: that route is authenticated by a constant-time
+        // shared-secret comparison and 404s when the secret is unset, so it
+        // is never session-authenticated in the first place — which is
+        // exactly the threat CSRF protects against.
+        $middleware->validateCsrfTokens(except: [
+            'internal/queue/drain',
+        ]);
     })
     ->withExceptions(function (Exceptions $exceptions): void {
         // When a multipart upload exceeds php.ini's post_max_size, PHP

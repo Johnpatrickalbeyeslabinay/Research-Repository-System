@@ -42,6 +42,22 @@ return [
 
     /*
     |--------------------------------------------------------------------------
+    | Cron secret
+    |--------------------------------------------------------------------------
+    |
+    | Shared secret for POST /internal/queue/drain, the serverless safety
+    | net that runs any job index_sync couldn't finish inline. That route
+    | cannot be session-authenticated (a cron has no session), so this IS
+    | its authentication: sent as the X-Cron-Secret header and compared with
+    | hash_equals(). Left empty, the route 404s — an unconfigured deployment
+    | must fail closed, not expose an open queue runner.
+    |
+    */
+
+    'cron_secret' => env('RESEARCH_CRON_SECRET', ''),
+
+    /*
+    |--------------------------------------------------------------------------
     | Embeddings
     |--------------------------------------------------------------------------
     |

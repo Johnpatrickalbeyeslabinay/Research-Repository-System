@@ -2,7 +2,7 @@
     'file',
     // Every row is opt-out via $show, not opt-in per-caller markup, so a
     // new metadata row added here reaches every surface automatically.
-    'show' => ['researchers', 'adviser', 'type', 'year', 'keywords', 'sdgs', 'stats'],
+    'show' => ['researchers', 'adviser', 'type', 'year', 'keywords', 'sdgs', 'stats', 'index-status'],
     'compact' => false,
 ])
 
@@ -27,6 +27,28 @@
     $publishedYear = $file->publication_year ?? $file->created_at?->format('Y');
 
     $rowClass = $compact ? 'mb-1 small' : 'mb-2';
+
+    // Whether the AI assistant can actually answer questions about this
+    // paper. Only 'ready' documents are retrievable (see
+    // VectorSearchService's `sf.search_index_status = 'ready'`), so a paper
+    // stuck at not_started/processing/failed is silently invisible to every
+    // answer with nothing on screen to explain why. Shown only to people
+    // who could act on it — the submitter, their adviser, and admins —
+    // since it is an operational detail, not part of the research record.
+    $indexStatus = $file->search_index_status ?? 'not_started';
+    $viewer = auth()->user();
+    $canSeeIndexStatus = $viewer !== null && (
+        $viewer->role === 'admin'
+        || $viewer->id === $file->user_id
+        || $viewer->id === $file->adviser_id
+    );
+
+    $indexNotice = match ($indexStatus) {
+        'ready' => null,
+        'failed' => ['bi-exclamation-triangle', 'text-danger', 'Not searchable — AI indexing failed. Re-submitting the PDF will retry it.'],
+        'processing' => ['bi-arrow-repeat', 'text-secondary', 'Indexing for AI search…'],
+        default => ['bi-clock', 'text-secondary', 'Queued for AI search indexing.'],
+    };
 @endphp
 
 <div {{ $attributes }}>
@@ -92,6 +114,12 @@
             @endif
             <span class="me-3"><i class="bi bi-eye me-1"></i>{{ $file->views ?? 0 }}</span>
             <span><i class="bi bi-download me-1"></i>{{ $file->downloads ?? 0 }}</span>
+        </div>
+    @endif
+
+    @if (in_array('index-status', $show, true) && $indexNotice && $canSeeIndexStatus)
+        <div class="{{ $rowClass }} small {{ $indexNotice[1] }}">
+            <i class="bi {{ $indexNotice[0] }} me-1"></i>{{ $indexNotice[2] }}
         </div>
     @endif
 </div>

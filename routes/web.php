@@ -11,6 +11,8 @@ use App\Http\Controllers\PublicController;
 use App\Http\Controllers\RepositoryController;
 use App\Http\Controllers\ResearchAnalysisController;
 use App\Http\Controllers\StudentController;
+use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Artisan;
 use Illuminate\Support\Facades\Route;
 
 // Home page
@@ -19,6 +21,65 @@ Route::get('/', function () {
         'name' => 'Yshacute',
     ]);
 });
+
+/*
+ * Serverless queue drain.
+ *
+ * The app deploys to Vercel (vercel.json), which runs no long-lived
+ * process — so `php artisan queue:work` never runs in production and a
+ * dispatched App\Jobs\ProcessResearchDocument sits in the jobs table
+ * forever. That is not hypothetical: it is exactly how the corpus came to
+ * have zero embedded chunks while every submission looked successful, and
+ * why the chatbot answered "I couldn't find enough information" to
+ * everything.
+ *
+ * RESEARCH_INDEX_SYNC=true handles the common case inline via
+ * ->afterResponse(). This endpoint is the safety net for the rest: a large
+ * PDF that outruns the request, or a job that failed and was retried.
+ * Point Vercel Cron (see vercel.json) or any external pinger at it.
+ *
+ * NOTE: Vercel's Hobby plan allows only ONE cron invocation per day. The
+ * hourly schedule in vercel.json needs a Pro plan; on Hobby, either accept
+ * daily catch-up or point an external scheduler (cron-job.org, GitHub
+ * Actions) at this URL instead. Either way index_sync, not this, is what
+ * makes indexing feel immediate.
+ *
+ * Deliberately NOT behind 'auth' — a cron has no session — so the shared
+ * secret IS the authentication. hash_equals() to compare in constant time;
+ * refuses outright when the secret is unset, so an unconfigured deployment
+ * fails closed rather than exposing an open queue runner.
+ */
+Route::match(['get', 'post'], '/internal/queue/drain', function (Request $request) {
+    $expected = (string) config('research.cron_secret');
+
+    abort_if($expected === '', 404);
+
+    // Two accepted forms, because the caller isn't always ours:
+    //   - Authorization: Bearer <secret>  — what Vercel Cron sends (it
+    //     also uses GET, hence the match() above rather than post()).
+    //   - X-Cron-Secret: <secret>         — for curl / any other pinger.
+    $bearer = (string) $request->bearerToken();
+    $header = (string) $request->header('X-Cron-Secret');
+
+    abort_unless(
+        hash_equals($expected, $bearer) || hash_equals($expected, $header),
+        403
+    );
+
+    Artisan::call('queue:work', [
+        '--stop-when-empty' => true,
+        // Comfortably inside a serverless function's ceiling — whatever is
+        // left is picked up by the next cron tick rather than being killed
+        // mid-job.
+        '--max-time' => 50,
+        '--tries' => 3,
+    ]);
+
+    return response()->json([
+        'success' => true,
+        'output' => trim(Artisan::output()),
+    ]);
+})->name('internal.queue.drain');
 
 Route::get('/login', [AuthController::class, 'showLogin'])
     ->name('login');

@@ -11,5 +11,11 @@
             "src": "/(.*)",
             "dest": "/api/index.php"
         }
+    ],
+    "crons": [
+        {
+            "path": "/internal/queue/drain",
+            "schedule": "0 * * * *"
+        }
     ]
 }
