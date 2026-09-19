@@ -42,6 +42,25 @@
 .btn-check:checked + .favorite-btn {
     color: #006400 !important;
 }
+
+  /* Sticky footer, not a FIXED one — see public_layout for the full
+     reasoning. .fixed-bottom parked the footer permanently over the last
+     ~80px of the page, hiding whatever sat at the end of the content. */
+  body {
+    display: flex;
+    flex-direction: column;
+    min-height: 100vh;
+  }
+
+  .page-content {
+    flex: 1 0 auto;
+    /* Clears the .fixed-top navbar, which IS still out of flow. */
+    padding-top: 88px;
+  }
+
+  footer {
+    flex-shrink: 0;
+  }
 </style>
 
 
@@ -96,15 +115,8 @@
 
 
 
-  <br><br><br>
-
-
-
-
-
-
   <!-- Design sa content.blade.php -->
-  <div class="container mt-4">
+  <div class="container page-content pt-4 pb-5">
     @yield('repository')
   </div>
 
@@ -114,7 +126,7 @@
 
 
   <!-- FOOTER -->
-  <footer class="text-white text-center  fixed-bottom p-2" style="background: navy;">
+  <footer class="text-white text-center p-2" style="background: navy;">
     <div class="m-0 flex-column" style="color: #cffafe;">
       <h6 class="">2026 Cagayan State University Aparri Campus</h6>
       <h6 style="">College of Fisheries and Aquatic Sciences</h6>

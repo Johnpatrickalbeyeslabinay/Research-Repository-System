@@ -86,6 +86,26 @@ class ResearchShowPageTest extends TestCase
         $this->get("/research/{$file->id}")->assertNotFound();
     }
 
+    public function test_the_action_buttons_are_not_hidden_behind_a_fixed_footer(): void
+    {
+        // The footer was .fixed-bottom, which parks it out of flow over the
+        // last ~80px of the page — covering View PDF / Download / Ask about
+        // this research with no way to scroll past. Asserting the class is
+        // gone is a crude proxy for a visual bug, but it is the part that
+        // actually regresses: the buttons themselves were always in the
+        // markup, just permanently underneath something.
+        $owner = User::factory()->student()->create();
+        $file = UserFile::factory()->approved()->publicVisibility()->create(['user_id' => $owner->id]);
+
+        $html = $this->actingAs($owner)->get("/research/{$file->id}")->assertOk()->getContent();
+
+        // Matched on the <footer> tag itself, not anywhere in the document
+        // — the layout's CSS comment explains the old class by name.
+        $this->assertDoesNotMatchRegularExpression('/<footer[^>]*fixed-bottom/', $html);
+        $this->assertStringContainsString('View PDF', $html);
+        $this->assertStringContainsString('Ask about this research', $html);
+    }
+
     public function test_approved_but_private_research_is_not_public(): void
     {
         // Approval alone doesn't publish — the student must also have
