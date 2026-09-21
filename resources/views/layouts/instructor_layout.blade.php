@@ -60,16 +60,17 @@
                     <!-- Logo + Program -->
                     <div class="d-flex align-items-center">
 
-                        <i data-lucide="fish" class="me-3 rounded-circle p-2 text-white"
-                            style="width:36px;height:36px;background:linear-gradient(135deg,#1e3a8a,#0d9488);">
-                        </i>
+                    <img src="{{ asset('images/logo.png') }}"
+                        alt="CSU Aparri Logo"
+                        class="me-3 rounded-circle"
+                        style="width:90px;height:90px;object-fit:cover;">
 
-                        <div class="d-flex flex-column">
-                            <h5 class="fw-bold mb-0">CSU APARRI</h5>
-                            <small class="text-secondary">Fisheries Program</small>
-                        </div>
-
+                    <div class="d-flex flex-column">
+                        <h5 class="fw-bold mb-0">CSU APARRI</h5>
+                        <small class="text-secondary">Fisheries Program</small>
                     </div>
+
+                </div>
 
                     <!-- Bell + Hamburger -->
                     <div class="d-flex align-items-center">
@@ -104,22 +105,20 @@
         <div class="offcanvas-header py-4 px-3 text-dark bg-white">
 
 
-          <div class="d-flex align-items-center">
+          <!-- Logo + Program -->
+                    <div class="d-flex align-items-center">
 
-            <i class="fa-solid fa-fish-fins fs-3 me-3 rounded-circle p-2 text-white"
-              style=" background: linear-gradient(135deg, #1e3a8a, #0d9488);"></i>
+                    <img src="{{ asset('images/logo.png') }}"
+                        alt="CSU Aparri Logo"
+                        class="me-3 rounded-circle"
+                        style="width:70px;height:70px;object-fit:cover;">
 
-            <div class="d-flex flex-column">
+                    <div class="d-flex flex-column">
+                        <h5 class="fw-bold mb-0">CSU APARRI</h5>
+                        <small class="text-secondary">Fisheries Program</small>
+                    </div>
 
-              <h5 class="fw-bold mb-0">
-                CSU APARRI
-              </h5>
-
-              <small class="text-secondary">
-                Fisheries Program
-              </small>
-            </div>
-          </div>
+                </div>
         </div>
 
 
@@ -219,20 +218,17 @@
 
       <div class="d-flex align-items-center">
 
-        <i class="fa-solid fa-fish-fins fs-3 me-3 rounded-circle p-2 text-white"
-          style=" background: linear-gradient(135deg, #1e3a8a, #0d9488);"></i>
+                    <img src="{{ asset('images/logo.png') }}"
+                        alt="CSU Aparri Logo"
+                        class="me-3 rounded-circle"
+                        style="width:90px;height:90px;object-fit:cover;">
 
-        <div class="d-flex flex-column">
+                    <div class="d-flex flex-column">
+                        <h5 class="fw-bold mb-0">CSU APARRI</h5>
+                        <small class="text-secondary">Fisheries Program</small>
+                    </div>
 
-          <h5 class="fw-bold mb-0 text-dark">
-            CSU APARRI
-          </h5>
-
-          <small class="text-secondary">
-            Fisheries Program
-          </small>
-        </div>
-      </div>
+                </div>
 
       <button class="btn-close btn-close-dark" data-bs-dismiss="offcanvas"></button>
 
