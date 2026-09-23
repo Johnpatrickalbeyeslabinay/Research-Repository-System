@@ -36,11 +36,17 @@
     <input type="hidden" id="ai-chat-csrf" value="{{ csrf_token() }}">
 
     {{-- Launcher --}}
-    <button type="button" id="ai-chat-launcher" popovertarget="ai-chat-panel"
-        class="btn rounded-circle shadow d-flex align-items-center justify-content-center"
-        style="position:fixed;right:24px;bottom:24px;width:60px;height:60px;background-color:#0E7F77;color:#fff;z-index:1050;"
+    <button type="button"
+        id="ai-chat-launcher"
+        popovertarget="ai-chat-panel"
+        class="btn p-0 d-flex align-items-center justify-content-center"
+        style="position:fixed; right:24px; bottom:24px; width:60px; height:60px; background:transparent; border:none; box-shadow:none; z-index:1050;"
         aria-label="Open AI research assistant">
-        <i data-lucide="{{ $studFileId ? 'message-circle-question' : 'fish' }}" style="width:26px;height:26px;"></i>
+
+    <img src="{{ asset('images/logo.png') }}"
+         alt="AQUA"
+         style="width:70px; height:70px; object-fit:contain; display:block;">
+
     </button>
 
     {{-- Positioning/sizing lives in the stylesheet below, not inline —
@@ -51,12 +57,19 @@
     <div id="ai-chat-panel" popover>
 
         {{-- Header --}}
-        <div class="d-flex align-items-center justify-content-between px-3 py-2" style="background-color:#0E7F77;color:#fff;flex:0 0 auto;">
+        <div class="d-flex align-items-center justify-content-between px-3 py-2" style="background: linear-gradient(135deg, #072A89 0%, #0757B5 45%, #00B8D9 100%); color:#fff;flex:0 0 auto;">
             <div class="d-flex align-items-center gap-2" style="min-width:0;">
-                <i data-lucide="fish" style="width:22px;height:22px;flex:0 0 auto;"></i>
+                <img src="{{ asset('images/logo.png') }}"
+                    alt="AQUA Logo"
+                    style="width:70px;height:70px;object-fit:contain;flex:0 0 auto;">
+
                 <div style="min-width:0;">
-                    <div class="fw-bold" style="font-size:0.92rem;line-height:1.2;">AI Research Assistant</div>
-                    <small class="d-block text-truncate" style="opacity:0.85;max-width:220px;">
+                    <div class="fw-bold" style="font-size:0.92rem;line-height:1.2;">
+                        Ask AQUA
+                    </div>
+
+                    <small class="d-block text-truncate"
+                        style="opacity:0.85;max-width:220px;">
                         @if ($studFileId)
                             {{ $studFileTitle }}
                         @else
