@@ -4,11 +4,11 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>@yield('title', 'example lang')</title>
+    <title>@yield('title', 'ADMIN')</title>
 
     <!--icons-->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
-   <link rel="shortcut icon" href="{{ asset('images/icon.png') }}">
+   <link rel="shortcut icon" href="{{ asset('images/logo.png') }}">
 
     <!-- Bootstrap -->
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
@@ -31,6 +31,29 @@
         background: #f3f4f6;
         color: #374151;
     }
+
+
+    @media (max-width: 767.98px) {
+
+    .stats-scroll {
+        flex-wrap: nowrap;
+        overflow-x: auto;
+        overflow-y: hidden;
+    }
+
+    .stats-scroll > div {
+        flex: 0 0 85%;
+    }
+
+    .stats-scroll::-webkit-scrollbar {
+        display: none;
+    }
+
+    .stats-scroll {
+        scrollbar-width: none;
+    }
+}
+
 
 </style>
 
@@ -178,7 +201,7 @@
 
                         <li class="nav-item mt-2">
 
-                            <a class="nav-link active bg-primary rounded text-dark bg-light"
+                             <a class="nav-link active bg-primary rounded text-dark bg-light"
                                 href="{{ route('repository')  }}">
 
                                 <i class="fa-solid fa-folder me-2"></i>
@@ -310,7 +333,7 @@
 
                         <li class="nav-item mt-2">
 
-                             <a class="nav-link active bg-primary rounded text-dark bg-light"
+                              <a class="nav-link active bg-primary rounded text-dark bg-light"
                                 href="{{ route('repository')  }}">
 
                                 <i class="fa-solid fa-folder me-2"></i>

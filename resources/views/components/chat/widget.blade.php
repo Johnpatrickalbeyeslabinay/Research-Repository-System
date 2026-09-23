@@ -40,7 +40,7 @@
         id="ai-chat-launcher"
         popovertarget="ai-chat-panel"
         class="btn p-0 d-flex align-items-center justify-content-center"
-        style="position:fixed; right:24px; bottom:24px; width:60px; height:60px; background:transparent; border:none; box-shadow:none; z-index:1050;"
+        style="position:fixed; right:24px; bottom:24px; width:75px; height:75px; background:transparent; border:none; box-shadow:none; z-index:1050;"
         aria-label="Open AI research assistant">
 
     <img src="{{ asset('images/logo.png') }}"
@@ -139,7 +139,7 @@
                      reply is generating — rather than two separate buttons
                      swapping visibility, matching how other chat UIs do it. --}}
                 <button type="button" id="ai-chat-send" class="btn text-white flex-shrink-0 d-flex align-items-center justify-content-center"
-                    style="background-color:#0E7F77;width:38px;height:38px;" title="Send">
+                    style="background-color:#072a89;width:38px;height:38px;" title="Send">
                     <i data-lucide="send" id="ai-chat-send-icon" style="width:16px;height:16px;"></i>
                     <i data-lucide="square" id="ai-chat-stop-icon" style="width:13px;height:13px;display:none;"></i>
                 </button>
@@ -153,7 +153,7 @@
 
     <template id="ai-chat-tpl-user">
         <div class="d-flex justify-content-end mb-3 ai-chat-msg">
-            <div class="rounded-3 px-3 py-2 text-white" style="background-color:#0E7F77;max-width:85%;white-space:pre-wrap;word-break:break-word;font-size:0.88rem;" data-role="content"></div>
+            <div class="rounded-3 px-3 py-2 text-white" style="background-color:#072a89;max-width:85%;white-space:pre-wrap;word-break:break-word;font-size:0.88rem;" data-role="content"></div>
         </div>
     </template>
 

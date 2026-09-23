@@ -18,77 +18,105 @@
 
     </div>
 
-    <div class="container-fluid py-4">
-        <div class="row g-4">
+    <!-- Dashboard Statistics -->
+<div class="row flex-nowrap overflow-auto g-3 pb-2">
 
-            <!-- Total Submissions -->
-            <div class="col-12 col-sm-6 col-xl-3">
-                <div class="card border-0 shadow-sm rounded-4 h-100">
-                    <div class="card-body d-flex justify-content-between align-items-center">
-                        <div>
-                            <p class="text-secondary mb-2">Total Submissions</p>
-                            <h3 class="fw-normal mb-0">{{ $studFiles->count() }}</h3>
-                        </div>
+    <!-- Total Submissions -->
+    <div class="col-10 col-sm-6 col-xl-3">
+        <div class="card border-0 shadow-sm rounded-4 h-100">
+            <div class="card-body d-flex justify-content-between align-items-center">
 
-                        <div class="bg-primary bg-opacity-10 rounded-2 p-3">
-                            <i class="fa-regular fa-file-lines text-primary fs-4"></i>
-                        </div>
-                    </div>
+                <div>
+                    <p class="text-secondary mb-2">
+                        Total Submissions
+                    </p>
+
+                    <h3 class="fw-normal mb-0">
+                        {{ $studFiles->count() }}
+                    </h3>
                 </div>
-            </div>
 
-            <!-- Approved -->
-            <div class="col-12 col-sm-6 col-xl-3">
-                <div class="card border-0 shadow-sm rounded-4 h-100">
-                    <div class="card-body d-flex justify-content-between align-items-center">
-                        <div>
-                            <p class="text-secondary mb-2">Approved</p>
-                            <h3 class="fw-normal mb-0">{{ $approvedCount }}</h3>
-                        </div>
-
-                        <div class="bg-success bg-opacity-10 rounded-2 p-3">
-                            <i class="fa-regular fa-circle-check text-success fs-4"></i>
-                        </div>
-                    </div>
+                <div class="bg-primary bg-opacity-10 rounded-2 p-3">
+                    <i class="fa-regular fa-file-lines text-primary fs-4"></i>
                 </div>
+
             </div>
-
-            <!-- Pending -->
-            <div class="col-12 col-sm-6 col-xl-3">
-                <div class="card border-0 shadow-sm rounded-4 h-100">
-                    <div class="card-body d-flex justify-content-between align-items-center">
-                        <div>
-                            <p class="text-secondary mb-2">Pending Review</p>
-                            <h3 class="fw-normal mb-0">{{ $pendingCount }}</h3>
-                        </div>
-
-                        <div class="bg-warning bg-opacity-10 rounded-2 p-3">
-                            <i class="fa-regular fa-clock text-warning fs-4"></i>
-                        </div>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Reject -->
-            <div class="col-12 col-sm-6 col-xl-3">
-                <div class="card border-0 shadow-sm rounded-4 h-100">
-                    <div class="card-body d-flex justify-content-between align-items-center">
-                        <div>
-                            <p class="text-secondary mb-2">Reject</p>
-                            <h3 class="fw-normal mb-0">{{ $rejectedCount }}</h3>
-                        </div>
-
-                        <div class="bg-warning bg-opacity-10 rounded-2 p-3">
-                            <i class="fa-regular fa-clock text-warning fs-4"></i>
-                        </div>
-                    </div>
-                </div>
-            </div>
-
-
-
         </div>
     </div>
+
+
+    <!-- Approved -->
+    <div class="col-10 col-sm-6 col-xl-3">
+        <div class="card border-0 shadow-sm rounded-4 h-100">
+            <div class="card-body d-flex justify-content-between align-items-center">
+
+                <div>
+                    <p class="text-secondary mb-2">
+                        Approved
+                    </p>
+
+                    <h3 class="fw-normal mb-0">
+                        {{ $approvedCount }}
+                    </h3>
+                </div>
+
+                <div class="bg-success bg-opacity-10 rounded-2 p-3">
+                    <i class="fa-regular fa-circle-check text-success fs-4"></i>
+                </div>
+
+            </div>
+        </div>
+    </div>
+
+
+    <!-- Pending -->
+    <div class="col-10 col-sm-6 col-xl-3">
+        <div class="card border-0 shadow-sm rounded-4 h-100">
+            <div class="card-body d-flex justify-content-between align-items-center">
+
+                <div>
+                    <p class="text-secondary mb-2">
+                        Pending Review
+                    </p>
+
+                    <h3 class="fw-normal mb-0">
+                        {{ $pendingCount }}
+                    </h3>
+                </div>
+
+                <div class="bg-warning bg-opacity-10 rounded-2 p-3">
+                    <i class="fa-regular fa-clock text-warning fs-4"></i>
+                </div>
+
+            </div>
+        </div>
+    </div>
+
+
+    <!-- Rejected -->
+    <div class="col-10 col-sm-6 col-xl-3">
+        <div class="card border-0 shadow-sm rounded-4 h-100">
+            <div class="card-body d-flex justify-content-between align-items-center">
+
+                <div>
+                    <p class="text-secondary mb-2">
+                        Rejected
+                    </p>
+
+                    <h3 class="fw-normal mb-0">
+                        {{ $rejectedCount }}
+                    </h3>
+                </div>
+
+                <div class="bg-danger bg-opacity-10 rounded-2 p-3">
+                    <i class="fa-regular fa-circle-xmark text-danger fs-4"></i>
+                </div>
+
+            </div>
+        </div>
+    </div>
+
+</div>
 
 
 
@@ -380,7 +408,7 @@
 
                                                             <button
                                                                 class="btn btn-outline-secondary btn-sm rounded-pill px-2 py-1"
-                                                                popovertarget="popover-{{ $file->id }}">
+                                                                id="review-tab" data-bs-target="#review" type="button" role="tab">
 
                                                                 <i class="bi bi-eye me-1"></i>
                                                                 Review

@@ -105,6 +105,12 @@
 
 
 
+
+
+
+
+
+
 <!--DASHBOARD-->
 @if($view == 'dashboard')
 
@@ -134,7 +140,7 @@
 <!--mga counts ng users etc.-->
    <div class="container-fluid mt-3">
 
-    <div class="row g-3">
+    <div class="row g-3 stats-scroll">
 
         <!-- Total Users -->
         <div class="col-xl-4 col-lg-4 col-md-6">
@@ -169,7 +175,9 @@
 
                     <div class="mt-2">
                         <small class="text-secondary">Total Students</small>
-                        <h4 class="fw-bold mb-0">{{ $users->where('role', 'student')->count() }}</h4>
+                        <h4 class="fw-bold mb-0">
+                            {{ $users->where('role', 'student')->count() }}
+                        </h4>
                     </div>
 
                 </div>
@@ -189,7 +197,9 @@
 
                     <div class="mt-2">
                         <small class="text-secondary">Total Instructors</small>
-                        <h4 class="fw-bold mb-0">{{ $users->where('role', 'instructor')->count() }}</h4>
+                        <h4 class="fw-bold mb-0">
+                            {{ $users->where('role', 'instructor')->count() }}
+                        </h4>
                     </div>
 
                 </div>
@@ -239,7 +249,6 @@
     </div>
 
 </div>
-
 
 
 
@@ -656,13 +665,6 @@
 
 
 
-
-
-
-
-
-
-
 <!--MANAGE USERS-->
 @if($view == 'user')
 
@@ -679,6 +681,13 @@
         </div>
 
         <div class="mt-3 mt-md-0">
+
+        <button type="button"
+                        class="btn btn-success rounded-3"
+                        data-bs-toggle="modal"
+                        data-bs-target="#importStudentsModal"> <i class="bi bi-file-earmark-excel me-2"></i>
+                    Import Student Accounts </button>
+
 
     <button class="btn btn-success" data-bs-toggle="modal" data-bs-target="#addUserModal">
 
@@ -931,11 +940,7 @@
 
                         <!-- Import Student Accounts Button -->
 
-                    <button type="button"
-                        class="btn btn-success rounded-3"
-                        data-bs-toggle="modal"
-                        data-bs-target="#importStudentsModal"> <i class="bi bi-file-earmark-excel me-2"></i>
-                    Import Student Accounts </button>
+
 
                     <!-- Import Student Accounts Modal -->
 
@@ -1037,72 +1042,95 @@
 
     <!--users total-->
     <div class="container-fluid py-4">
-        <div class="row g-4">
 
-            <!-- Total Submissions -->
-            <div class="col-12 col-sm-6 col-xl-3">
-                <div class="card border-0 shadow-sm rounded-4 h-100">
-                    <div class="card-body d-flex justify-content-between align-items-center">
-                        <div>
-                            <p class="text-secondary mb-2">Total Users</p>
-                            <h3 class="fw-normal mb-0">{{ count($users) }}</h3>
-                        </div>
 
-                        <div class="bg-primary bg-opacity-10 rounded-2 p-3">
-                            <i class="fa-regular fa-user text-primary fs-4"></i>
-                        </div>
-                    </div>
+
+       <div class="row g-4 stats-scroll">
+
+    <!-- Total Users -->
+    <div class="col-12 col-sm-6 col-xl-3">
+        <div class="card border-0 shadow-sm rounded-4 h-100">
+            <div class="card-body d-flex justify-content-between align-items-center">
+
+                <div>
+                    <p class="text-secondary mb-2">Total Users</p>
+                    <h3 class="fw-normal mb-0">
+                        {{ count($users) }}
+                    </h3>
                 </div>
-            </div>
 
-
-            <div class="col-12 col-sm-6 col-xl-3">
-                <div class="card border-0 shadow-sm rounded-4 h-100">
-                    <div class="card-body d-flex justify-content-between align-items-center">
-                        <div>
-                            <p class="text-secondary mb-2">Students</p>
-                            <h3 class="fw-normal mb-0">{{ $users->where('role', 'student')->count() }}</h3>
-                        </div>
-
-                        <div class="bg-primary bg-opacity-10 rounded-2 p-3">
-                            <i class="fa-solid fa-user-graduate text-primary fs-4"></i>
-                        </div>
-                    </div>
+                <div class="bg-primary bg-opacity-10 rounded-2 p-3">
+                    <i class="fa-regular fa-user text-primary fs-4"></i>
                 </div>
-            </div>
 
-            <!-- Approved -->
-            <div class="col-12 col-sm-6 col-xl-3">
-                <div class="card border-0 shadow-sm rounded-4 h-100">
-                    <div class="card-body d-flex justify-content-between align-items-center">
-                        <div>
-                            <p class="text-secondary mb-2">Instructor</p>
-                            <h3 class="fw-normal mb-0">{{ $users->where('role', 'instructor')->count() }}</h3>
-                        </div>
-
-                        <div class="bg-success bg-opacity-10 rounded-2 p-3">
-                            <i class="fa-solid fa-user-check text-success fs-4"></i>
-                        </div>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Pending -->
-            <div class="col-12 col-sm-6 col-xl-3">
-                <div class="card border-0 shadow-sm rounded-4 h-100">
-                    <div class="card-body d-flex justify-content-between align-items-center">
-                        <div>
-                            <p class="text-secondary mb-2">Admin</p>
-                            <h3 class="fw-normal mb-0">{{ $users->where('role', 'admin')->count() }}</h3>
-                        </div>
-
-                        <div class="bg-warning bg-opacity-10 rounded-2 p-3">
-                            <i class="fa-solid fa-shield text-warning fs-4"></i>
-                        </div>
-                    </div>
-                </div>
             </div>
         </div>
+    </div>
+
+
+    <!-- Students -->
+    <div class="col-12 col-sm-6 col-xl-3">
+        <div class="card border-0 shadow-sm rounded-4 h-100">
+            <div class="card-body d-flex justify-content-between align-items-center">
+
+                <div>
+                    <p class="text-secondary mb-2">Students</p>
+                    <h3 class="fw-normal mb-0">
+                        {{ $users->where('role', 'student')->count() }}
+                    </h3>
+                </div>
+
+                <div class="bg-primary bg-opacity-10 rounded-2 p-3">
+                    <i class="fa-solid fa-user-graduate text-primary fs-4"></i>
+                </div>
+
+            </div>
+        </div>
+    </div>
+
+
+    <!-- Instructor -->
+    <div class="col-12 col-sm-6 col-xl-3">
+        <div class="card border-0 shadow-sm rounded-4 h-100">
+            <div class="card-body d-flex justify-content-between align-items-center">
+
+                <div>
+                    <p class="text-secondary mb-2">Instructor</p>
+                    <h3 class="fw-normal mb-0">
+                        {{ $users->where('role', 'instructor')->count() }}
+                    </h3>
+                </div>
+
+                <div class="bg-success bg-opacity-10 rounded-2 p-3">
+                    <i class="fa-solid fa-user-check text-success fs-4"></i>
+                </div>
+
+            </div>
+        </div>
+    </div>
+
+
+    <!-- Admin -->
+    <div class="col-12 col-sm-6 col-xl-3">
+        <div class="card border-0 shadow-sm rounded-4 h-100">
+            <div class="card-body d-flex justify-content-between align-items-center">
+
+                <div>
+                    <p class="text-secondary mb-2">Admin</p>
+                    <h3 class="fw-normal mb-0">
+                        {{ $users->where('role', 'admin')->count() }}
+                    </h3>
+                </div>
+
+                <div class="bg-warning bg-opacity-10 rounded-2 p-3">
+                    <i class="fa-solid fa-shield text-warning fs-4"></i>
+                </div>
+
+            </div>
+        </div>
+    </div>
+
+</div>
 
 
 

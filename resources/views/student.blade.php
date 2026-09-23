@@ -1,6 +1,6 @@
 @extends('layouts.student_layout')
 
-@section('title', 'Student')
+@section('title', 'STUDENT')
 
 @section('student')
 
@@ -1187,86 +1187,6 @@
 </div>
 </div>
 
-
-
-
-
-<!-- ================= REJECTED BIN ================= -->
-<div class="tab-pane fade" id="rejectedbin">
-
-    <div class="card mt-3 shadow-sm border-0 rounded-4">
-
-        <div class="card-body">
-
-            <strong class="fw-bold mb-4">
-                <i class="fa-regular fa-circle-xmark me-2 text-danger"></i>
-                Rejected Bin
-            </strong><br>
-            <small class="text-muted">Papers rejected by your Instructor or Admin. Review the feedback, make corrections, and resubmit.</small>
-
-            @forelse($rejectedFiles as $file)
-
-                <div class="card border border-danger-subtle rounded-3 mb-3">
-
-                    <div class="card-body d-flex justify-content-between align-items-center">
-
-                        <div>
-                            <h5 class="fw-bold mb-1">
-                                {{ $file->title }}
-                            </h5>
-
-                            <p class="text-muted mb-1">
-                                {{ \Illuminate\Support\Str::limit($file->desc, 180) }}
-                            </p>
-
-                            @if($file->instructor_feedback)
-                                <p class="small text-secondary mb-1">
-                                    <i class="bi bi-chat-left-text me-1"></i>{{ $file->instructor_feedback }}
-                                </p>
-                            @endif
-
-                            <span class="badge bg-danger">
-                                Rejected
-                            </span>
-                        </div>
-
-                        <div>
-                            <a href="{{ route('file.view', $file->id) }}"
-                               class="btn btn-sm btn-outline-primary">
-
-                                <i class="fa-solid fa-eye"></i>
-                                View
-
-                            </a>
-                        </div>
-
-                    </div>
-
-                </div>
-
-            @empty
-
-                <div class="text-center py-5">
-
-                    <i class="fa-regular fa-circle-xmark text-secondary fa-2xl"></i><br>
-
-                    <strong class="text-muted">
-                        No rejected submissions
-                    </strong>
-
-                    <p class="text-muted mb-0">
-                        Papers rejected by your Instructor or Admin will appear here.
-                    </p>
-
-                </div>
-
-            @endforelse
-
-        </div>
-
-    </div>
-
-</div>
 
 
         <!-- ================= BOOKMARKS ================= -->
