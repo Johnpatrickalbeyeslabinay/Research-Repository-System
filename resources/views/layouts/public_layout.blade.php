@@ -70,33 +70,43 @@
 
   <!--navbar-->
 
-  <nav class="navbar navbar-expand-lg navbar-light bg-white fixed-top shadow-sm border-bottom">
+ <nav class="navbar navbar-expand-lg mb-5 navbar-light bg-white fixed-top shadow-sm border-bottom">
 
-    <div class="container-fluid">
+    <div class="container-fluid justify-content-between">
 
-      <!-- Logo -->
-      <div class="d-flex align-items-center">
-        <i data-lucide="fish" class="me-3 rounded-circle p-2 text-white"
-          style="width:36px;height:36px;background:linear-gradient(135deg,#1e3a8a,#0d9488);">
-        </i>
+        <!-- Logo -->
+        <div class="d-flex align-items-center">
 
-        <div class="d-flex flex-column">
-          <h5 class="fw-bold mb-0">CSU APARRI</h5>
-          <small class="text-secondary">Fisheries Program</small>
+            <!-- Logo + Program -->
+            <div class="d-flex align-items-center">
+
+                <img src="{{ asset('images/logo.png') }}"
+                    alt="CSU Aparri Logo"
+                    class="me-3 rounded-circle"
+                    style="width:90px;height:90px;object-fit:cover;">
+
+                <div class="d-flex flex-column">
+                    <h5 class="fw-bold mb-0">CSU APARRI</h5>
+                    <small class="text-secondary">Fisheries Program</small>
+                </div>
+
+            </div>
+
         </div>
-      </div>
 
-      <!-- Login -->
-      <div>
-        <a href="{{ route('login') }}" class="btn text-white px-2 py-1 me-3" style="background:navy;">
-          <i class="fa-solid fa-arrow-right me-2"></i>
-          Login
-        </a>
-      </div>
+        <!-- Login - pinakadulo kanan -->
+        <div>
+            <a href="{{ route('login') }}"
+                class="btn text-white px-3 py-2 me-3"
+                style="background:navy;">
+                <i class="fa-solid fa-arrow-right me-2"></i>
+                Login
+            </a>
+        </div>
 
     </div>
 
-  </nav>
+</nav>
 
 
 
@@ -126,9 +136,6 @@
   <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
   <script src="https://unpkg.com/lucide@latest"></script>
 
-  <script>
-    lucide.createIcons();
-  </script>
 </body>
 
 </html>

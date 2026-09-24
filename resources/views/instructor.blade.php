@@ -406,14 +406,15 @@
                                                                 Pending
                                                             </span>
 
-                                                            <button
+
+                                                            <!--<button
                                                                 class="btn btn-outline-secondary btn-sm rounded-pill px-2 py-1"
                                                                 id="review-tab" data-bs-target="#review" type="button" role="tab">
 
                                                                 <i class="bi bi-eye me-1"></i>
                                                                 Review
 
-                                                            </button>
+                                                            </button>-->
 
                                                         </div>
 
@@ -467,13 +468,14 @@
 
                             <div class="card-body">
 
-                                <div class="row align-items-center">
+                               <div class="row align-items-center">
 
-                                    <div class="col-lg-9">
-
+                                <div class="col-lg-9">
 
                                     <!-- STATUS & VISIBILITY -->
-                                    <div class="position-absolute top-0 end-0 m-3 d-flex align-items-center gap-2">
+                                    <div class="d-flex justify-content-end align-items-center gap-2 mb-2
+                                                position-absolute top-0 end-0 m-3
+                                                status-visibility">
 
                                         <!-- STATUS -->
                                         @if(empty($file->status) || $file->status == 'pending')
@@ -514,48 +516,102 @@
 
                                     </div>
 
-                                        <h5 class="fw-bold mb-2">
-                                            {{ $file->title }}
-                                        </h5>
 
-                                        <div class="d-flex flex-wrap gap-3 text-muted small mb-3">
+                                    <!-- TITLE -->
+                                    <h5 class="fw-bold mb-2">
+                                        {{ $file->title }}
+                                    </h5>
 
-                                            <span>
-                                                <i class="bi bi-person-lines-fill me-1"></i>
-                                                Adviser:
-                                                {{ $file->adviser }}
+
+                                    <!-- STATUS & VISIBILITY - MOBILE ONLY -->
+                                    <div class="d-none mobile-status-visibility align-items-center gap-2 mb-3">
+
+                                        <!-- STATUS -->
+                                        @if(empty($file->status) || $file->status == 'pending')
+                                            <span class="badge text-dark rounded-pill px-2 py-1"
+                                                style="background-color: #fff3cd;">
+                                                Pending
                                             </span>
 
-                                            <span>
-                                                <i class="bi bi-calendar-event me-1"></i>
-                                                {{ $file->created_at->format('M d, Y') }}
+                                        @elseif($file->status == 'approved')
+                                            <span class="badge text-dark rounded-pill px-2 py-1"
+                                                style="background-color: #d1e7dd;">
+                                                Approved
                                             </span>
 
-                                            <span>
-                                                <i class="bi bi-eye me-1"></i>
-                                                {{ $file->views ?? 0 }}
+                                        @elseif($file->status == 'rejected')
+                                            <span class="badge text-dark rounded-pill px-2 py-1"
+                                                style="background-color: #f8d7da;">
+                                                Rejected
+                                            </span>
+                                        @endif
+
+
+                                        <!-- VISIBILITY -->
+                                        @if(empty($file->visibility) || $file->visibility == 'private')
+                                            <span class="badge text-dark rounded-pill px-2 py-1"
+                                                style="background-color: #f8f9fa;">
+                                                <i class="fa-solid fa-lock fa-2xs"></i>
+                                                Private
                                             </span>
 
-                                            <span>
-                                                <i class="bi bi-download me-1"></i>
-                                                {{ $file->downloads ?? 0 }}
+                                        @elseif($file->visibility == 'public')
+                                            <span class="badge text-dark rounded-pill px-2 py-1"
+                                                style="background-color: #edf7ef;">
+                                                <i class="fa-solid fa-globe fa-2xs"></i>
+                                                Public
                                             </span>
+                                        @endif
 
-                                        </div>
-
-                                        <p class="text-secondary mb-3">
-                                            {{ \Illuminate\Support\Str::limit($file->desc, 180) }}
-                                        </p>
-
-                                        @foreach(explode(',', $file->auto_tag) as $tag)
-                                            <span class="small rounded me-1 mb-1 px-2 py-1"
-                                                style="background-color:#EFF6FF; color:#3B5FBF;">
-                                                {{ trim($tag) }}
-                                            </span>
-                                        @endforeach
                                     </div>
 
+
+                                    <!-- DETAILS -->
+                                    <div class="d-flex flex-wrap gap-3 text-muted small mb-3">
+
+                                        <span>
+                                            <i class="bi bi-person-lines-fill me-1"></i>
+                                            Adviser:
+                                            {{ $file->adviser }}
+                                        </span>
+
+                                        <span>
+                                            <i class="bi bi-calendar-event me-1"></i>
+                                            {{ $file->created_at->format('M d, Y') }}
+                                        </span>
+
+                                        <span>
+                                            <i class="bi bi-eye me-1"></i>
+                                            {{ $file->views ?? 0 }}
+                                        </span>
+
+                                        <span>
+                                            <i class="bi bi-download me-1"></i>
+                                            {{ $file->downloads ?? 0 }}
+                                        </span>
+
+                                    </div>
+
+
+                                    <!-- DESCRIPTION -->
+                                    <p class="text-secondary mb-3">
+                                        {{ \Illuminate\Support\Str::limit($file->desc, 180) }}
+                                    </p>
+
+
+                                    <!-- TAGS -->
+                                    @foreach(explode(',', $file->auto_tag) as $tag)
+                                        <span class="small rounded me-1 mb-1 px-2 py-1"
+                                            style="background-color:#EFF6FF; color:#3B5FBF;">
+                                            {{ trim($tag) }}
+                                        </span>
+                                    @endforeach
+
                                 </div>
+
+                            </div>
+
+
 
                                <div class="d-flex align-items-center gap-3 mt-3 flex-wrap">
 
@@ -672,6 +728,81 @@
 
 
                                     <div class="rounded-4">
+
+
+                                {{-- Instructor Feedback History --}}
+                                        <div class="mt-4">
+
+                                            <h5 class="fw-bold mb-3">
+                                                <i class="bi bi-chat-left-text me-2"></i>
+                                                Instructor Feedback
+                                            </h5>
+
+                                            @php
+                                                $feedbackHistory = [];
+
+                                                if (!empty($file->instructor_feedback)) {
+                                                    $decodedFeedback = json_decode($file->instructor_feedback, true);
+
+                                                    if (is_array($decodedFeedback)) {
+                                                        $feedbackHistory = $decodedFeedback;
+                                                    } else {
+                                                        // Support old single feedback
+                                                        $feedbackHistory[] = [
+                                                            'user_id' => $file->adviser_id,
+                                                            'feedback' => $file->instructor_feedback,
+                                                            'created_at' => $file->updated_at?->toDateTimeString(),
+                                                        ];
+                                                    }
+                                                }
+                                            @endphp
+
+                                            @forelse($feedbackHistory as $feedback)
+
+                                                @php
+                                                    $commenter = \App\Models\User::find($feedback['user_id'] ?? null);
+                                                @endphp
+
+                                                <div class="border rounded-3 p-3 mb-3">
+
+                                                    <div class="d-flex justify-content-between align-items-start">
+
+                                                        <div>
+                                                            <strong>
+                                                                {{ $commenter->name ?? 'Unknown Instructor' }}
+                                                            </strong>
+
+                                                            <div class="text-muted small">
+                                                                @if(!empty($feedback['created_at']))
+                                                                    {{ \Carbon\Carbon::parse($feedback['created_at'])->format('M j, Y h:i A') }}
+                                                                @endif
+                                                            </div>
+                                                        </div>
+
+                                                        <i class="bi bi-chat-left-text text-primary"></i>
+
+                                                    </div>
+
+                                                    <div class="mt-3">
+                                                        {{ $feedback['feedback'] ?? '' }}
+                                                    </div>
+
+                                                </div>
+
+                                            @empty
+
+                                                <div class="alert alert-secondary">
+                                                    <i class="bi bi-chat-left-text me-2"></i>
+                                                    No feedback has been posted yet.
+                                                </div>
+
+                                            @endforelse
+
+                                        </div>
+
+
+
+
                                         <div class="card-body p-4">
 
                                             <h5 class="fw-bold mb-4">
@@ -682,9 +813,11 @@
                                                 @csrf
 
                                                 <!-- Comment -->
-                                                <div class="mb-3">
-                                                    <textarea name="feedback" class="form-control form-control-sm" rows="4"
-                                                        placeholder="Enter your feedback, comments, or revision instructions...">{{ old('feedback', $file->instructor_feedback) }}</textarea>
+                                               <div class="mb-3">
+                                                    <textarea name="feedback"
+                                                        class="form-control form-control-sm"
+                                                        rows="4"
+                                                        placeholder="Enter your feedback, comments, or revision instructions..."></textarea>
                                                 </div>
 
                                                 <!-- Button -->

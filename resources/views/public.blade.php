@@ -8,6 +8,7 @@
         <i class="fa-solid fa-arrow-left fa-xl"></i>
     </a>
 
+    <br><br><br><br><br>
     <div class="container text-center mt-5">
         <h1>Fisheries Research Repository</h1>
         <p>Explore academic research from students and faculty of the Fisheries Program</p>
@@ -80,7 +81,11 @@
             <!-- Research Cards -->
             <div class="row g-4 mt-3">
                 @foreach ($studFiles as $file)
-                    <x-research.card :file="$file" :show-download="$showDownload" />
+                    <x-research.card
+                        :file="$file"
+                        :show-download="false"
+                        :url="route('public.research.show', $file->id)"
+                    />
                 @endforeach
             </div>
 

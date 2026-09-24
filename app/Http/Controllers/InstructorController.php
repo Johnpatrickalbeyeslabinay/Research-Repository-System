@@ -50,7 +50,7 @@ class InstructorController extends Controller
             ->get();
 
         $studFiles = UserFile::where('adviser_id', Auth::id())
-            ->with(['authors', 'keywords', 'sdgs'])
+            ->with(['authors', 'keywords', 'sdgs',  'feedbacks.user'])
             ->latest()
             ->get();
 
@@ -130,6 +130,26 @@ class InstructorController extends Controller
     }
 
     // POST FEEDBACK
+    // public function feedback(Request $request, $id)
+    // {
+    // $request->validate([
+    //   'feedback' => 'required|string|max:2000',
+    // ]);
+
+    // $file = UserFile::where('id', $id)
+    //   ->where('adviser_id', Auth::id())
+    // ->firstOrFail();
+
+    // $file->instructor_feedback = $request->feedback;
+    // $file->save();
+
+    // Previously nothing told the student feedback existed at all —
+    // they'd only ever see it if they happened to reopen the card.
+    // $file->user->notify(new ResearchFeedbackPosted($file));
+
+    // return back()->with('success', 'Feedback posted.');
+    // }
+
     public function feedback(Request $request, $id)
     {
         $request->validate([
@@ -140,12 +160,34 @@ class InstructorController extends Controller
             ->where('adviser_id', Auth::id())
             ->firstOrFail();
 
-        $file->instructor_feedback = $request->feedback;
-        $file->save();
+        // Kunin ang existing feedback history
+        $feedbacks = [];
 
-        // Previously nothing told the student feedback existed at all —
-        // they'd only ever see it if they happened to reopen the card.
-        $file->user->notify(new ResearchFeedbackPosted($file));
+        if (! empty($file->instructor_feedback)) {
+            $decoded = json_decode($file->instructor_feedback, true);
+
+            if (is_array($decoded)) {
+                $feedbacks = $decoded;
+            } else {
+                // Preserve old single feedback
+                $feedbacks[] = [
+                    'user_id' => $file->adviser_id,
+                    'feedback' => $file->instructor_feedback,
+                    'created_at' => $file->updated_at?->toDateTimeString(),
+                ];
+            }
+        }
+
+        // Add new feedback
+        $feedbacks[] = [
+            'user_id' => Auth::id(),
+            'feedback' => $request->feedback,
+            'created_at' => now()->toDateTimeString(),
+        ];
+
+        // Save entire history back to existing column
+        $file->instructor_feedback = json_encode($feedbacks);
+        $file->save();
 
         return back()->with('success', 'Feedback posted.');
     }

@@ -746,7 +746,7 @@
                                             {{ \Illuminate\Support\Str::limit($file->desc, 180) }}
                                         </p>
 
-                                        @if($file->instructor_feedback)
+                                        <!--@if($file->instructor_feedback)
                                             <div class="rounded-3 p-2 mt-2" style="background-color:#FFF8E1;">
                                                 <small class="fw-semibold text-secondary d-block mb-1">
                                                     <i class="bi bi-chat-left-text me-1"></i>
@@ -754,7 +754,7 @@
                                                 </small>
                                                 <small>{{ $file->instructor_feedback }}</small>
                                             </div>
-                                        @endif
+                                        @endif-->
 
                                     </div>
 
@@ -1048,7 +1048,7 @@
                                         {{ $file->desc ?? 'No abstract available.' }}
                                     </p>
 
-                                    @if($file->instructor_feedback)
+                                    <!--@if($file->instructor_feedback)
                                         <div class="rounded-3 p-3 mt-3" style="background-color:#FFF8E1;">
                                             <small class="fw-semibold text-secondary d-block mb-1">
                                                 <i class="bi bi-chat-left-text me-1"></i>
@@ -1056,7 +1056,85 @@
                                             </small>
                                             {{ $file->instructor_feedback }}
                                         </div>
-                                    @endif
+                                    @endif-->
+
+
+
+
+
+                                    {{-- Instructor Feedback History --}}
+                                        <div class="mt-4">
+
+                                            <h5 class="fw-bold mb-3">
+                                                <i class="bi bi-chat-left-text me-2"></i>
+                                                Instructor Feedback
+                                            </h5>
+
+                                            @php
+                                                $feedbackHistory = [];
+
+                                                if (!empty($file->instructor_feedback)) {
+                                                    $decodedFeedback = json_decode($file->instructor_feedback, true);
+
+                                                    if (is_array($decodedFeedback)) {
+                                                        $feedbackHistory = $decodedFeedback;
+                                                    } else {
+                                                        // Support old single feedback
+                                                        $feedbackHistory[] = [
+                                                            'user_id' => $file->adviser_id,
+                                                            'feedback' => $file->instructor_feedback,
+                                                            'created_at' => $file->updated_at?->toDateTimeString(),
+                                                        ];
+                                                    }
+                                                }
+                                            @endphp
+
+                                            @forelse($feedbackHistory as $feedback)
+
+                                                @php
+                                                    $commenter = \App\Models\User::find($feedback['user_id'] ?? null);
+                                                @endphp
+
+                                                <div class="border rounded-3 p-3 mb-3">
+
+                                                    <div class="d-flex justify-content-between align-items-start">
+
+                                                        <div>
+                                                            <strong>
+                                                                {{ $commenter->name ?? 'Unknown Instructor' }}
+                                                            </strong>
+
+                                                            <div class="text-muted small">
+                                                                @if(!empty($feedback['created_at']))
+                                                                    {{ \Carbon\Carbon::parse($feedback['created_at'])->format('M j, Y h:i A') }}
+                                                                @endif
+                                                            </div>
+                                                        </div>
+
+                                                        <i class="bi bi-chat-left-text text-primary"></i>
+
+                                                    </div>
+
+                                                    <div class="mt-3">
+                                                        {{ $feedback['feedback'] ?? '' }}
+                                                    </div>
+
+                                                </div>
+
+                                            @empty
+
+                                                <div class="alert alert-secondary">
+                                                    <i class="bi bi-chat-left-text me-2"></i>
+                                                    No feedback has been posted yet.
+                                                </div>
+
+                                            @endforelse
+
+                                        </div>
+
+
+
+
 
                                     <div
                                         class="alert alert-primary d-flex justify-content-between align-items-center mt-5 flex-wrap">

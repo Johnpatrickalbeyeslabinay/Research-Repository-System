@@ -30,6 +30,33 @@
     background: #f3f4f6;
     color: #374151;
   }
+
+
+    .mobile-status-visibility {
+        display: none !important;
+    }
+
+    @media (max-width: 991.98px) {
+
+        /* Hide desktop status */
+        .status-visibility {
+            display: none !important;
+        }
+
+        /* Show mobile status below title */
+        .mobile-status-visibility {
+            display: flex !important;
+        }
+    }
+
+     @media (max-width: 575.98px) {
+
+        .action-buttons {
+            width: 100%;
+            justify-content: flex-start;
+        }
+
+    }
 </style>
 
 
