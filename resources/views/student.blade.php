@@ -573,10 +573,10 @@
         </button>
 
         <!-- Bookmarks -->
-        <button class="nav-link rounded-5 px-2 py-1" id="bookmark-tab" data-bs-toggle="pill" data-bs-target="#bookmark"
+        <!--<button class="nav-link rounded-5 px-2 py-1" id="bookmark-tab" data-bs-toggle="pill" data-bs-target="#bookmark"
             type="button" role="tab">
             Bookmarks
-        </button>
+        </button>-->
 
     </div>
 
