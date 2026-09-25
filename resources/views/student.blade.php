@@ -282,7 +282,7 @@
                                             <span class="rw-row-label">Type</span>
                                             <select name="research_type" class="form-select form-select-sm">
                                                 <option value="">Select</option>
-                                                @foreach(['Thesis', 'Capstone', 'Case Study', 'Other'] as $type)
+                                                @foreach(['Thesis'] as $type)
                                                     <option value="{{ $type }}" {{ old('research_type') === $type ? 'selected' : '' }}>{{ $type }}</option>
                                                 @endforeach
                                             </select>
