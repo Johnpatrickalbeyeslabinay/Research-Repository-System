@@ -740,11 +740,33 @@
                                              at submission, previously shown nowhere on this card at all (only
                                              the auto-generated title-word tags below stood in for "keywords"). --}}
                                         <x-research.meta :file="$file" compact
-                                            :show="['researchers', 'type', 'year', 'keywords', 'sdgs']" />
+                                            :show="['researchers', 'type', 'year',]" />
+                                        <!-- 'keywords', 'sdgs'-->
 
+                                        <!--abstract-->
                                         <p class="text-secondary mb-3">
                                             {{ \Illuminate\Support\Str::limit($file->desc, 180) }}
                                         </p>
+
+
+                                        <!--Rejected resaon-->
+                                        @if($file->status === 'rejected' && !empty($file->rejection_reason))
+                                            <div class="alert alert-danger rounded-3 mb-3 py-2 px-3">
+                                                <div class="d-flex align-items-start">
+                                                    <i class="fa-solid fa-circle-exclamation me-2 mt-1"></i>
+
+                                                    <div>
+                                                        <div class="fw-semibold mb-1">
+                                                            Reason for Rejection
+                                                        </div>
+
+                                                        <div class="small">
+                                                            {{ $file->rejection_reason }}
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        @endif
 
                                         <!--@if($file->instructor_feedback)
                                             <div class="rounded-3 p-2 mt-2" style="background-color:#FFF8E1;">
@@ -1133,7 +1155,44 @@
                                         </div>
 
 
+                                            <!--Rejected resaon-->
+                                        @if($file->status === 'rejected' && !empty($file->rejection_reason))
+                                            <div class="alert alert-danger rounded-3 mb-3 py-2 px-3">
 
+                                                <div class="d-flex align-items-start">
+                                                    <i class="fa-solid fa-circle-exclamation me-2 mt-1"></i>
+
+                                                    <div class="w-100">
+
+                                                        <div class="fw-semibold mb-1">
+                                                            Reason for Rejection
+                                                        </div>
+
+                                                        <div class="mb-1">
+                                                                <strong>{{ $file->adviser }}</strong>
+                                                        </div>
+
+                                                        <div class="small text-secondary d-flex align-items-center flex-wrap gap-3">
+
+                                                            <div>
+                                                                <small>{{ $file->rejected_at?->format('M d, Y') ?? $file->updated_at?->format('M d, Y') }}</small>
+                                                            </div>
+
+                                                            <div>
+                                                                <small>{{ $file->rejected_at?->format('h:i A') ?? $file->updated_at?->format('h:i A') }}</small>
+                                                            </div>
+
+                                                        </div>
+
+                                                        <div class="small mt-1 mb-2">
+                                                            {{ $file->rejection_reason }}
+                                                        </div>
+
+                                                    </div>
+                                                </div>
+
+                                            </div>
+                                        @endif
 
 
                                     <div
@@ -1145,6 +1204,8 @@
                                                 <small>{{ basename($file->file_path) }}</small>
                                             </div>
                                         </div>
+
+
 
                                         <div class="d-flex gap-2 mt-3 mt-md-0">
 

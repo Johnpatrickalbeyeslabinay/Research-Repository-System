@@ -643,16 +643,130 @@
                                         </form>
 
 
+
+                                        <!--REJECT BTN WITH REASIN-->
                                         <form action="{{ route('instructor.research.reject', $file->id) }}"
                                             method="POST"
                                             class="m-0">
 
                                             @csrf
 
-                                            <button type="submit" class="btn btn-outline-danger px-2 py-1">
+                                            <button type="button"
+                                                    class="btn btn-outline-danger px-2 py-1"
+                                                    data-bs-toggle="modal"
+                                                    data-bs-target="#rejectModal{{ $file->id }}">
                                                 <i class="fa-regular fa-circle-xmark me-1"></i>
                                                 Reject
                                             </button>
+
+                                            <!-- Reject Modal -->
+                                            <div class="modal fade"
+                                                id="rejectModal{{ $file->id }}"
+                                                tabindex="-1"
+                                                aria-labelledby="rejectModalLabel{{ $file->id }}"
+                                                aria-hidden="true">
+
+                                                <div class="modal-dialog modal-dialog-centered">
+                                                    <div class="modal-content">
+
+                                                        <div class="modal-header">
+                                                            <h5 class="modal-title"
+                                                                id="rejectModalLabel{{ $file->id }}">
+                                                                Reject Research Paper
+                                                            </h5>
+
+                                                            <button type="button"
+                                                                    class="btn-close"
+                                                                    data-bs-dismiss="modal"
+                                                                    aria-label="Close"></button>
+                                                        </div>
+
+                                                        <div class="modal-body">
+
+                                                            <p class="mb-3">
+                                                                Please provide a reason for rejecting this research paper.
+                                                            </p>
+
+                                                            <label for="rejectReason{{ $file->id }}"
+                                                                class="form-label fw-semibold">
+                                                                Reason
+                                                            </label>
+
+                                                            <select name="rejection_reason"
+                                                                    id="rejectReason{{ $file->id }}"
+                                                                    class="form-select"
+                                                                    required
+                                                                    onchange="toggleOtherReason({{ $file->id }})">
+
+                                                                <option value="" selected disabled>
+                                                                    Select a reason
+                                                                </option>
+
+                                                                <option value="Incomplete manuscript">
+                                                                    Incomplete manuscript
+                                                                </option>
+
+                                                                <option value="Needs major revisions">
+                                                                    Needs major revisions
+                                                                </option>
+
+                                                                <option value="Formatting issues">
+                                                                    Formatting issues
+                                                                </option>
+
+                                                                <option value="Missing required sections">
+                                                                    Missing required sections
+                                                                </option>
+
+                                                                <option value="Not suitable for publication">
+                                                                    Not suitable for publication
+                                                                </option>
+
+                                                                <option value="Other">
+                                                                    Other
+                                                                </option>
+
+                                                            </select>
+
+
+                                                            <!-- Custom reason -->
+                                                            <div class="mt-3 d-none"
+                                                                id="otherReasonContainer{{ $file->id }}">
+
+                                                                <label for="customReason{{ $file->id }}"
+                                                                    class="form-label fw-semibold">
+                                                                    Custom Reason / Message
+                                                                </label>
+
+                                                                <textarea name="custom_rejection_reason"
+                                                                        id="customReason{{ $file->id }}"
+                                                                        class="form-control"
+                                                                        rows="4"
+                                                                        placeholder="Please specify the reason for rejection..."></textarea>
+
+                                                            </div>
+
+                                                        </div>
+
+                                                        <div class="modal-footer">
+
+                                                            <button type="button"
+                                                                    class="btn btn-secondary"
+                                                                    data-bs-dismiss="modal">
+                                                                Cancel
+                                                            </button>
+
+                                                            <button type="submit"
+                                                                    class="btn btn-danger">
+                                                                <i class="fa-regular fa-circle-xmark me-1"></i>
+                                                                Confirm Reject
+                                                            </button>
+
+                                                        </div>
+
+                                                    </div>
+                                                </div>
+                                            </div>
 
                                         </form>
 
@@ -830,6 +944,48 @@
                                             </form>
 
 
+
+
+                                            <!--Rejected resaon-->
+                                        @if($file->status === 'rejected' && !empty($file->rejection_reason))
+                                            <div class="alert alert-danger rounded-3 mt-3 mb-2 py-2 px-3">
+
+                                                <div class="d-flex align-items-start">
+                                                    <i class="fa-solid fa-circle-exclamation me-2 mt-1"></i>
+
+                                                    <div class="w-100">
+
+                                                        <div class="fw-semibold mb-1">
+                                                            Reason for Rejection
+                                                        </div>
+
+                                                        <div class="mb-1">
+                                                                <strong>{{ $file->adviser }}</strong>
+                                                        </div>
+
+                                                        <div class="small text-secondary d-flex align-items-center flex-wrap gap-3">
+
+                                                            <div>
+                                                                <small>{{ $file->rejected_at?->format('M d, Y') ?? $file->updated_at?->format('M d, Y') }}</small>
+                                                            </div>
+
+                                                            <div>
+                                                                <small>{{ $file->rejected_at?->format('h:i A') ?? $file->updated_at?->format('h:i A') }}</small>
+                                                            </div>
+
+                                                        </div>
+
+                                                        <div class="small mt-1 mb-2">
+                                                            {{ $file->rejection_reason }}
+                                                        </div>
+
+                                                    </div>
+                                                </div>
+
+                                            </div>
+                                        @endif
+
+
                                             @if($file->status == 'pending')
 
                                             <form action="{{ route('instructor.research.approve', $file->id) }}"
@@ -907,6 +1063,21 @@
 
 
 
+<script>
+    function toggleOtherReason(fileId) {
+        const select = document.getElementById('rejectReason' + fileId);
+        const container = document.getElementById('otherReasonContainer' + fileId);
+        const textarea = document.getElementById('customReason' + fileId);
 
+        if (select.value === 'Other') {
+            container.classList.remove('d-none');
+            textarea.required = true;
+        } else {
+            container.classList.add('d-none');
+            textarea.required = false;
+            textarea.value = '';
+        }
+    }
+</script>
 
 @endsection

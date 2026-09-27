@@ -163,7 +163,7 @@
 
 
 
-                <div class="container-fluid px-4">
+                <div class="container-fluid px-4 mt-5">
                     <div class="user-manual-card">
                         <div>
                             <h2 class="user-manual-title">
@@ -175,7 +175,7 @@
                             </p>
                         </div>
 
-                        <a href="{{ asset('documents/user-manual.pdf') }}"
+                        <a href="{{ asset('documents/user manual.pdf') }}"
                         class="btn user-manual-btn"
                         download>
                             <i class="fa-solid fa-download me-2"></i>

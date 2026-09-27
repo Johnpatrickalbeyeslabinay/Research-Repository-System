@@ -52,6 +52,7 @@ class UserFile extends Model
         'ai_suggested_sdgs' => 'array',
         'ai_analyzed_at' => 'datetime',
         'search_indexed_at' => 'datetime',
+        'rejected_at' => 'datetime',
     ];
 
     public function user()

@@ -107,21 +107,44 @@ class InstructorController extends Controller
     }
 
     // REJECT RESEARCH
-    public function reject($id)
+    public function reject(Request $request, $id)
     {
+        $request->validate([
+            'rejection_reason' => 'required|string|max:255',
+            'custom_rejection_reason' => 'nullable|string|max:2000',
+        ]);
+
         $file = UserFile::where('id', $id)
             ->where('adviser_id', Auth::id())
             ->firstOrFail();
 
-        abort_if($file->status !== 'pending', 409, 'This research has already been reviewed.');
+        abort_if(
+            $file->status !== 'pending',
+            409,
+            'This research has already been reviewed.'
+        );
+
+        $reason = $request->rejection_reason;
+
+        if ($reason === 'Other') {
+            $request->validate([
+                'custom_rejection_reason' => 'required|string|max:2000',
+            ]);
+
+            $reason = $request->custom_rejection_reason;
+        }
 
         $file->status = 'rejected';
+        $file->rejection_reason = $reason;
+        $file->rejected_at = now();
 
         $file->save();
 
         self::forgetDashboardCache();
 
-        $file->user->notify(new ResearchReviewedByInstructor($file, 'rejected'));
+        $file->user->notify(
+            new ResearchReviewedByInstructor($file, 'rejected')
+        );
 
         return back()->with(
             'success',
