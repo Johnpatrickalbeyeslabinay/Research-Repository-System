@@ -4,3 +4,67 @@
 nav {
     z-index: 1000;
 }
+
+.user-manual-card {
+    width: 100%;
+    padding: 32px 44px;
+    border: 1px solid #b9dcff;
+    border-radius: 20px;
+    background: #ffffff;
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.08);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 30px;
+}
+
+.user-manual-title {
+    margin: 0 0 8px;
+    color: #172033;
+    font-size: 28px;
+    font-weight: 500;
+}
+
+.user-manual-description {
+    color: #59677b;
+    font-size: 21px;
+    line-height: 1.5;
+}
+
+.user-manual-btn {
+    flex-shrink: 0;
+    padding: 11px 18px;
+    border: 1px solid #75aefc;
+    border-radius: 10px;
+    background: #ffffff;
+    color: #23449a;
+    font-size: 19px;
+    font-weight: 500;
+}
+
+.user-manual-btn:hover {
+    background: #f0f6ff;
+    border-color: #23449a;
+    color: #1e3a8a;
+}
+
+@media (max-width: 768px) {
+    .user-manual-card {
+        padding: 24px;
+        flex-direction: column;
+        align-items: flex-start;
+    }
+
+    .user-manual-title {
+        font-size: 24px;
+    }
+
+    .user-manual-description {
+        font-size: 17px;
+    }
+
+    .user-manual-btn {
+        width: 100%;
+        text-align: center;
+    }
+}

@@ -18,77 +18,105 @@
 
     </div>
 
-    <div class="container-fluid py-4">
-        <div class="row g-4">
+    <!-- Dashboard Statistics -->
+<div class="row flex-nowrap overflow-auto g-3 pb-2">
 
-            <!-- Total Submissions -->
-            <div class="col-12 col-sm-6 col-xl-3">
-                <div class="card border-0 shadow-sm rounded-4 h-100">
-                    <div class="card-body d-flex justify-content-between align-items-center">
-                        <div>
-                            <p class="text-secondary mb-2">Total Submissions</p>
-                            <h3 class="fw-normal mb-0">{{ $studFiles->count() }}</h3>
-                        </div>
+    <!-- Total Submissions -->
+    <div class="col-10 col-sm-6 col-xl-3">
+        <div class="card border-0 shadow-sm rounded-4 h-100">
+            <div class="card-body d-flex justify-content-between align-items-center">
 
-                        <div class="bg-primary bg-opacity-10 rounded-2 p-3">
-                            <i class="fa-regular fa-file-lines text-primary fs-4"></i>
-                        </div>
-                    </div>
+                <div>
+                    <p class="text-secondary mb-2">
+                        Total Submissions
+                    </p>
+
+                    <h3 class="fw-normal mb-0">
+                        {{ $studFiles->count() }}
+                    </h3>
                 </div>
-            </div>
 
-            <!-- Approved -->
-            <div class="col-12 col-sm-6 col-xl-3">
-                <div class="card border-0 shadow-sm rounded-4 h-100">
-                    <div class="card-body d-flex justify-content-between align-items-center">
-                        <div>
-                            <p class="text-secondary mb-2">Approved</p>
-                            <h3 class="fw-normal mb-0">{{ $approvedCount }}</h3>
-                        </div>
-
-                        <div class="bg-success bg-opacity-10 rounded-2 p-3">
-                            <i class="fa-regular fa-circle-check text-success fs-4"></i>
-                        </div>
-                    </div>
+                <div class="bg-primary bg-opacity-10 rounded-2 p-3">
+                    <i class="fa-regular fa-file-lines text-primary fs-4"></i>
                 </div>
+
             </div>
-
-            <!-- Pending -->
-            <div class="col-12 col-sm-6 col-xl-3">
-                <div class="card border-0 shadow-sm rounded-4 h-100">
-                    <div class="card-body d-flex justify-content-between align-items-center">
-                        <div>
-                            <p class="text-secondary mb-2">Pending Review</p>
-                            <h3 class="fw-normal mb-0">{{ $pendingCount }}</h3>
-                        </div>
-
-                        <div class="bg-warning bg-opacity-10 rounded-2 p-3">
-                            <i class="fa-regular fa-clock text-warning fs-4"></i>
-                        </div>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Reject -->
-            <div class="col-12 col-sm-6 col-xl-3">
-                <div class="card border-0 shadow-sm rounded-4 h-100">
-                    <div class="card-body d-flex justify-content-between align-items-center">
-                        <div>
-                            <p class="text-secondary mb-2">Reject</p>
-                            <h3 class="fw-normal mb-0">{{ $rejectedCount }}</h3>
-                        </div>
-
-                        <div class="bg-warning bg-opacity-10 rounded-2 p-3">
-                            <i class="fa-regular fa-clock text-warning fs-4"></i>
-                        </div>
-                    </div>
-                </div>
-            </div>
-
-
-
         </div>
     </div>
+
+
+    <!-- Approved -->
+    <div class="col-10 col-sm-6 col-xl-3">
+        <div class="card border-0 shadow-sm rounded-4 h-100">
+            <div class="card-body d-flex justify-content-between align-items-center">
+
+                <div>
+                    <p class="text-secondary mb-2">
+                        Approved
+                    </p>
+
+                    <h3 class="fw-normal mb-0">
+                        {{ $approvedCount }}
+                    </h3>
+                </div>
+
+                <div class="bg-success bg-opacity-10 rounded-2 p-3">
+                    <i class="fa-regular fa-circle-check text-success fs-4"></i>
+                </div>
+
+            </div>
+        </div>
+    </div>
+
+
+    <!-- Pending -->
+    <div class="col-10 col-sm-6 col-xl-3">
+        <div class="card border-0 shadow-sm rounded-4 h-100">
+            <div class="card-body d-flex justify-content-between align-items-center">
+
+                <div>
+                    <p class="text-secondary mb-2">
+                        Pending Review
+                    </p>
+
+                    <h3 class="fw-normal mb-0">
+                        {{ $pendingCount }}
+                    </h3>
+                </div>
+
+                <div class="bg-warning bg-opacity-10 rounded-2 p-3">
+                    <i class="fa-regular fa-clock text-warning fs-4"></i>
+                </div>
+
+            </div>
+        </div>
+    </div>
+
+
+    <!-- Rejected -->
+    <div class="col-10 col-sm-6 col-xl-3">
+        <div class="card border-0 shadow-sm rounded-4 h-100">
+            <div class="card-body d-flex justify-content-between align-items-center">
+
+                <div>
+                    <p class="text-secondary mb-2">
+                        Rejected
+                    </p>
+
+                    <h3 class="fw-normal mb-0">
+                        {{ $rejectedCount }}
+                    </h3>
+                </div>
+
+                <div class="bg-danger bg-opacity-10 rounded-2 p-3">
+                    <i class="fa-regular fa-circle-xmark text-danger fs-4"></i>
+                </div>
+
+            </div>
+        </div>
+    </div>
+
+</div>
 
 
 
@@ -378,14 +406,15 @@
                                                                 Pending
                                                             </span>
 
-                                                            <button
+
+                                                            <!--<button
                                                                 class="btn btn-outline-secondary btn-sm rounded-pill px-2 py-1"
-                                                                popovertarget="popover-{{ $file->id }}">
+                                                                id="review-tab" data-bs-target="#review" type="button" role="tab">
 
                                                                 <i class="bi bi-eye me-1"></i>
                                                                 Review
 
-                                                            </button>
+                                                            </button>-->
 
                                                         </div>
 
@@ -439,13 +468,14 @@
 
                             <div class="card-body">
 
-                                <div class="row align-items-center">
+                               <div class="row align-items-center">
 
-                                    <div class="col-lg-9">
-
+                                <div class="col-lg-9">
 
                                     <!-- STATUS & VISIBILITY -->
-                                    <div class="position-absolute top-0 end-0 m-3 d-flex align-items-center gap-2">
+                                    <div class="d-flex justify-content-end align-items-center gap-2 mb-2
+                                                position-absolute top-0 end-0 m-3
+                                                status-visibility">
 
                                         <!-- STATUS -->
                                         @if(empty($file->status) || $file->status == 'pending')
@@ -486,48 +516,102 @@
 
                                     </div>
 
-                                        <h5 class="fw-bold mb-2">
-                                            {{ $file->title }}
-                                        </h5>
 
-                                        <div class="d-flex flex-wrap gap-3 text-muted small mb-3">
+                                    <!-- TITLE -->
+                                    <h5 class="fw-bold mb-2">
+                                        {{ $file->title }}
+                                    </h5>
 
-                                            <span>
-                                                <i class="bi bi-person-lines-fill me-1"></i>
-                                                Adviser:
-                                                {{ $file->adviser }}
+
+                                    <!-- STATUS & VISIBILITY - MOBILE ONLY -->
+                                    <div class="d-none mobile-status-visibility align-items-center gap-2 mb-3">
+
+                                        <!-- STATUS -->
+                                        @if(empty($file->status) || $file->status == 'pending')
+                                            <span class="badge text-dark rounded-pill px-2 py-1"
+                                                style="background-color: #fff3cd;">
+                                                Pending
                                             </span>
 
-                                            <span>
-                                                <i class="bi bi-calendar-event me-1"></i>
-                                                {{ $file->created_at->format('M d, Y') }}
+                                        @elseif($file->status == 'approved')
+                                            <span class="badge text-dark rounded-pill px-2 py-1"
+                                                style="background-color: #d1e7dd;">
+                                                Approved
                                             </span>
 
-                                            <span>
-                                                <i class="bi bi-eye me-1"></i>
-                                                {{ $file->views ?? 0 }}
+                                        @elseif($file->status == 'rejected')
+                                            <span class="badge text-dark rounded-pill px-2 py-1"
+                                                style="background-color: #f8d7da;">
+                                                Rejected
+                                            </span>
+                                        @endif
+
+
+                                        <!-- VISIBILITY -->
+                                        @if(empty($file->visibility) || $file->visibility == 'private')
+                                            <span class="badge text-dark rounded-pill px-2 py-1"
+                                                style="background-color: #f8f9fa;">
+                                                <i class="fa-solid fa-lock fa-2xs"></i>
+                                                Private
                                             </span>
 
-                                            <span>
-                                                <i class="bi bi-download me-1"></i>
-                                                {{ $file->downloads ?? 0 }}
+                                        @elseif($file->visibility == 'public')
+                                            <span class="badge text-dark rounded-pill px-2 py-1"
+                                                style="background-color: #edf7ef;">
+                                                <i class="fa-solid fa-globe fa-2xs"></i>
+                                                Public
                                             </span>
+                                        @endif
 
-                                        </div>
-
-                                        <p class="text-secondary mb-3">
-                                            {{ \Illuminate\Support\Str::limit($file->desc, 180) }}
-                                        </p>
-
-                                        @foreach(explode(',', $file->auto_tag) as $tag)
-                                            <span class="small rounded me-1 mb-1 px-2 py-1"
-                                                style="background-color:#EFF6FF; color:#3B5FBF;">
-                                                {{ trim($tag) }}
-                                            </span>
-                                        @endforeach
                                     </div>
 
+
+                                    <!-- DETAILS -->
+                                    <div class="d-flex flex-wrap gap-3 text-muted small mb-3">
+
+                                        <span>
+                                            <i class="bi bi-person-lines-fill me-1"></i>
+                                            Adviser:
+                                            {{ $file->adviser }}
+                                        </span>
+
+                                        <span>
+                                            <i class="bi bi-calendar-event me-1"></i>
+                                            {{ $file->created_at->format('M d, Y') }}
+                                        </span>
+
+                                        <span>
+                                            <i class="bi bi-eye me-1"></i>
+                                            {{ $file->views ?? 0 }}
+                                        </span>
+
+                                        <span>
+                                            <i class="bi bi-download me-1"></i>
+                                            {{ $file->downloads ?? 0 }}
+                                        </span>
+
+                                    </div>
+
+
+                                    <!-- DESCRIPTION -->
+                                    <p class="text-secondary mb-3">
+                                        {{ \Illuminate\Support\Str::limit($file->desc, 180) }}
+                                    </p>
+
+
+                                    <!-- TAGS -->
+                                    @foreach(explode(',', $file->auto_tag) as $tag)
+                                        <span class="small rounded me-1 mb-1 px-2 py-1"
+                                            style="background-color:#EFF6FF; color:#3B5FBF;">
+                                            {{ trim($tag) }}
+                                        </span>
+                                    @endforeach
+
                                 </div>
+
+                            </div>
+
+
 
                                <div class="d-flex align-items-center gap-3 mt-3 flex-wrap">
 
@@ -559,16 +643,130 @@
                                         </form>
 
 
+
+                                        <!--REJECT BTN WITH REASIN-->
                                         <form action="{{ route('instructor.research.reject', $file->id) }}"
                                             method="POST"
                                             class="m-0">
 
                                             @csrf
 
-                                            <button type="submit" class="btn btn-outline-danger px-2 py-1">
+                                            <button type="button"
+                                                    class="btn btn-outline-danger px-2 py-1"
+                                                    data-bs-toggle="modal"
+                                                    data-bs-target="#rejectModal{{ $file->id }}">
                                                 <i class="fa-regular fa-circle-xmark me-1"></i>
                                                 Reject
                                             </button>
+
+                                            <!-- Reject Modal -->
+                                            <div class="modal fade"
+                                                id="rejectModal{{ $file->id }}"
+                                                tabindex="-1"
+                                                aria-labelledby="rejectModalLabel{{ $file->id }}"
+                                                aria-hidden="true">
+
+                                                <div class="modal-dialog modal-dialog-centered">
+                                                    <div class="modal-content">
+
+                                                        <div class="modal-header">
+                                                            <h5 class="modal-title"
+                                                                id="rejectModalLabel{{ $file->id }}">
+                                                                Reject Research Paper
+                                                            </h5>
+
+                                                            <button type="button"
+                                                                    class="btn-close"
+                                                                    data-bs-dismiss="modal"
+                                                                    aria-label="Close"></button>
+                                                        </div>
+
+                                                        <div class="modal-body">
+
+                                                            <p class="mb-3">
+                                                                Please provide a reason for rejecting this research paper.
+                                                            </p>
+
+                                                            <label for="rejectReason{{ $file->id }}"
+                                                                class="form-label fw-semibold">
+                                                                Reason
+                                                            </label>
+
+                                                            <select name="rejection_reason"
+                                                                    id="rejectReason{{ $file->id }}"
+                                                                    class="form-select"
+                                                                    required
+                                                                    onchange="toggleOtherReason({{ $file->id }})">
+
+                                                                <option value="" selected disabled>
+                                                                    Select a reason
+                                                                </option>
+
+                                                                <option value="Incomplete manuscript">
+                                                                    Incomplete manuscript
+                                                                </option>
+
+                                                                <option value="Needs major revisions">
+                                                                    Needs major revisions
+                                                                </option>
+
+                                                                <option value="Formatting issues">
+                                                                    Formatting issues
+                                                                </option>
+
+                                                                <option value="Missing required sections">
+                                                                    Missing required sections
+                                                                </option>
+
+                                                                <option value="Not suitable for publication">
+                                                                    Not suitable for publication
+                                                                </option>
+
+                                                                <option value="Other">
+                                                                    Other
+                                                                </option>
+
+                                                            </select>
+
+
+                                                            <!-- Custom reason -->
+                                                            <div class="mt-3 d-none"
+                                                                id="otherReasonContainer{{ $file->id }}">
+
+                                                                <label for="customReason{{ $file->id }}"
+                                                                    class="form-label fw-semibold">
+                                                                    Custom Reason / Message
+                                                                </label>
+
+                                                                <textarea name="custom_rejection_reason"
+                                                                        id="customReason{{ $file->id }}"
+                                                                        class="form-control"
+                                                                        rows="4"
+                                                                        placeholder="Please specify the reason for rejection..."></textarea>
+
+                                                            </div>
+
+                                                        </div>
+
+                                                        <div class="modal-footer">
+
+                                                            <button type="button"
+                                                                    class="btn btn-secondary"
+                                                                    data-bs-dismiss="modal">
+                                                                Cancel
+                                                            </button>
+
+                                                            <button type="submit"
+                                                                    class="btn btn-danger">
+                                                                <i class="fa-regular fa-circle-xmark me-1"></i>
+                                                                Confirm Reject
+                                                            </button>
+
+                                                        </div>
+
+                                                    </div>
+                                                </div>
+                                            </div>
 
                                         </form>
 
@@ -644,6 +842,81 @@
 
 
                                     <div class="rounded-4">
+
+
+                                {{-- Instructor Feedback History --}}
+                                        <div class="mt-4">
+
+                                            <h5 class="fw-bold mb-3">
+                                                <i class="bi bi-chat-left-text me-2"></i>
+                                                Instructor Feedback
+                                            </h5>
+
+                                            @php
+                                                $feedbackHistory = [];
+
+                                                if (!empty($file->instructor_feedback)) {
+                                                    $decodedFeedback = json_decode($file->instructor_feedback, true);
+
+                                                    if (is_array($decodedFeedback)) {
+                                                        $feedbackHistory = $decodedFeedback;
+                                                    } else {
+                                                        // Support old single feedback
+                                                        $feedbackHistory[] = [
+                                                            'user_id' => $file->adviser_id,
+                                                            'feedback' => $file->instructor_feedback,
+                                                            'created_at' => $file->updated_at?->toDateTimeString(),
+                                                        ];
+                                                    }
+                                                }
+                                            @endphp
+
+                                            @forelse($feedbackHistory as $feedback)
+
+                                                @php
+                                                    $commenter = \App\Models\User::find($feedback['user_id'] ?? null);
+                                                @endphp
+
+                                                <div class="border rounded-3 p-3 mb-3">
+
+                                                    <div class="d-flex justify-content-between align-items-start">
+
+                                                        <div>
+                                                            <strong>
+                                                                {{ $commenter->name ?? 'Unknown Instructor' }}
+                                                            </strong>
+
+                                                            <div class="text-muted small">
+                                                                @if(!empty($feedback['created_at']))
+                                                                    {{ \Carbon\Carbon::parse($feedback['created_at'])->format('M j, Y h:i A') }}
+                                                                @endif
+                                                            </div>
+                                                        </div>
+
+                                                        <i class="bi bi-chat-left-text text-primary"></i>
+
+                                                    </div>
+
+                                                    <div class="mt-3">
+                                                        {{ $feedback['feedback'] ?? '' }}
+                                                    </div>
+
+                                                </div>
+
+                                            @empty
+
+                                                <div class="alert alert-secondary">
+                                                    <i class="bi bi-chat-left-text me-2"></i>
+                                                    No feedback has been posted yet.
+                                                </div>
+
+                                            @endforelse
+
+                                        </div>
+
+
+
+
                                         <div class="card-body p-4">
 
                                             <h5 class="fw-bold mb-4">
@@ -654,9 +927,11 @@
                                                 @csrf
 
                                                 <!-- Comment -->
-                                                <div class="mb-3">
-                                                    <textarea name="feedback" class="form-control form-control-sm" rows="4"
-                                                        placeholder="Enter your feedback, comments, or revision instructions...">{{ old('feedback', $file->instructor_feedback) }}</textarea>
+                                               <div class="mb-3">
+                                                    <textarea name="feedback"
+                                                        class="form-control form-control-sm"
+                                                        rows="4"
+                                                        placeholder="Enter your feedback, comments, or revision instructions..."></textarea>
                                                 </div>
 
                                                 <!-- Button -->
@@ -667,6 +942,48 @@
                                                     Post Feedback
                                                 </button>
                                             </form>
+
+
+
+
+                                            <!--Rejected resaon-->
+                                        @if($file->status === 'rejected' && !empty($file->rejection_reason))
+                                            <div class="alert alert-danger rounded-3 mt-3 mb-2 py-2 px-3">
+
+                                                <div class="d-flex align-items-start">
+                                                    <i class="fa-solid fa-circle-exclamation me-2 mt-1"></i>
+
+                                                    <div class="w-100">
+
+                                                        <div class="fw-semibold mb-1">
+                                                            Reason for Rejection
+                                                        </div>
+
+                                                        <div class="mb-1">
+                                                                <strong>{{ $file->adviser }}</strong>
+                                                        </div>
+
+                                                        <div class="small text-secondary d-flex align-items-center flex-wrap gap-3">
+
+                                                            <div>
+                                                                <small>{{ $file->rejected_at?->format('M d, Y') ?? $file->updated_at?->format('M d, Y') }}</small>
+                                                            </div>
+
+                                                            <div>
+                                                                <small>{{ $file->rejected_at?->format('h:i A') ?? $file->updated_at?->format('h:i A') }}</small>
+                                                            </div>
+
+                                                        </div>
+
+                                                        <div class="small mt-1 mb-2">
+                                                            {{ $file->rejection_reason }}
+                                                        </div>
+
+                                                    </div>
+                                                </div>
+
+                                            </div>
+                                        @endif
 
 
                                             @if($file->status == 'pending')
@@ -746,6 +1063,21 @@
 
 
 
+<script>
+    function toggleOtherReason(fileId) {
+        const select = document.getElementById('rejectReason' + fileId);
+        const container = document.getElementById('otherReasonContainer' + fileId);
+        const textarea = document.getElementById('customReason' + fileId);
 
+        if (select.value === 'Other') {
+            container.classList.remove('d-none');
+            textarea.required = true;
+        } else {
+            container.classList.add('d-none');
+            textarea.required = false;
+            textarea.value = '';
+        }
+    }
+</script>
 
 @endsection

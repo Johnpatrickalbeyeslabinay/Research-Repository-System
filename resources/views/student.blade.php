@@ -282,7 +282,7 @@
                                             <span class="rw-row-label">Type</span>
                                             <select name="research_type" class="form-select form-select-sm">
                                                 <option value="">Select</option>
-                                                @foreach(['Thesis', 'Capstone', 'Case Study', 'Other'] as $type)
+                                                @foreach(['Thesis'] as $type)
                                                     <option value="{{ $type }}" {{ old('research_type') === $type ? 'selected' : '' }}>{{ $type }}</option>
                                                 @endforeach
                                             </select>
@@ -573,10 +573,10 @@
         </button>
 
         <!-- Bookmarks -->
-        <button class="nav-link rounded-5 px-2 py-1" id="bookmark-tab" data-bs-toggle="pill" data-bs-target="#bookmark"
+        <!--<button class="nav-link rounded-5 px-2 py-1" id="bookmark-tab" data-bs-toggle="pill" data-bs-target="#bookmark"
             type="button" role="tab">
             Bookmarks
-        </button>
+        </button>-->
 
     </div>
 
@@ -740,13 +740,35 @@
                                              at submission, previously shown nowhere on this card at all (only
                                              the auto-generated title-word tags below stood in for "keywords"). --}}
                                         <x-research.meta :file="$file" compact
-                                            :show="['researchers', 'type', 'year', 'keywords', 'sdgs']" />
+                                            :show="['researchers', 'type', 'year',]" />
+                                        <!-- 'keywords', 'sdgs'-->
 
+                                        <!--abstract-->
                                         <p class="text-secondary mb-3">
                                             {{ \Illuminate\Support\Str::limit($file->desc, 180) }}
                                         </p>
 
-                                        @if($file->instructor_feedback)
+
+                                        <!--Rejected resaon-->
+                                        @if($file->status === 'rejected' && !empty($file->rejection_reason))
+                                            <div class="alert alert-danger rounded-3 mb-3 py-2 px-3">
+                                                <div class="d-flex align-items-start">
+                                                    <i class="fa-solid fa-circle-exclamation me-2 mt-1"></i>
+
+                                                    <div>
+                                                        <div class="fw-semibold mb-1">
+                                                            Reason for Rejection
+                                                        </div>
+
+                                                        <div class="small">
+                                                            {{ $file->rejection_reason }}
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        @endif
+
+                                        <!--@if($file->instructor_feedback)
                                             <div class="rounded-3 p-2 mt-2" style="background-color:#FFF8E1;">
                                                 <small class="fw-semibold text-secondary d-block mb-1">
                                                     <i class="bi bi-chat-left-text me-1"></i>
@@ -754,7 +776,7 @@
                                                 </small>
                                                 <small>{{ $file->instructor_feedback }}</small>
                                             </div>
-                                        @endif
+                                        @endif-->
 
                                     </div>
 
@@ -1048,7 +1070,7 @@
                                         {{ $file->desc ?? 'No abstract available.' }}
                                     </p>
 
-                                    @if($file->instructor_feedback)
+                                    <!--@if($file->instructor_feedback)
                                         <div class="rounded-3 p-3 mt-3" style="background-color:#FFF8E1;">
                                             <small class="fw-semibold text-secondary d-block mb-1">
                                                 <i class="bi bi-chat-left-text me-1"></i>
@@ -1056,7 +1078,122 @@
                                             </small>
                                             {{ $file->instructor_feedback }}
                                         </div>
-                                    @endif
+                                    @endif-->
+
+
+
+
+
+                                    {{-- Instructor Feedback History --}}
+                                        <div class="mt-4">
+
+                                            <h5 class="fw-bold mb-3">
+                                                <i class="bi bi-chat-left-text me-2"></i>
+                                                Instructor Feedback
+                                            </h5>
+
+                                            @php
+                                                $feedbackHistory = [];
+
+                                                if (!empty($file->instructor_feedback)) {
+                                                    $decodedFeedback = json_decode($file->instructor_feedback, true);
+
+                                                    if (is_array($decodedFeedback)) {
+                                                        $feedbackHistory = $decodedFeedback;
+                                                    } else {
+                                                        // Support old single feedback
+                                                        $feedbackHistory[] = [
+                                                            'user_id' => $file->adviser_id,
+                                                            'feedback' => $file->instructor_feedback,
+                                                            'created_at' => $file->updated_at?->toDateTimeString(),
+                                                        ];
+                                                    }
+                                                }
+                                            @endphp
+
+                                            @forelse($feedbackHistory as $feedback)
+
+                                                @php
+                                                    $commenter = \App\Models\User::find($feedback['user_id'] ?? null);
+                                                @endphp
+
+                                                <div class="border rounded-3 p-3 mb-3">
+
+                                                    <div class="d-flex justify-content-between align-items-start">
+
+                                                        <div>
+                                                            <strong>
+                                                                {{ $commenter->name ?? 'Unknown Instructor' }}
+                                                            </strong>
+
+                                                            <div class="text-muted small">
+                                                                @if(!empty($feedback['created_at']))
+                                                                    {{ \Carbon\Carbon::parse($feedback['created_at'])->format('M j, Y h:i A') }}
+                                                                @endif
+                                                            </div>
+                                                        </div>
+
+                                                        <i class="bi bi-chat-left-text text-primary"></i>
+
+                                                    </div>
+
+                                                    <div class="mt-3">
+                                                        {{ $feedback['feedback'] ?? '' }}
+                                                    </div>
+
+                                                </div>
+
+                                            @empty
+
+                                                <div class="alert alert-secondary">
+                                                    <i class="bi bi-chat-left-text me-2"></i>
+                                                    No feedback has been posted yet.
+                                                </div>
+
+                                            @endforelse
+
+                                        </div>
+
+
+                                            <!--Rejected resaon-->
+                                        @if($file->status === 'rejected' && !empty($file->rejection_reason))
+                                            <div class="alert alert-danger rounded-3 mb-3 py-2 px-3">
+
+                                                <div class="d-flex align-items-start">
+                                                    <i class="fa-solid fa-circle-exclamation me-2 mt-1"></i>
+
+                                                    <div class="w-100">
+
+                                                        <div class="fw-semibold mb-1">
+                                                            Reason for Rejection
+                                                        </div>
+
+                                                        <div class="mb-1">
+                                                                <strong>{{ $file->adviser }}</strong>
+                                                        </div>
+
+                                                        <div class="small text-secondary d-flex align-items-center flex-wrap gap-3">
+
+                                                            <div>
+                                                                <small>{{ $file->rejected_at?->format('M d, Y') ?? $file->updated_at?->format('M d, Y') }}</small>
+                                                            </div>
+
+                                                            <div>
+                                                                <small>{{ $file->rejected_at?->format('h:i A') ?? $file->updated_at?->format('h:i A') }}</small>
+                                                            </div>
+
+                                                        </div>
+
+                                                        <div class="small mt-1 mb-2">
+                                                            {{ $file->rejection_reason }}
+                                                        </div>
+
+                                                    </div>
+                                                </div>
+
+                                            </div>
+                                        @endif
+
 
                                     <div
                                         class="alert alert-primary d-flex justify-content-between align-items-center mt-5 flex-wrap">
@@ -1067,6 +1204,8 @@
                                                 <small>{{ basename($file->file_path) }}</small>
                                             </div>
                                         </div>
+
+
 
                                         <div class="d-flex gap-2 mt-3 mt-md-0">
 
@@ -1187,86 +1326,6 @@
 </div>
 </div>
 
-
-
-
-
-<!-- ================= REJECTED BIN ================= -->
-<div class="tab-pane fade" id="rejectedbin">
-
-    <div class="card mt-3 shadow-sm border-0 rounded-4">
-
-        <div class="card-body">
-
-            <strong class="fw-bold mb-4">
-                <i class="fa-regular fa-circle-xmark me-2 text-danger"></i>
-                Rejected Bin
-            </strong><br>
-            <small class="text-muted">Papers rejected by your Instructor or Admin. Review the feedback, make corrections, and resubmit.</small>
-
-            @forelse($rejectedFiles as $file)
-
-                <div class="card border border-danger-subtle rounded-3 mb-3">
-
-                    <div class="card-body d-flex justify-content-between align-items-center">
-
-                        <div>
-                            <h5 class="fw-bold mb-1">
-                                {{ $file->title }}
-                            </h5>
-
-                            <p class="text-muted mb-1">
-                                {{ \Illuminate\Support\Str::limit($file->desc, 180) }}
-                            </p>
-
-                            @if($file->instructor_feedback)
-                                <p class="small text-secondary mb-1">
-                                    <i class="bi bi-chat-left-text me-1"></i>{{ $file->instructor_feedback }}
-                                </p>
-                            @endif
-
-                            <span class="badge bg-danger">
-                                Rejected
-                            </span>
-                        </div>
-
-                        <div>
-                            <a data-turbo="false" href="{{ route('file.view', $file->id) }}"
-                               class="btn btn-sm btn-outline-primary">
-
-                                <i class="fa-solid fa-eye"></i>
-                                View
-
-                            </a>
-                        </div>
-
-                    </div>
-
-                </div>
-
-            @empty
-
-                <div class="text-center py-5">
-
-                    <i class="fa-regular fa-circle-xmark text-secondary fa-2xl"></i><br>
-
-                    <strong class="text-muted">
-                        No rejected submissions
-                    </strong>
-
-                    <p class="text-muted mb-0">
-                        Papers rejected by your Instructor or Admin will appear here.
-                    </p>
-
-                </div>
-
-            @endforelse
-
-        </div>
-
-    </div>
-
-</div>
 
 
         <!-- ================= BOOKMARKS ================= -->

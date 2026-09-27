@@ -30,7 +30,7 @@
 
                     <div class="d-flex flex-column">
                         <h5 class="fw-bold mb-0">CSU APARRI</h5>
-                        <small class="text-secondary">Fisheries Program</small>
+                        <small class="fw-bold text-secondary">Fisheries Program</small>
                     </div>
 
                 </div>

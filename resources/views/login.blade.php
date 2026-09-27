@@ -11,37 +11,43 @@
             <!-- LEFT SIDE -->
             <div class="col-lg-6 col-12 d-flex align-items-center justify-content-center text-white">
 
-                <div class="text-center text-lg-start">
+    <div class="text-center text-lg-start">
 
-                    <div class="display-1 mb-4">
-                        ⚪
-                    </div>
+        <div class="mb-4">
+            <img src="{{ asset('images/cfas.png') }}"
+                 alt="Cagayan State University - Aparri"
+                 class="img-fluid"
+                 style="max-width: 180px; height: auto;">
+        </div>
 
-                    <h1 class="fw-bold display-4">
-                        Research Repository
-                    </h1>
+        <h1 class="fw-bold display-4">
+            Research Repository
+        </h1>
 
-                    <h3 class="fw-normal">
-                        Cagayan State University - Aparri
-                    </h3>
+        <h3 class="fw-normal">
+            Cagayan State University - Aparri
+        </h3>
 
-                    <h4 class="fw-light mb-5">
-                        Fishery Program
-                    </h4>
+        <h4 class="fw-light mb-5">
+            Bachelor of Science in Fisheries and Aquatic Sciences
+        </h4>
 
+        <div class="mb-3 fs-5">
+            <h5>
+                <i class="fa fa-book me-2" aria-hidden="true"></i>
+                Where Fisheries Research Comes Together
+            </h5>
+        </div>
 
-                    <div class="mb-3 fs-5">
-                        <h5> <i class="fa fa-book" aria-hidden="true"></i> Where Fisheries Research Comes Together</h5>
-                    </div>
+        <a href="{{ route('public') }}"
+           class="btn btn-outline-light btn-lg px-2 py-1 fw-normal">
+            Browse Public Repository
+            <i class="fa-solid fa-arrow-right ms-2"></i>
+        </a>
 
+    </div>
 
-                    <a href="{{ route('public') }}" class="btn btn-outline-light btn-lg px-2 py-1 fw-normal">
-                        Browse Public Repository <i class="fa-solid fa-arrow-right ms-2"></i>
-                    </a>
-
-                </div>
-
-            </div>
+</div>
 
             <!-- RIGHT SIDE -->
             <div class="col-lg-6 col-12 d-flex align-items-center justify-content-center py-5">

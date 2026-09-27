@@ -21,16 +21,25 @@
     <div class="container-fluid">
 
       <!-- Logo -->
-      <div class="d-flex align-items-center">
-        <i data-lucide="fish" class="me-3 rounded-circle p-2 text-white"
-          style="width:36px;height:36px;background:linear-gradient(135deg,#1e3a8a,#0d9488);">
-        </i>
+      <!-- Logo -->
+        <div class="d-flex align-items-center">
 
-        <div class="d-flex flex-column">
-          <h5 class="fw-bold mb-0">CSU APARRI</h5>
-          <small class="text-secondary">Fisheries Program</small>
+            <!-- Logo + Program -->
+            <div class="d-flex align-items-center">
+
+                <img src="{{ asset('images/logo.png') }}"
+                    alt="CSU Aparri Logo"
+                    class="me-3 rounded-circle"
+                    style="width:70px;height:70px;object-fit:cover;">
+
+                <div class="d-flex flex-column">
+                    <h5 class="fw-bold mb-0">CSU APARRI</h5>
+                    <small class="text-secondary">Fisheries Program</small>
+                </div>
+
+            </div>
+
         </div>
-      </div>
 
       <!-- Back BTN -->
       @php

@@ -232,5 +232,11 @@ Route::get('/repository', [RepositoryController::class, 'index'])
 // itself is public for approved+public research; the PDF stays gated
 // (RepositoryController::show() only ever loads approved+public rows,
 // and the Download link/prompt on the page respects Auth::check()).
+// Route::get('/research/{id}', [RepositoryController::class, 'show'])
+// ->name('research.show');
+
 Route::get('/research/{id}', [RepositoryController::class, 'show'])
     ->name('research.show');
+
+Route::get('/public/research/{id}', [RepositoryController::class, 'show'])
+    ->name('public.research.show');

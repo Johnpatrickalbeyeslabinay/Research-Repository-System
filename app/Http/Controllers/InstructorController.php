@@ -44,7 +44,7 @@ class InstructorController extends Controller
         // given — eager-load them here (there was no eager loading at
         // all before) so the review tab doesn't N+1 across the list.
         $studFiles = UserFile::where('adviser_id', Auth::id())
-            ->with(['authors', 'keywords', 'sdgs'])
+            ->with(['authors', 'keywords', 'sdgs',  'feedbacks.user'])
             ->latest()
             ->get();
 
@@ -105,21 +105,44 @@ class InstructorController extends Controller
     }
 
     // REJECT RESEARCH
-    public function reject($id)
+    public function reject(Request $request, $id)
     {
+        $request->validate([
+            'rejection_reason' => 'required|string|max:255',
+            'custom_rejection_reason' => 'nullable|string|max:2000',
+        ]);
+
         $file = UserFile::where('id', $id)
             ->where('adviser_id', Auth::id())
             ->firstOrFail();
 
-        abort_if($file->status !== 'pending', 409, 'This research has already been reviewed.');
+        abort_if(
+            $file->status !== 'pending',
+            409,
+            'This research has already been reviewed.'
+        );
+
+        $reason = $request->rejection_reason;
+
+        if ($reason === 'Other') {
+            $request->validate([
+                'custom_rejection_reason' => 'required|string|max:2000',
+            ]);
+
+            $reason = $request->custom_rejection_reason;
+        }
 
         $file->status = 'rejected';
+        $file->rejection_reason = $reason;
+        $file->rejected_at = now();
 
         $file->save();
 
         self::forgetDashboardCache();
 
-        $file->user->notify(new ResearchReviewedByInstructor($file, 'rejected'));
+        $file->user->notify(
+            new ResearchReviewedByInstructor($file, 'rejected')
+        );
 
         return back()->with(
             'success',
@@ -128,6 +151,26 @@ class InstructorController extends Controller
     }
 
     // POST FEEDBACK
+    // public function feedback(Request $request, $id)
+    // {
+    // $request->validate([
+    //   'feedback' => 'required|string|max:2000',
+    // ]);
+
+    // $file = UserFile::where('id', $id)
+    //   ->where('adviser_id', Auth::id())
+    // ->firstOrFail();
+
+    // $file->instructor_feedback = $request->feedback;
+    // $file->save();
+
+    // Previously nothing told the student feedback existed at all —
+    // they'd only ever see it if they happened to reopen the card.
+    // $file->user->notify(new ResearchFeedbackPosted($file));
+
+    // return back()->with('success', 'Feedback posted.');
+    // }
+
     public function feedback(Request $request, $id)
     {
         $request->validate([
@@ -138,12 +181,34 @@ class InstructorController extends Controller
             ->where('adviser_id', Auth::id())
             ->firstOrFail();
 
-        $file->instructor_feedback = $request->feedback;
-        $file->save();
+        // Kunin ang existing feedback history
+        $feedbacks = [];
 
-        // Previously nothing told the student feedback existed at all —
-        // they'd only ever see it if they happened to reopen the card.
-        $file->user->notify(new ResearchFeedbackPosted($file));
+        if (! empty($file->instructor_feedback)) {
+            $decoded = json_decode($file->instructor_feedback, true);
+
+            if (is_array($decoded)) {
+                $feedbacks = $decoded;
+            } else {
+                // Preserve old single feedback
+                $feedbacks[] = [
+                    'user_id' => $file->adviser_id,
+                    'feedback' => $file->instructor_feedback,
+                    'created_at' => $file->updated_at?->toDateTimeString(),
+                ];
+            }
+        }
+
+        // Add new feedback
+        $feedbacks[] = [
+            'user_id' => Auth::id(),
+            'feedback' => $request->feedback,
+            'created_at' => now()->toDateTimeString(),
+        ];
+
+        // Save entire history back to existing column
+        $file->instructor_feedback = json_encode($feedbacks);
+        $file->save();
 
         return back()->with('success', 'Feedback posted.');
     }

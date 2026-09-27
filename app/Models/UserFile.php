@@ -4,6 +4,8 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use App\Models\ResearchFeedback;
+
 
 class UserFile extends Model
 {
@@ -50,6 +52,7 @@ class UserFile extends Model
         'ai_suggested_sdgs' => 'array',
         'ai_analyzed_at' => 'datetime',
         'search_indexed_at' => 'datetime',
+        'rejected_at' => 'datetime',
     ];
 
     public function user()
@@ -123,5 +126,13 @@ class UserFile extends Model
     public function chatConversations()
     {
         return $this->hasMany(ChatConversation::class, 'stud_file_id');
+    }
+
+    public function feedbacks()
+    {
+        return $this->hasMany(
+            ResearchFeedback::class,
+            'stud_file_id'
+        )->with('user')->latest();
     }
 }

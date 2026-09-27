@@ -148,7 +148,7 @@
 
                         <li class="nav-item mt-2">
 
-                            <a class="nav-link active bg-primary rounded text-dark bg-light"
+                             <a class="nav-link active bg-primary rounded text-dark bg-light"
                                 href="{{ route('repository')  }}">
 
                                 <i class="fa-solid fa-folder me-2"></i>
@@ -280,7 +280,7 @@
 
                         <li class="nav-item mt-2">
 
-                             <a class="nav-link active bg-primary rounded text-dark bg-light"
+                              <a class="nav-link active bg-primary rounded text-dark bg-light"
                                 href="{{ route('repository')  }}">
 
                                 <i class="fa-solid fa-folder me-2"></i>
