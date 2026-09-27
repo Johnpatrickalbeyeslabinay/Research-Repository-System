@@ -1,0 +1,17 @@
+/* Styles for resources/views/layouts/instructor_layout.blade.php — moved out of an inline <style>
+   block so browsers cache them instead of re-downloading on every page. */
+
+.nav-pills .nav-link {
+  color: black;
+  background: #fff;
+  transition: .2s;
+}
+
+.nav-pills .nav-link:hover {
+  background: #f8f9fa;
+}
+
+.nav-pills .nav-link.active {
+  background: #f3f4f6;
+  color: #374151;
+}

@@ -43,16 +43,14 @@ class InstructorController extends Controller
         // meta.blade.php reads authors/keywords/sdgs on every row it's
         // given — eager-load them here (there was no eager loading at
         // all before) so the review tab doesn't N+1 across the list.
-        $pendingFiles = UserFile::where('adviser_id', Auth::id())
-            ->where('status', 'pending')
-            ->with(['authors', 'keywords', 'sdgs'])
-            ->latest()
-            ->get();
-
         $studFiles = UserFile::where('adviser_id', Auth::id())
             ->with(['authors', 'keywords', 'sdgs'])
             ->latest()
             ->get();
+
+        // A subset of the rows above — sliced in PHP rather than paying a
+        // second round trip to the remote database for the same data.
+        $pendingFiles = $studFiles->where('status', 'pending')->values();
 
         // Real in-app notifications (research submitted to this instructor,
         // etc.) — populates the dashboard's "Notification" tab, which was

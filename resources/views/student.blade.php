@@ -1,6 +1,6 @@
 @extends('layouts.student_layout')
 
-@section('title', 'Student')
+@section('title', 'Student Dashboard')
 
 @section('student')
 
@@ -252,7 +252,7 @@
                     </div>
                 </nav>
 
-                <form action="{{ route('student.store') }}" method="POST" enctype="multipart/form-data" class="rw-form">
+                <form action="{{ route('student.store') }}" data-turbo="false" method="POST" enctype="multipart/form-data" class="rw-form">
 
                     @csrf
                     <input type="hidden" name="_popover_target" value="popover">
@@ -809,7 +809,7 @@
                             </div>
                         @endif
 
-                        <form action="{{ route('student.update', $file->id) }}" method="POST" enctype="multipart/form-data">
+                        <form data-turbo="false" action="{{ route('student.update', $file->id) }}" method="POST" enctype="multipart/form-data">
 
                             @csrf
                             @method('PUT')
@@ -1070,19 +1070,19 @@
 
                                         <div class="d-flex gap-2 mt-3 mt-md-0">
 
-                                           <!--<a href="{{ route('file.view', $file->id) }}" target="_blank"
+                                           <!--<a data-turbo="false" href="{{ route('file.view', $file->id) }}" target="_blank"
                                                 class="btn btn-outline-primary">
                                                 <i class="bi bi-eye me-2"></i>
                                                 View
                                             </a>-->
 
-                                            <a href="{{ route('file.view', ['id' => $file->id, 'v' => time()]) }}" target="_blank"
+                                            <a data-turbo="false" href="{{ route('file.view', ['id' => $file->id, 'v' => time()]) }}" target="_blank"
                                                 class="btn btn-outline-primary px-2 py-1">
                                                 <i class="bi bi-eye me-2"></i>
                                                 View
                                             </a>
 
-                                            <a href="{{ route('file.download', $file->id) }}"
+                                            <a data-turbo="false" href="{{ route('file.download', $file->id) }}"
                                             class="btn btn-outline-success px-2 py-1">
                                                 <i class="bi bi-download me-2"></i>
                                                 Download
@@ -1231,7 +1231,7 @@
                         </div>
 
                         <div>
-                            <a href="{{ route('file.view', $file->id) }}"
+                            <a data-turbo="false" href="{{ route('file.view', $file->id) }}"
                                class="btn btn-sm btn-outline-primary">
 
                                 <i class="fa-solid fa-eye"></i>
@@ -1301,7 +1301,7 @@
 
     <!-- The SDG "Done" button and PDF dropzone behavior for the redesigned
          submission form are now handled by resources/js/research-submission.js
-         (initSdgDoneButtons / initDropzone), loaded from student_layout via Vite. -->
+         (initSdgDoneButtons / initDropzone), loaded on demand by resources/js/app.js. -->
 
 @if ($errors->any())
     <script>
@@ -1310,13 +1310,17 @@
         // a `popover="manual"` panel that is closed by default, so without
         // this the errors rendered above are in the DOM but never seen.
         // _popover_target (set on each form) says which panel to reopen.
-        document.addEventListener('DOMContentLoaded', () => {
+        (() => {
             const target = @json(old('_popover_target', 'popover'));
             const panel = document.getElementById(target);
             if (panel && typeof panel.showPopover === 'function') {
-                panel.showPopover();
+                try {
+                    panel.showPopover();
+                } catch (e) {
+                    // Already open.
+                }
             }
-        });
+        })();
     </script>
 @endif
 

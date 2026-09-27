@@ -54,6 +54,24 @@ class ConversationContext
             $retrieval->files,
             $isFollowUp
         );
+
+        // Remember how deep this turn read. RetrievalTierPlanner uses it so a
+        // bare follow-up ("and the sample size?") after a full-text turn stays
+        // at full text instead of silently dropping back to abstracts — it is
+        // continuing the same line of enquiry, and the pronoun carries none of
+        // the depth markers the planner would otherwise look for.
+        //
+        // Stored here rather than in retrieval_meta because the planner reads
+        // active_context, and the planner only honours it for follow-ups — so a
+        // genuinely fresh question re-plans from scratch and one deep turn does
+        // not make the rest of the conversation expensive.
+        if ($retrieval->tier !== null) {
+            $context = $conversation->active_context ?? [];
+            $context['tier'] = $retrieval->tier->tier->value;
+            $context['tier_reason'] = $retrieval->tier->reason;
+            $conversation->active_context = $context;
+            $conversation->save();
+        }
     }
 
     /**

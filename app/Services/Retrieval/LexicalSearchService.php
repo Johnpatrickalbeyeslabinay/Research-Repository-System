@@ -22,11 +22,22 @@ use Illuminate\Support\Facades\DB;
 class LexicalSearchService
 {
     /**
+     * $sections restricts to those chunk sections (empty means no restriction),
+     * and comes from App\Services\Retrieval\Tier::sections().
+     *
+     * This arm had NO section filter before retrieval tiers existed, and adding
+     * one here is not optional: HybridSearchService fuses both arms, so
+     * restricting sections on the vector arm alone would let the lexical arm
+     * pull methodology and results chunks straight into an abstract-tier answer
+     * — quietly defeating both the tier and the token budget it exists to
+     * enforce, while every test that only checked the vector arm still passed.
+     *
      * @param  array{year_from: ?int, year_to: ?int, sdg_numbers: int[], author: ?string,
      *                research_type: ?string, stud_file_ids: int[]}  $filters
+     * @param  string[]  $sections
      * @return array<int, array{id:int, stud_file_id:int, section:?string, page_number:?int, content:string, rank:float}>
      */
-    public function search(string $query, ?User $user, array $filters, int $limit): array
+    public function search(string $query, ?User $user, array $filters, int $limit, array $sections = []): array
     {
         $query = trim($query);
 
@@ -47,6 +58,13 @@ class LexicalSearchService
             CROSS JOIN q
             WHERE sf.search_index_status = 'ready'
               AND rc.content_tsv @@ q.tsq";
+
+        // Bound HERE, before the access predicate and filter fragment, because
+        // positional `?` bindings must be pushed in the order their
+        // placeholders appear in the SQL text.
+        [$sectionSql, $sectionBindings] = RetrievalFilterSql::sectionClause($sections);
+        $sql .= $sectionSql;
+        array_push($bindings, ...$sectionBindings);
 
         [$accessSql, $accessBindings] = ResearchAccess::sqlPredicate($user, 'sf');
         $sql .= " AND {$accessSql}";

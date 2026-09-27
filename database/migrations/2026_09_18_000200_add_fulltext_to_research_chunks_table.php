@@ -25,7 +25,7 @@ return new class extends Migration
         }
 
         DB::statement(
-            "ALTER TABLE research_chunks ADD COLUMN content_tsv tsvector ".
+            'ALTER TABLE research_chunks ADD COLUMN content_tsv tsvector '.
             "GENERATED ALWAYS AS (to_tsvector('english', content)) STORED"
         );
 

@@ -52,7 +52,7 @@
 
                     <div class="card-body p-4">
 
-                        <form action="{{ route('login.submit') }}" method="POST">
+                        <form action="{{ route('login.submit') }}" data-turbo="false" method="POST">
                             @csrf
 
                             <h2 class="text-center fw-bold">
@@ -142,7 +142,9 @@
 
 
    <script>
-document.addEventListener('DOMContentLoaded', function () {
+// Runs inline: under Turbo there's no DOMContentLoaded on a page visit, and
+// this script sits after the elements it binds.
+(function () {
 
     const password = document.getElementById('password');
     const toggle = document.getElementById('togglePassword');
@@ -159,7 +161,7 @@ document.addEventListener('DOMContentLoaded', function () {
 
     });
 
-});
+})();
 </script>
 
 

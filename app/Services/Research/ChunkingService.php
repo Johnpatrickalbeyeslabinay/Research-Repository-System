@@ -3,6 +3,7 @@
 namespace App\Services\Research;
 
 use App\Services\Pdf\SectionDetector;
+use App\Support\TokenEstimator;
 
 /**
  * Splits an already-extracted research document into section-aware,
@@ -19,7 +20,10 @@ class ChunkingService
     // that section's *heading* page number — a chunk 40 pages into Results
     // would cite the page "RESULTS" appeared on, not its own page. That's a
     // fabricated citation.
-    public function __construct(private SectionDetector $sectionDetector) {}
+    public function __construct(
+        private SectionDetector $sectionDetector,
+        private TokenEstimator $tokens,
+    ) {}
 
     /**
      * @param  string[]  $pages  per-page extracted text (from PdfTextExtractor)
@@ -38,8 +42,13 @@ class ChunkingService
      *     truncated: bool,
      * }
      */
-    public function chunk(array $pages, string $fullText, array $sections, ?string $documentSummary = null): array
-    {
+    public function chunk(
+        array $pages,
+        string $fullText,
+        array $sections,
+        ?string $documentSummary = null,
+        ?string $abstractFallback = null,
+    ): array {
         $noiseLines = $this->detectRepeatedLines($pages);
         $ranges = $this->chunkableRanges($sections, $fullText);
         $pageStarts = $this->sectionDetector->pageStartOffsets($pages);
@@ -64,8 +73,39 @@ class ChunkingService
                 'section' => 'metadata',
                 'page_number' => null,
                 'content' => $documentSummary,
-                'token_count' => (int) round(str_word_count($documentSummary) * 4 / 3),
+                'token_count' => $this->tokens->estimate($documentSummary),
                 'content_hash' => hash('sha256', $documentSummary),
+            ];
+        }
+
+        // A real abstract chunk for documents where SectionDetector found no
+        // ABSTRACT heading — a scanned PDF, an unusual layout, or an approval
+        // sheet before the abstract. Without this those documents have no
+        // section='abstract' chunk at all, so the Abstract retrieval tier
+        // (App\Services\Retrieval\Tier) can only see the synthetic metadata
+        // chunk and EvidenceSufficiencyGate escalates every one of their
+        // questions to full text — the exact documents where the cheap tier
+        // would have paid off most get none of its benefit.
+        //
+        // The text comes from the student's typed abstract or the one parsed
+        // out of the PDF, so it is already stored; this only makes it
+        // retrievable at the right granularity. Costs at most one extra chunk
+        // per document, and content-hash reuse means re-indexing an unchanged
+        // document re-embeds nothing.
+        $abstractFallback = $abstractFallback !== null ? trim($abstractFallback) : null;
+
+        if ($abstractFallback !== null && $abstractFallback !== '' && ! $this->hasAbstractSection($sections)) {
+            $chunks[] = [
+                'chunk_index' => $index++,
+                'section' => 'abstract',
+                // Deliberately null: this text was assembled from stored
+                // metadata, not located on a page. A page number here would be
+                // a fabricated citation, which is what the per-chunk page
+                // resolution in this class exists to prevent.
+                'page_number' => null,
+                'content' => $abstractFallback,
+                'token_count' => $this->tokens->estimate($abstractFallback),
+                'content_hash' => hash('sha256', $abstractFallback),
             ];
         }
 
@@ -106,8 +146,11 @@ class ChunkingService
                     // a wrong page would be a fabricated citation.
                     'page_number' => $this->sectionDetector->pageNumberForOffset($slice[0][1], $pageStarts),
                     'content' => $content,
-                    // Rough words-to-tokens estimate (~1.33 tokens/word for English).
-                    'token_count' => (int) round(count($slice) * 4 / 3),
+                    // App\Support\TokenEstimator rather than a local formula:
+                    // the word-count estimate this replaced scored zero for
+                    // digits and symbols, so numeric results text was priced
+                    // at roughly a quarter of what it actually costs.
+                    'token_count' => $this->tokens->estimate($content),
                     'content_hash' => hash('sha256', $content),
                 ];
 
@@ -124,6 +167,22 @@ class ChunkingService
      * @param  array<int, array{key: string, start: int, end: int, page_number: ?int}>  $sections
      * @return array<int, array{key: ?string, page_number: ?int, start: int, end: int}>
      */
+    /**
+     * Whether SectionDetector located an ABSTRACT heading in the document.
+     *
+     * @param  array<int, array{key: ?string}>  $sections
+     */
+    private function hasAbstractSection(array $sections): bool
+    {
+        foreach ($sections as $section) {
+            if (($section['key'] ?? null) === 'abstract') {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
     private function chunkableRanges(array $sections, string $fullText): array
     {
         if (empty($sections)) {

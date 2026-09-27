@@ -33,41 +33,57 @@ class AdminController extends Controller
         $role = request('role');
         $search = request('search');
 
-        $users = User::query();
-
-        if ($role) {
-            $users->where('role', $role);
-        }
-
-        if ($search) {
-            $users->where(fn ($q) => $q->where('name', 'ilike', "%{$search}%")
-                ->orWhere('email', 'ilike', "%{$search}%")
-                ->orWhere('user_id', 'ilike', "%{$search}%"));
-        }
-
-        // Deliberately not cached — search/role-filter results must stay live.
-        $users = $users->get();
-
-        // Was UserFile::where('status', 'admin_pending')->get() — no eager
-        // loading (meta.blade.php would N+1 across the list), no
-        // ordering, no pagination, and admin_pending only, which made
-        // the already-approved/already-rejected badge branches in
-        // admin.blade.php unreachable: there was no way to look at a
-        // past decision again. ?status= defaults to the original
-        // behavior; 'all' or a specific status opens up the rest.
+        // Each tab only loads what it renders: the dashboard never showed
+        // the user list, and the Manage Users tab never showed the research
+        // queue, but both were fetched on every visit — including every
+        // user in the system, unpaginated.
+        $users = null;
+        $studFiles = null;
         $statusFilter = request('status', 'admin_pending');
 
-        $studFilesQuery = UserFile::with(['authors', 'keywords', 'sdgs'])->latest();
+        if ($view === 'user') {
+            $users = User::query();
 
-        if ($statusFilter !== 'all') {
-            $studFilesQuery->where('status', $statusFilter);
+            if ($role) {
+                $users->where('role', $role);
+            }
+
+            if ($search) {
+                $users->where(fn ($q) => $q->where('name', 'ilike', "%{$search}%")
+                    ->orWhere('email', 'ilike', "%{$search}%")
+                    ->orWhere('user_id', 'ilike', "%{$search}%"));
+            }
+
+            // Deliberately not cached — search/role-filter results must stay live.
+            $users = $users->orderBy('name')->paginate(25)->withQueryString();
+        } else {
+            // Was UserFile::where('status', 'admin_pending')->get() — no eager
+            // loading (meta.blade.php would N+1 across the list), no
+            // ordering, no pagination, and admin_pending only, which made
+            // the already-approved/already-rejected badge branches in
+            // admin.blade.php unreachable: there was no way to look at a
+            // past decision again. ?status= defaults to the original
+            // behavior; 'all' or a specific status opens up the rest.
+            $studFilesQuery = UserFile::with(['authors', 'keywords', 'sdgs'])->latest();
+
+            if ($statusFilter !== 'all') {
+                $studFilesQuery->where('status', $statusFilter);
+            }
+
+            $studFiles = $studFilesQuery->paginate(10)->withQueryString();
         }
 
-        $studFiles = $studFilesQuery->paginate(10)->withQueryString();
+        // System-wide totals for the stat cards — one GROUP BY instead of
+        // counting a fully loaded (and search-filtered) user collection.
+        $userCounts = User::selectRaw('role, COUNT(*) as total')
+            ->groupBy('role')
+            ->pluck('total', 'role')
+            ->map(fn ($n) => (int) $n);
 
         $year = request('year', date('Y'));
 
-        $stats = Cache::remember(
+        // Stat cards and charts live on the dashboard tab only.
+        $stats = $view === 'user' ? [] : Cache::remember(
             "admin_dashboard_stats:{$year}",
             self::DASHBOARD_CACHE_TTL,
             fn () => $this->computeDashboardStats($year)
@@ -78,6 +94,7 @@ class AdminController extends Controller
         return view('admin', array_merge(compact(
             'view',
             'users',
+            'userCounts',
             'role',
             'search',
             'studFiles',
@@ -146,14 +163,13 @@ class AdminController extends Controller
 
     /**
      * Busts the admin dashboard's stat cache for this record's submission
-     * year. The repository/public listings no longer cache their result
-     * set at all (RepositoryController::listing() — paginated + filtered
-     * results aren't a good fit for a single unconditional cache key), so
-     * there's nothing left to bust there.
+     * year, plus the repository's filter facets — an approval can add a
+     * new publication year or research type to the public listing.
      */
     private static function forgetResearchCaches(UserFile $file): void
     {
         Cache::forget('admin_dashboard_stats:'.$file->created_at->year);
+        RepositoryController::forgetFacets();
     }
 
     public function store(Request $request)

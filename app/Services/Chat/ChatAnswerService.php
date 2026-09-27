@@ -24,7 +24,7 @@ class ChatAnswerService
      *         config('chat.models.max_output_tokens') for this call — a
      *         catalog turn answers with a short list and doesn't need the
      *         full research-answer ceiling (see config('chat.catalog')).
-     * @return array{content: string, model: string, prompt_tokens: ?int, completion_tokens: ?int, latency_ms: int}
+     * @return array{content: string, model: string, prompt_tokens: ?int, cached_prompt_tokens: ?int, completion_tokens: ?int, latency_ms: int}
      *
      * @throws ChatUnavailableException
      */
@@ -75,6 +75,13 @@ class ChatAnswerService
             'content' => trim($content),
             'model' => $model,
             'prompt_tokens' => $response->json('usage.prompt_tokens'),
+            // The subset of prompt_tokens OpenAI served from its automatic
+            // prefix cache, which bills at a lower rate — App\Support\AiCost
+            // needs it to report real spend rather than list price. Absent
+            // on a cache miss, and absent entirely for prompts under the
+            // 1024-token minimum where the cache never engages at all
+            // (which, for this chatbot, is most short turns).
+            'cached_prompt_tokens' => $response->json('usage.prompt_tokens_details.cached_tokens'),
             'completion_tokens' => $response->json('usage.completion_tokens'),
             'latency_ms' => $latencyMs,
         ];

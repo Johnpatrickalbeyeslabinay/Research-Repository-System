@@ -127,8 +127,12 @@ Route::middleware('auth')->prefix('chat')->name('chat.')->group(function () {
     // The one endpoint that costs real API tokens — throttled tighter than
     // the submission flow's AI route (throttle:10,1) plus a per-user daily
     // quota (App\Http\Middleware\ChatDailyQuota) on top of the burst limit.
+    //
+    // 'throttle:chat' is the named limiter registered in
+    // AppServiceProvider::boot(), which reads config('chat.limits.per_minute').
+    // It replaced a hardcoded throttle:6,1 that ignored that config entirely.
     Route::post('/conversations/{conversation}/messages', [ChatController::class, 'message'])
-        ->middleware(['throttle:6,1', 'chat.quota'])
+        ->middleware(['throttle:chat', 'chat.quota'])
         ->name('message');
 });
 

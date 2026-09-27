@@ -26,6 +26,12 @@
     $quota = \App\Support\ChatQuota::status(auth()->id());
 @endphp
 
+{{-- Turbo keeps a data-turbo-permanent element alive across page visits
+     when the next page has one with the same id, so an open conversation
+     survives navigating the dashboard. The id is per-mode: a research
+     page's pinned widget must not be carried onto (or replaced by) the
+     repository-wide one. resources/js/chat.js guards against re-binding. --}}
+<div id="ai-chat-shell-{{ $studFileId ?? 'repository' }}" data-turbo-permanent>
 <div id="ai-chat-widget"
     data-store-url="{{ route('chat.store') }}"
     data-index-url="{{ route('chat.index') }}"
@@ -149,12 +155,25 @@
             <div style="max-width:92%;min-width:0;">
                 <div class="rounded-3 px-3 py-2" style="background-color:#fff;border:1px solid #e5e7eb;white-space:pre-wrap;word-break:break-word;font-size:0.88rem;" data-role="content"></div>
                 <div data-role="sources" class="mt-2 d-flex flex-column gap-2"></div>
+                {{-- A separate list, below the repository's own sources and
+                     under its own heading. Never merged into [data-role="sources"]. --}}
+                <div data-role="external-sources" class="mt-2 d-none flex-column gap-2">
+                    <div class="text-secondary fw-semibold" style="font-size:0.7rem;">Beyond this repository</div>
+                </div>
                 <div class="d-flex gap-3 mt-1 ps-1 ai-chat-msg-actions">
                     <button type="button" class="btn btn-link text-secondary p-0 ai-chat-copy" style="font-size:0.72rem;text-decoration:none;">
                         <i data-lucide="copy" style="width:12px;height:12px;"></i> Copy
                     </button>
                     <button type="button" class="btn btn-link text-secondary p-0 ai-chat-retry" style="font-size:0.72rem;text-decoration:none;display:none;">
                         <i data-lucide="rotate-ccw" style="width:12px;height:12px;"></i> Retry
+                    </button>
+                    {{-- Shown only on an abstract-tier answer (see
+                         App\Services\Retrieval\Tier): that answer came from the
+                         studies' abstracts, so this is how the user asks for the
+                         body text without having to guess the phrasing that
+                         triggers RetrievalTierPlanner's drill-down rule. --}}
+                    <button type="button" class="btn btn-link text-secondary p-0 ai-chat-deeper" style="font-size:0.72rem;text-decoration:none;display:none;">
+                        <i data-lucide="search" style="width:12px;height:12px;"></i> Go deeper
                     </button>
                 </div>
             </div>
@@ -165,6 +184,28 @@
         <a href="#" target="_blank" rel="noopener" class="d-block rounded-3 px-2 py-2 text-decoration-none text-dark ai-chat-source-card"
             style="background-color:#EFF6FF;border:1px solid #dbeafe;font-size:0.76rem;line-height:1.3;">
             <div class="fw-semibold text-truncate" data-role="title"></div>
+            <div class="text-secondary" data-role="meta"></div>
+        </a>
+    </template>
+
+    {{-- Visually distinct from ai-chat-tpl-source-card on purpose. An internal
+         source card links same-origin to a study this repository holds and the
+         user is authorised to read; this one leaves the site entirely for a
+         paper nobody here reviewed. Amber rather than blue, an explicit
+         "External" badge, and rel="noopener noreferrer" because the
+         destination is untrusted.
+
+         The two are rendered into SEPARATE containers (see chat.js) and must
+         stay that way — the whole point is that a reader can never wonder
+         whether the bot just presented an outside paper as one of ours. --}}
+    <template id="ai-chat-tpl-external-card">
+        <a href="#" target="_blank" rel="noopener noreferrer" class="d-block rounded-3 px-2 py-2 text-decoration-none text-dark ai-chat-external-card"
+            style="background-color:#FFFBEB;border:1px solid #fde68a;font-size:0.76rem;line-height:1.3;">
+            <div class="d-flex align-items-center gap-2 mb-1">
+                <span class="badge rounded-pill" style="background-color:#B45309;font-size:0.6rem;font-weight:600;">External</span>
+                <span class="text-secondary" style="font-size:0.66rem;" data-role="provider"></span>
+            </div>
+            <div class="fw-semibold" data-role="title" style="word-break:break-word;"></div>
             <div class="text-secondary" data-role="meta"></div>
         </a>
     </template>
@@ -265,3 +306,4 @@
         }
     }
 </style>
+</div>

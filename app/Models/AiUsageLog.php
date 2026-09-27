@@ -12,6 +12,27 @@ class AiUsageLog extends Model
 {
     public const UPDATED_AT = null;
 
+    /**
+     * Every operation this app actually writes. The migration's inline
+     * comment listed only four and omitted two that were already in use
+     * ('query_condense', 'catalog') while naming two that were never
+     * written at all ('doc_embedding', 'metadata') — those two are now
+     * genuinely recorded, from App\Jobs\ProcessResearchDocument and
+     * App\Services\Ai\MetadataAnalysisService respectively.
+     *
+     * Kept as constants so a report can enumerate them instead of
+     * discovering operations by querying DISTINCT on production data.
+     */
+    public const OPERATIONS = [
+        'chat_answer',
+        'catalog',
+        'query_embedding',
+        'query_condense',
+        'doc_embedding',
+        'metadata',
+        'external_search',
+    ];
+
     protected $fillable = [
         'user_id',
         'conversation_id',
@@ -19,6 +40,7 @@ class AiUsageLog extends Model
         'operation',
         'model',
         'prompt_tokens',
+        'cached_prompt_tokens',
         'completion_tokens',
         'total_tokens',
         'latency_ms',
@@ -34,6 +56,23 @@ class AiUsageLog extends Model
     public function user()
     {
         return $this->belongsTo(User::class);
+    }
+
+    /**
+     * USD for this call, priced at report time from config/ai_pricing.php.
+     *
+     * An accessor rather than a column on purpose: prices change, and a
+     * stored cost would leave wrong numbers in rows nobody can identify as
+     * stale. Computing it means correcting a rate re-prices all history.
+     */
+    public function getEstimatedCostUsdAttribute(): float
+    {
+        return \App\Support\AiCost::usd(
+            $this->model,
+            $this->prompt_tokens,
+            $this->completion_tokens,
+            $this->cached_prompt_tokens,
+        );
     }
 
     /**

@@ -2,13 +2,39 @@
 
 namespace App\Models;
 
+use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Support\Facades\Cache;
 
 class Sdg extends Model
 {
     protected $fillable = [
         'number',
     ];
+
+    /**
+     * All 17 goals, ordered — seeded reference data that every submission
+     * form and repository filter renders, so it's served from cache rather
+     * than costing a round trip to the remote database on each page view.
+     * An empty result isn't cached, so a deploy that seeds after the first
+     * request doesn't pin an empty picker for a day.
+     */
+    public static function cachedList(): Collection
+    {
+        $cached = Cache::get('sdgs:list');
+
+        if ($cached instanceof Collection && $cached->isNotEmpty()) {
+            return $cached;
+        }
+
+        $sdgs = static::orderBy('number')->get();
+
+        if ($sdgs->isNotEmpty()) {
+            Cache::put('sdgs:list', $sdgs, now()->addDay());
+        }
+
+        return $sdgs;
+    }
 
     // config/sdgs.php is the single source of truth for the official
     // name — previously only the submission form's picker component
@@ -25,12 +51,12 @@ class Sdg extends Model
     }
 
     public function userFiles()
-{
-    return $this->belongsToMany(
-        UserFile::class,
-        'stud_file_sdg',
-        'sdg_id',
-        'stud_file_id'
-    );
-}
+    {
+        return $this->belongsToMany(
+            UserFile::class,
+            'stud_file_sdg',
+            'sdg_id',
+            'stud_file_id'
+        );
+    }
 }

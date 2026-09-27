@@ -24,6 +24,17 @@ final class RetrievalResult
      *         only to suggest "you might mean..." research cards alongside
      *         the no-evidence canned response, never sent to the LLM.
      */
+    /**
+     * @param  bool  $embeddingWasCached  true when the query vector came from
+     *         the shared 24h embedding cache and so cost nothing. Callers
+     *         must not write a 'query_embedding' row to ai_usage_logs when
+     *         this is true — doing so is what made that operation's spend
+     *         unmeasurable (see RetrievalService::lastEmbeddingWasCached()).
+     * @param  int  $embeddingPromptTokens  real tokens billed for the query
+     *         embedding; 0 on a cache hit.
+     * @param  int  $embeddingLatencyMs  time in the embedding call alone —
+     *         NOT the whole retrieval, which is what used to be logged here.
+     */
     public function __construct(
         public readonly array $chunks,
         public readonly Collection $files,
@@ -31,6 +42,17 @@ final class RetrievalResult
         public readonly bool $isComparison,
         public readonly bool $relaxedFilters,
         public readonly array $nearestDocumentIds = [],
+        public readonly bool $embeddingWasCached = true,
+        public readonly int $embeddingPromptTokens = 0,
+        public readonly int $embeddingLatencyMs = 0,
+        /**
+         * Which tier produced these chunks, and why — including whether
+         * EvidenceSufficiencyGate escalated mid-turn. Written to
+         * retrieval_meta and to active_context, because a token total alone
+         * cannot tell "abstract-first worked" apart from "everything escalated
+         * anyway".
+         */
+        public readonly ?TierDecision $tier = null,
     ) {}
 
     /**

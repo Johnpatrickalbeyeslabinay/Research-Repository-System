@@ -138,6 +138,7 @@ function initChatWidget(root) {
     const tplUser = document.getElementById('ai-chat-tpl-user');
     const tplAssistant = document.getElementById('ai-chat-tpl-assistant');
     const tplSourceCard = document.getElementById('ai-chat-tpl-source-card');
+    const tplExternalCard = document.getElementById('ai-chat-tpl-external-card');
     const tplTyping = document.getElementById('ai-chat-tpl-typing');
     const tplHistoryItem = document.getElementById('ai-chat-tpl-history-item');
 
@@ -206,7 +207,20 @@ function initChatWidget(root) {
         return bits.join(' · ');
     }
 
-    function renderAssistantMessage(content, citations, question, suggestedResearch) {
+    function formatExternalMeta(source) {
+        const bits = [];
+        if (source.authors && source.authors.length) {
+            bits.push(source.authors[0] + (source.authors.length > 1 ? ' et al.' : ''));
+        }
+        if (source.year) bits.push(String(source.year));
+        if (source.venue) bits.push(source.venue);
+        // The DOI is what makes an external citation independently verifiable,
+        // so it is shown rather than hidden behind the link.
+        if (source.doi) bits.push('doi:' + source.doi);
+        return bits.join(' · ');
+    }
+
+    function renderAssistantMessage(content, citations, question, suggestedResearch, tier, externalSources) {
         const node = tplAssistant.content.firstElementChild.cloneNode(true);
         // Markdown for assistant turns only — the model is the only source
         // that emits it. User text and error text stay literal.
@@ -232,6 +246,27 @@ function initChatWidget(root) {
             sourcesEl.appendChild(card);
         });
 
+        // External works go in their OWN container, below the repository's own
+        // sources and under their own heading. Deliberately never merged into
+        // sourcesEl: an internal card links same-origin to a study this
+        // repository holds and the user is cleared to read, while this one
+        // leaves the site for a paper nobody here reviewed. A reader must never
+        // have to wonder which they are looking at.
+        const externalEl = node.querySelector('[data-role="external-sources"]');
+        if (externalEl && tplExternalCard && (externalSources || []).length) {
+            externalEl.classList.remove('d-none');
+            externalEl.classList.add('d-flex');
+
+            externalSources.forEach((source) => {
+                const card = tplExternalCard.content.firstElementChild.cloneNode(true);
+                card.href = source.url || '#';
+                card.querySelector('[data-role="provider"]').textContent = source.provider || '';
+                card.querySelector('[data-role="title"]').textContent = '[' + source.n + '] ' + source.title;
+                card.querySelector('[data-role="meta"]').textContent = formatExternalMeta(source);
+                externalEl.appendChild(card);
+            });
+        }
+
         const copyBtn = node.querySelector('.ai-chat-copy');
         copyBtn.addEventListener('click', () => {
             navigator.clipboard?.writeText(content).then(() => {
@@ -248,6 +283,19 @@ function initChatWidget(root) {
         if (question) {
             retryBtn.style.display = '';
             retryBtn.addEventListener('click', () => sendMessage(question));
+        }
+
+        // Offered only when the answer came from abstract-level evidence. The
+        // server decides that (retrieval_meta.tier), so the button appears
+        // exactly when there is actually more text to read — rather than
+        // inviting the user to pay for a second, identical full-text turn.
+        const deeperBtn = node.querySelector('.ai-chat-deeper');
+        if (deeperBtn && question && tier === 'abstract') {
+            deeperBtn.style.display = '';
+            // Phrased to match RetrievalTierPlanner's explicit drill-down
+            // pattern, so the follow-up is planned at full text rather than
+            // re-planned as another abstract turn.
+            deeperBtn.addEventListener('click', () => sendMessage(`${question} — in more detail`));
         }
 
         messagesEl.appendChild(node);
@@ -375,8 +423,11 @@ function initChatWidget(root) {
             renderAssistantMessage(
                 body.assistant_message.content,
                 body.assistant_message.citations,
-                null,
-                body.assistant_message.suggested_research
+                // The question, so the "Go deeper" button can resend it.
+                text,
+                body.assistant_message.suggested_research,
+                body.assistant_message.tier,
+                body.assistant_message.external_sources
             );
         } catch (error) {
             hideTyping();
@@ -434,7 +485,12 @@ function initChatWidget(root) {
             if (message.role === 'user') {
                 renderUserMessage(message.content);
             } else {
-                renderAssistantMessage(message.content, message.citations, null);
+                // External sources replay too — a past turn that cited outside
+                // literature must not silently lose those cards, or the
+                // transcript stops matching what the user was shown.
+                renderAssistantMessage(
+                    message.content, message.citations, null, null, null, message.external_sources
+                );
             }
         });
     }
@@ -451,10 +507,24 @@ function initChatWidget(root) {
 
         if (state.historyLoaded) return;
 
-        const response = await fetch(indexUrl, { headers: { Accept: 'application/json' } });
-        if (!response.ok) return;
+        // Placeholder rows while the list loads, so the panel doesn't sit
+        // empty on a slow connection looking like there's no history.
+        historyList.innerHTML = '<div class="placeholder-glow px-3 py-2">'
+            + '<span class="placeholder col-10 mb-2"></span>'
+            + '<span class="placeholder col-8 mb-2"></span>'
+            + '<span class="placeholder col-9"></span></div>';
 
-        const body = await response.json();
+        let body;
+        try {
+            const response = await fetch(indexUrl, { headers: { Accept: 'application/json' } });
+            if (!response.ok) throw new Error(`HTTP ${response.status}`);
+            body = await response.json();
+        } catch (error) {
+            historyList.innerHTML = '<div class="text-secondary small px-3 py-2">Couldn&#39;t load past conversations. Try again.</div>';
+            return;
+        }
+
+        historyList.innerHTML = '';
         state.historyLoaded = true;
 
         if (!body.conversations || body.conversations.length === 0) {
@@ -533,8 +603,18 @@ function initChatWidget(root) {
     });
 }
 
-document.addEventListener('DOMContentLoaded', () => {
+// Called by resources/js/app.js on every 'turbo:load'. The repository-wide
+// widget is data-turbo-permanent, so Turbo carries the SAME element across
+// pages (an open conversation survives navigation) — it must not be bound
+// twice. A WeakSet rather than a data-* flag: Turbo's back/forward cache
+// restores CLONES of the page, which have the attribute but not the
+// listeners, and those clones do need initializing.
+const initialized = new WeakSet();
+
+export function init() {
     document.querySelectorAll('#ai-chat-widget').forEach((root) => {
+        if (initialized.has(root)) return;
+        initialized.add(root);
         safeInit('chat widget', () => initChatWidget(root));
     });
-});
+}

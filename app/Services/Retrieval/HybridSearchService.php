@@ -41,10 +41,19 @@ class HybridSearchService
      *   raw cosine similarity — App\Services\Retrieval\ChunkReranker only
      *   needs a comparable ordering value, not a specific scale.
      */
-    public function search(array $queryVector, string $queryText, ?User $user, array $filters, int $limit): array
-    {
-        $vectorResult = $this->vectorSearch->search($queryVector, $user, $filters, $limit);
-        $lexicalChunks = $this->lexicalSearch->search($queryText, $user, $filters, $limit);
+    public function search(
+        array $queryVector,
+        string $queryText,
+        ?User $user,
+        array $filters,
+        int $limit,
+        array $sections = [],
+        ?float $minSimilarity = null,
+    ): array {
+        // $sections goes to BOTH arms. Passing it to only one would let the
+        // other fuse out-of-tier chunks into the evidence set.
+        $vectorResult = $this->vectorSearch->search($queryVector, $user, $filters, $limit, $sections, $minSimilarity);
+        $lexicalChunks = $this->lexicalSearch->search($queryText, $user, $filters, $limit, $sections);
 
         // VectorSearchService relaxes its own narrow filters internally
         // when starved (a specific year/SDG/author/type returning almost
@@ -65,7 +74,8 @@ class HybridSearchService
                 $queryText,
                 $user,
                 RetrievalFilterSql::clearNarrowFilters($filters),
-                $limit
+                $limit,
+                $sections
             );
             $lexicalRelaxed = ! empty($lexicalChunks);
         }

@@ -140,7 +140,7 @@ class CatalogService
             // One metadata chunk per document means rows map 1:1 to
             // documents — no need to over-fetch for de-duplication.
             limit: $limit,
-            section: 'metadata',
+            sections: Tier::Metadata->sections(),
             minSimilarity: (float) config('chat.catalog.min_similarity', 0.12),
         );
 

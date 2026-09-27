@@ -2,67 +2,8 @@
 <html lang="en">
 
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-
-  <!--icons-->
-  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
-    <link rel="shortcut icon" href="{{ asset('images/icon.png') }}">
-
-  <!-- Bootstrap -->
-  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
-  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
-
+    @include('partials.head', ['layoutCss' => 'resources/css/layouts/repository.css'])
 </head>
-
-<style>
-  .nav-pills .nav-link {
-    color: black;
-    background: #fff;
-    transition: .2s;
-  }
-
-  .nav-pills .nav-link:hover {
-    background: #f8f9fa;
-  }
-
-  .nav-pills .nav-link.active {
-    background: #f3f4f6;
-    color: #374151;
-  }
-
-
-  /*FAVORITE BTN*/
-  .favorite-btn {
-    cursor: pointer;
-    color: #adb5bd;
-    transition: 0.2s ease;
-}
-
-.btn-check:checked + .favorite-btn {
-    color: #006400 !important;
-}
-
-  /* Sticky footer, not a FIXED one — see public_layout for the full
-     reasoning. .fixed-bottom parked the footer permanently over the last
-     ~80px of the page, hiding whatever sat at the end of the content. */
-  body {
-    display: flex;
-    flex-direction: column;
-    min-height: 100vh;
-  }
-
-  .page-content {
-    flex: 1 0 auto;
-    /* Clears the .fixed-top navbar, which IS still out of flow. */
-    padding-top: 88px;
-  }
-
-  footer {
-    flex-shrink: 0;
-  }
-</style>
-
 
 <body class="text-dark" style="font-family: sans-serif, arial;
   font-size: var(--font-size-sm);            /* 14px base */
@@ -139,15 +80,8 @@
 
 <x-chat.widget />
 
-  <!-- Bootstrap JS -->
-  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
-  <script src="https://unpkg.com/lucide@latest"></script>
 
-  @vite(['resources/js/chat.js'])
 
-  <script>
-    lucide.createIcons();
-  </script>
 </body>
 
 </html>

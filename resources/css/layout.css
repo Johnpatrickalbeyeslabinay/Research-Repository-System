@@ -1,0 +1,33 @@
+/*
+ * Shared stylesheet for every Blade layout (resources/views/partials/head.blade.php).
+ *
+ * Deliberately separate from app.css: that one is Tailwind, whose preflight
+ * reset would fight Bootstrap on every page these layouts render.
+ * Layout-specific rules live in resources/css/layouts/*.css.
+ */
+@import 'bootstrap/dist/css/bootstrap.min.css';
+
+/* Turbo's navigation progress bar, in the app's primary blue. */
+.turbo-progress-bar {
+    height: 3px;
+    background-color: #1d3c9d;
+}
+
+/* Lucide swaps <i data-lucide> for an <svg> once JS runs; reserve the box
+   so icons don't shift the layout as they appear. */
+i[data-lucide] {
+    display: inline-block;
+}
+
+/* A turbo-frame is [busy] while its next content loads (live search,
+   pagination) — dim the stale results instead of leaving them looking
+   current. */
+turbo-frame {
+    display: block;
+    transition: opacity 0.15s ease-in-out;
+}
+
+turbo-frame[busy] {
+    opacity: 0.5;
+    pointer-events: none;
+}

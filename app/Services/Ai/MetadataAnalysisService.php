@@ -3,9 +3,13 @@
 namespace App\Services\Ai;
 
 use App\Exceptions\MetadataAnalysisException;
+use App\Models\AiUsageLog;
+use App\Support\TokenEstimator;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Str;
 
 /**
  * Generates keyword + SDG suggestions from a research title and abstract
@@ -35,6 +39,8 @@ class MetadataAnalysisService
     private const MAX_SDGS = 3;
 
     private const MIN_SDG_CONFIDENCE = 0.5;
+
+    public function __construct(private TokenEstimator $tokens) {}
 
     public function fingerprint(string $title, string $abstract): string
     {
@@ -68,12 +74,23 @@ class MetadataAnalysisService
     }
 
     /**
+     * Writes the 'metadata' row to ai_usage_logs. Deliberately HERE and not
+     * in analyze(): analyze() wraps this in a 7-day cache, so logging there
+     * would report every cache hit as fresh API spend. This method only runs
+     * on a miss, which makes it the only honest place to record the cost.
+     *
+     * (Until this existed, ai_usage_logs had no 'metadata' rows at all,
+     * despite that operation being named in the table's own migration
+     * comment — so keyword/SDG suggestion spend was invisible.)
+     *
      * @return array{keywords: string[], sdgs: array<int, array{number: int, confidence: float}>, model: string, fingerprint: string}
      *
      * @throws MetadataAnalysisException
      */
     private function callOpenAi(string $apiKey, string $title, string $abstract, ?string $fallbackExcerpt, string $fingerprint): array
     {
+        $requestId = (string) Str::uuid();
+        $start = microtime(true);
         $model = config('services.openai.metadata_model');
         $maxInputTokens = (int) config('services.openai.metadata_max_input_tokens', 2000);
         $maxOutputTokens = (int) config('services.openai.metadata_max_output_tokens', 300);
@@ -84,14 +101,24 @@ class MetadataAnalysisService
             $userContent .= "\n\nAdditional excerpt: {$fallbackExcerpt}";
         }
 
-        // Rough char budget so we never blow past the configured input
-        // token ceiling — ~4 chars/token is a standard rough estimate.
         // Applied unconditionally: previously this only ran when a
         // fallback excerpt was supplied, which the form never sends, so
         // title+abstract alone (the normal path, every single call) went
         // out completely uncapped regardless of METADATA_MAX_INPUT_TOKENS.
-        $charBudget = $maxInputTokens * 4;
-        $userContent = mb_substr($userContent, 0, $charBudget);
+        //
+        // Trimmed against App\Support\TokenEstimator rather than a flat
+        // chars-per-token multiplier, so an abstract dense with numbers and
+        // symbols is measured at what it really costs instead of a quarter
+        // of it. Trimming by characters and re-measuring converges quickly
+        // because the estimate is monotonic in length.
+        while ($userContent !== '' && $this->tokens->estimate($userContent) > $maxInputTokens) {
+            $overBy = $this->tokens->estimate($userContent) - $maxInputTokens;
+
+            // Cut at least one character so this always terminates, and
+            // scale the cut by how far over budget we are so a long abstract
+            // does not take thousands of iterations.
+            $userContent = mb_substr($userContent, 0, max(1, mb_strlen($userContent) - max(1, $overBy * 2)));
+        }
 
         try {
             $response = Http::withToken($apiKey)
@@ -145,6 +172,8 @@ class MetadataAnalysisService
         } catch (\Throwable $e) {
             Log::warning('Metadata AI call failed', ['error' => $e->getMessage()]);
 
+            $this->recordUsage($requestId, $model, null, $start, false, 'transport');
+
             throw MetadataAnalysisException::unavailable();
         }
 
@@ -154,6 +183,8 @@ class MetadataAnalysisService
                 'body' => $response->body(),
             ]);
 
+            $this->recordUsage($requestId, $model, null, $start, false, 'http_'.$response->status());
+
             throw MetadataAnalysisException::unavailable();
         }
 
@@ -161,8 +192,14 @@ class MetadataAnalysisService
         $parsed = is_string($content) ? json_decode($content, true) : null;
 
         if (! is_array($parsed) || ! isset($parsed['keywords']) || ! isset($parsed['sdgs'])) {
+            // Tokens were still spent producing the unusable response, so
+            // this is logged as a failure WITH its cost rather than skipped.
+            $this->recordUsage($requestId, $model, $response, $start, false, 'invalid_response');
+
             throw MetadataAnalysisException::invalidResponse();
         }
+
+        $this->recordUsage($requestId, $model, $response, $start, true, null);
 
         return [
             'keywords' => $this->sanitizeKeywords($parsed['keywords']),
@@ -170,6 +207,44 @@ class MetadataAnalysisService
             'model' => $model,
             'fingerprint' => $fingerprint,
         ];
+    }
+
+    /**
+     * Fire-and-forget cost telemetry (AiUsageLog::record swallows its own
+     * failures, so this can never break a submission).
+     *
+     * Auth::id() is read here rather than threaded in from
+     * ResearchAnalysisController: this is the only place that knows whether
+     * an API call actually happened, and a null user_id is a valid row, so
+     * the coupling buys correctness cheaply. It is nullable precisely
+     * because this can also run from a queue or a console command.
+     *
+     * @param  \Illuminate\Http\Client\Response|null  $response
+     */
+    private function recordUsage(
+        string $requestId,
+        string $model,
+        $response,
+        float $start,
+        bool $success,
+        ?string $errorCode,
+    ): void {
+        $promptTokens = $response?->json('usage.prompt_tokens');
+        $completionTokens = $response?->json('usage.completion_tokens');
+
+        AiUsageLog::record([
+            'user_id' => Auth::id(),
+            'request_id' => $requestId,
+            'operation' => 'metadata',
+            'model' => $model,
+            'prompt_tokens' => $promptTokens,
+            'cached_prompt_tokens' => $response?->json('usage.prompt_tokens_details.cached_tokens'),
+            'completion_tokens' => $completionTokens,
+            'total_tokens' => ($promptTokens ?? 0) + ($completionTokens ?? 0),
+            'latency_ms' => (int) round((microtime(true) - $start) * 1000),
+            'success' => $success,
+            'error_code' => $errorCode,
+        ]);
     }
 
     /**

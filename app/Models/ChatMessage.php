@@ -12,7 +12,9 @@ class ChatMessage extends Model
         'conversation_id',
         'role',
         'content',
+        'excluded_from_history',
         'citations',
+        'external_sources',
         'retrieval_meta',
         'model',
         'prompt_tokens',
@@ -22,7 +24,9 @@ class ChatMessage extends Model
 
     protected $casts = [
         'citations' => 'array',
+        'external_sources' => 'array',
         'retrieval_meta' => 'array',
+        'excluded_from_history' => 'boolean',
     ];
 
     public function conversation()

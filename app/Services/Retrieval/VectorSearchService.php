@@ -23,8 +23,11 @@ class VectorSearchService
      *                research_type: ?string, stud_file_ids: int[]}  $filters  QueryPlanner::plan()'s output
      * @param  int  $limit  final row count after any relaxation — the
      *                      caller's ChunkReranker narrows further
-     * @param  ?string  $section  restrict to one chunk section. Passing
-     *         'metadata' is what turns this into a DOCUMENT-level search:
+     * @param  string[]  $sections  restrict to these chunk sections; empty
+     *         means no restriction. Comes from
+     *         App\Services\Retrieval\Tier::sections().
+     *
+     *         ['metadata'] turns this into a DOCUMENT-level search:
      *         ChunkingService writes exactly one synthetic metadata chunk
      *         per document (chunk_index 0 — title/authors/year/type/
      *         keywords/SDGs/abstract, see ProcessResearchDocument::
@@ -32,10 +35,20 @@ class VectorSearchService
      *         row per study instead of many rows from the same one. That is
      *         precisely what App\Services\Retrieval\CatalogService needs for
      *         "recommend papers about X", and it needs no separate index.
+     *
+     *         ['metadata', 'abstract'] is the Abstract retrieval tier. It was
+     *         a single ?string until tiering needed two sections in one query;
+     *         widening it to a list is what let an abstract-level answer read
+     *         the abstract AND the document's metadata in one pass.
      * @param  ?float  $minSimilarity  overrides
      *         config('chat.retrieval.min_similarity') for this call — a
      *         broad discovery question is legitimately looser than a
-     *         precise factual one (see config's min_similarity_by_intent).
+     *         precise factual one. The one real caller that overrides it is
+     *         CatalogService, via config('chat.catalog.min_similarity').
+     *         (This used to cite a 'min_similarity_by_intent' config key,
+     *         which never existed: config/chat.php documents the OPPOSITE
+     *         decision — deliberately one threshold, not one per intent,
+     *         because a looser bar for broad questions measured worse.)
      * @return array{
      *     chunks: array<int, array{id:int, stud_file_id:int, section:?string, page_number:?int, content:string, similarity:float}>,
      *     relaxed_filters: bool,
@@ -50,12 +63,12 @@ class VectorSearchService
         ?User $user,
         array $filters,
         int $limit,
-        ?string $section = null,
+        array $sections = [],
         ?float $minSimilarity = null
     ): array {
         $minSimilarity ??= (float) config('chat.retrieval.min_similarity', 0.25);
 
-        $rows = $this->runQuery($queryVector, $user, $filters, $this->overfetchLimit($filters, $limit), $section);
+        $rows = $this->runQuery($queryVector, $user, $filters, $this->overfetchLimit($filters, $limit), $sections);
         $survivors = $this->aboveThreshold($rows, $minSimilarity);
         $nearest = array_slice($rows, 0, 3);
 
@@ -67,7 +80,7 @@ class VectorSearchService
         // RetrievalFilterSql::clearNarrowFilters()), rather than return a
         // handful of weak results or none at all.
         if (RetrievalFilterSql::hasNarrowFilter($filters) && count($survivors) < (int) config('chat.retrieval.filtered_min_results', 3)) {
-            $unfiltered = $this->runQuery($queryVector, $user, RetrievalFilterSql::clearNarrowFilters($filters), $limit, $section);
+            $unfiltered = $this->runQuery($queryVector, $user, RetrievalFilterSql::clearNarrowFilters($filters), $limit, $sections);
 
             return [
                 'chunks' => array_slice($this->aboveThreshold($unfiltered, $minSimilarity), 0, $limit),
@@ -86,7 +99,7 @@ class VectorSearchService
     /**
      * @return array<int, array{id:int, stud_file_id:int, section:?string, page_number:?int, content:string, similarity:float}>
      */
-    private function runQuery(array $queryVector, ?User $user, array $filters, int $limit, ?string $section = null): array
+    private function runQuery(array $queryVector, ?User $user, array $filters, int $limit, array $sections = []): array
     {
         // Bound once via a CTE and referenced twice (SELECT + ORDER BY)
         // below, rather than binding the same vector literal at two
@@ -108,10 +121,9 @@ class VectorSearchService
         // bindings must be pushed in the same order their `?` appear in the
         // SQL text — this clause precedes the access predicate and the
         // filter fragment below, so its binding must too.
-        if ($section !== null) {
-            $sql .= ' AND rc.section = ?';
-            $bindings[] = $section;
-        }
+        [$sectionSql, $sectionBindings] = RetrievalFilterSql::sectionClause($sections);
+        $sql .= $sectionSql;
+        array_push($bindings, ...$sectionBindings);
 
         // ResearchAccess::sqlPredicate() and RetrievalFilterSql::build() both
         // use positional `?` placeholders (never `:named` ones) — PDO does

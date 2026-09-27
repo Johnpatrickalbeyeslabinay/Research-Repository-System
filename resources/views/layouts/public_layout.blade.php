@@ -2,62 +2,8 @@
 <html lang="en">
 
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>@yield('title', 'PUBLIC')</title>
-
-  <!--icons-->
-  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
-    <link rel="shortcut icon" href="{{ asset('images/icon.png') }}">
-
-  <!-- Bootstrap -->
-  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
-  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
-
+    @include('partials.head', ['layoutCss' => 'resources/css/layouts/public.css'])
 </head>
-
-<style>
-  .nav-pills .nav-link {
-    color: black;
-    background: #fff;
-    transition: .2s;
-  }
-
-  .nav-pills .nav-link:hover {
-    background: #f8f9fa;
-  }
-
-  .nav-pills .nav-link.active {
-    background: #f3f4f6;
-    color: #374151;
-  }
-
-  /* Sticky footer, not a FIXED one.
-     The footer was .fixed-bottom, which lifts it out of the document flow
-     and parks it permanently over the last ~80px of the page — on
-     research/show that covered the View PDF / Download / Ask about this
-     research buttons entirely, with no way to scroll past it.
-     A flex column instead: the content region grows to fill a short page
-     (so the footer still sits at the bottom with no content above it) and
-     the footer is simply pushed below on a long one. */
-  body {
-    display: flex;
-    flex-direction: column;
-    min-height: 100vh;
-  }
-
-  .page-content {
-    flex: 1 0 auto;
-    /* Clears the .fixed-top navbar, which IS still out of flow. Replaces
-       three <br> tags that approximated the same thing. */
-    padding-top: 88px;
-  }
-
-  footer {
-    flex-shrink: 0;
-  }
-</style>
-
 
 <body class="text-dark" style="font-family: sans-serif, arial;
   font-size: var(--font-size-sm);            /* 14px base */
@@ -122,13 +68,7 @@
 
 
 
-  <!-- Bootstrap JS -->
-  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
-  <script src="https://unpkg.com/lucide@latest"></script>
 
-  <script>
-    lucide.createIcons();
-  </script>
 </body>
 
 </html>

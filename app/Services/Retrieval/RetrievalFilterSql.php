@@ -18,6 +18,37 @@ final class RetrievalFilterSql
      * @param  string  $chunkAlias  the calling query's research_chunks table alias
      * @return array{0: string, 1: array<int, mixed>}
      */
+    /**
+     * A section restriction for the retrieval tier (see
+     * App\Services\Retrieval\Tier::sections()).
+     *
+     * Lives here rather than being hand-built in each search service because
+     * BOTH arms need it and only one of them had it. VectorSearchService took a
+     * single `?string $section`; LexicalSearchService had no section filter at
+     * all — so restricting sections on the vector arm alone would let the
+     * lexical arm fuse methodology chunks straight into an abstract-tier
+     * answer, silently defeating the tier and its token budget.
+     *
+     * Emits positional `?` placeholders only. PDO cannot mix `?` and `:named`
+     * in one statement, and both call sites already use `?` for their query
+     * vector / tsquery.
+     *
+     * @param  string[]  $sections  empty means no restriction
+     * @return array{0: string, 1: array<int, string>}
+     */
+    public static function sectionClause(array $sections, string $chunkAlias = 'rc'): array
+    {
+        $sections = array_values(array_filter($sections, fn ($s) => is_string($s) && $s !== ''));
+
+        if (empty($sections)) {
+            return ['', []];
+        }
+
+        $placeholders = implode(', ', array_fill(0, count($sections), '?'));
+
+        return [" AND {$chunkAlias}.section IN ({$placeholders})", $sections];
+    }
+
     public static function build(array $filters, string $studFileAlias = 'sf', string $chunkAlias = 'rc'): array
     {
         $sql = '';
