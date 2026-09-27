@@ -162,6 +162,32 @@
 
 
 
+
+                <div class="container-fluid px-4">
+                    <div class="user-manual-card">
+                        <div>
+                            <h2 class="user-manual-title">
+                                Need help using the repository?
+                            </h2>
+
+                            <p class="user-manual-description mb-0">
+                                Download the user manual for student, instructor, administrator, and guest instructions.
+                            </p>
+                        </div>
+
+                        <a href="{{ asset('documents/user-manual.pdf') }}"
+                        class="btn user-manual-btn"
+                        download>
+                            <i class="fa-solid fa-download me-2"></i>
+                            Download User Manual
+                        </a>
+                    </div>
+                </div>
+
+
+
+
+
         <div class="cta rounded-5 shadow text-center py-5 px-3 mt-5"
             style=" background:linear-gradient(to right,#1e3c97,#007c78);">
 
