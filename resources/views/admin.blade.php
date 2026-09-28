@@ -269,7 +269,7 @@
         <button class="nav-link rounded-5 px-2 py-1" id="submissions-tab"
             data-bs-toggle="pill" data-bs-target="#submissions" type="button" role="tab">
 
-            My Submissions
+            Student Submissions
 
         </button>
 
@@ -378,7 +378,7 @@
             All Research Submissions
         </h3>
 
-        <div class="d-flex flex-wrap gap-3">
+        <!--<div class="d-flex flex-wrap gap-3">
 
             <span>
                 <i class="bi bi-circle-fill text-success small"></i>
@@ -395,7 +395,7 @@
                 {{ $rejectedCount }}
             </span>
 
-        </div>
+        </div>-->
 
     </div>
 
@@ -404,15 +404,88 @@
          this list permanently, making the Approved/Rejected badge
          branches below unreachable. --}}
     <form method="GET" class="mb-3">
-        <select name="status" class="form-select form-select-sm d-inline-block" style="max-width: 220px;"
-            onchange="this.form.submit()">
-            <option value="admin_pending" {{ $statusFilter === 'admin_pending' ? 'selected' : '' }}>Awaiting admin review</option>
-            <option value="approved" {{ $statusFilter === 'approved' ? 'selected' : '' }}>Approved</option>
-            <option value="rejected" {{ $statusFilter === 'rejected' ? 'selected' : '' }}>Rejected</option>
-            <option value="pending" {{ $statusFilter === 'pending' ? 'selected' : '' }}>With adviser</option>
-            <option value="all" {{ $statusFilter === 'all' ? 'selected' : '' }}>All statuses</option>
+
+    <div class="d-flex align-items-center gap-2 flex-wrap">
+
+        {{-- Status --}}
+        <select name="status"
+                class="form-select form-select-sm"
+                style="width: 220px;"
+                onchange="this.form.submit()">
+
+            <option value="admin_pending"
+                {{ $statusFilter === 'admin_pending' ? 'selected' : '' }}>
+                Awaiting admin review
+            </option>
+
+            <option value="approved"
+                {{ $statusFilter === 'approved' ? 'selected' : '' }}>
+                Approved
+            </option>
+
+            <option value="rejected"
+                {{ $statusFilter === 'rejected' ? 'selected' : '' }}>
+                Rejected
+            </option>
+
+            <option value="pending"
+                {{ $statusFilter === 'pending' ? 'selected' : '' }}>
+                With adviser
+            </option>
+
+            <option value="all"
+                {{ $statusFilter === 'all' ? 'selected' : '' }}>
+                All statuses
+            </option>
+
         </select>
-    </form>
+
+
+        {{-- Year From --}}
+        <select name="year_from"
+                class="form-select form-select-sm"
+                style="width: 120px;">
+
+            <option value="">From Year</option>
+
+            @for($year = 2020; $year <= 2026; $year++)
+                <option value="{{ $year }}"
+                    {{ request('year_from') == $year ? 'selected' : '' }}>
+                    {{ $year }}
+                </option>
+            @endfor
+
+        </select>
+
+
+        <span class="text-muted small">to</span>
+
+
+        {{-- Year To --}}
+        <select name="year_to"
+                class="form-select form-select-sm"
+                style="width: 120px;">
+
+            <option value="">To Year</option>
+
+            @for($year = 2020; $year <= 2026; $year++)
+                <option value="{{ $year }}"
+                    {{ request('year_to') == $year ? 'selected' : '' }}>
+                    {{ $year }}
+                </option>
+            @endfor
+
+        </select>
+
+
+        {{-- Filter --}}
+        <button type="submit" class="btn btn-primary btn-sm">
+            <i class="fa-solid fa-magnifying-glass"></i>
+        </button>
+
+    </div>
+
+</form>
 
     <!-- Table -->
 <div class="table-responsive">
@@ -519,13 +592,36 @@
 
                     <td class="text-end">
 
-                        <button class="btn btn-outline-primary rounded py-1"
-                            popovertarget="popover-{{ $file->id }}">
+                        <div class="d-flex flex-column flex-md-row gap-1">
 
-                            <i class="bi bi-folder me-2"></i>
-                            View
+                            <button type="button"
+                                    class="btn btn-outline-primary btn-sm rounded py-1 px-2"
+                                    popovertarget="popover-{{ $file->id }}">
 
-                        </button>
+                                <i class="bi bi-folder me-1"></i>
+                                View
+
+                            </button>
+
+                            <form action="{{ route('admin.files.destroy', $file->id) }}"
+                                method="POST"
+                                class="m-0">
+
+                                @csrf
+                                @method('DELETE')
+
+                                <button type="submit"
+                                        class="btn btn-outline-danger btn-sm rounded py-1 px-2"
+                                        onclick="return confirm('Are you sure you want to delete this research?')">
+
+                                    <i class="bi bi-trash me-1"></i>
+                                    Delete
+
+                                </button>
+
+                            </form>
+
+                        </div>
 
 
 
@@ -539,7 +635,7 @@
 <!-- POPOVER -->
  <!--FILE CONTENT-->
 <div id="popover-{{ $file->id }}" popover
-    style="border: 1px solid #dee2e6;  max-width: 500px; width: 90%; overflow-y: auto; max-height: 90vh;">
+    style="border: 1px solid #dee2e6;  max-width: 1000px; width: 90%; overflow-y: auto; max-height: 90vh;">
     <div class="container">
         <div class="border-0">
             <div class=" p-2 p-md-2">
@@ -604,34 +700,119 @@
                     </div>
                 </div>
 
-                <!--ACTION-->
-                <div class="d-flex gap-3">
+                <!-- ACTION -->
+                    <div class="d-flex gap-3">
 
-                    @if($file->status == 'admin_pending')
-                        <div class="d-flex gap-3">
+                        @if($file->status == 'admin_pending')
 
-                            <form action="{{ route('research.approve', $file->id) }}" method="POST">
+                            <!-- APPROVE -->
+                            <form action="{{ route('research.approve', $file->id) }}"
+                                method="POST"
+                                class="m-0">
+
                                 @csrf
 
-                                <button type="submit" class="btn btn-outline-success">
-                                    <i class="fa-regular fa-circle-check"></i>
+                                <button type="submit"
+                                        class="btn btn-outline-success px-2 py-1">
+
+                                    <i class="fa-regular fa-circle-check me-1"></i>
                                     Approve
+
                                 </button>
+
                             </form>
 
-                            <form action="{{ route('research.reject', $file->id) }}" method="POST">
+
+                            <!-- REJECT -->
+                            <form action="{{ route('research.reject', $file->id) }}"
+                                method="POST"
+                                class="m-0">
+
                                 @csrf
 
-                                <button type="submit" class="btn btn-outline-danger">
-                                    <i class="fa-regular fa-circle-xmark"></i>
+                                <button type="button"
+                                        class="btn btn-outline-danger px-2 py-1"
+                                        data-bs-toggle="modal"
+                                        data-bs-target="#rejectModal{{ $file->id }}">
+
+                                    <i class="fa-regular fa-circle-xmark me-1"></i>
                                     Reject
+
                                 </button>
+
+
+                                <!-- Reject Modal -->
+                                <div class="modal fade"
+                                    id="rejectModal{{ $file->id }}"
+                                    tabindex="-1"
+                                    aria-labelledby="rejectModalLabel{{ $file->id }}"
+                                    aria-hidden="true">
+
+                                    <div class="modal-dialog modal-dialog-centered">
+
+                                        <div class="modal-content">
+
+                                            <div class="modal-header">
+
+                                                <h5 class="modal-title"
+                                                    id="rejectModalLabel{{ $file->id }}">
+                                                    Reject Research Paper
+                                                </h5>
+
+                                                <button type="button"
+                                                        class="btn-close"
+                                                        data-bs-dismiss="modal">
+                                                </button>
+
+                                            </div>
+
+                                            <div class="modal-body">
+
+                                                <p class="mb-3">
+                                                    Please provide a reason for rejecting this research paper.
+                                                </p>
+
+                                                <label class="form-label fw-semibold">
+                                                    Rejection Reason / Comment
+                                                </label>
+
+                                                <textarea name="admin_reject"
+                                                        class="form-control"
+                                                        rows="5"
+                                                        placeholder="Please specify the reason for rejection..."
+                                                        required></textarea>
+
+                                            </div>
+
+                                            <div class="modal-footer">
+
+                                                <button type="button"
+                                                        class="btn btn-secondary"
+                                                        data-bs-dismiss="modal">
+                                                    Cancel
+                                                </button>
+
+                                                <button type="submit"
+                                                        class="btn btn-danger">
+
+                                                    <i class="fa-regular fa-circle-xmark me-1"></i>
+                                                    Confirm Reject
+
+                                                </button>
+
+                                            </div>
+
+                                        </div>
+
+                                    </div>
+
+                                </div>
+
                             </form>
 
-                        </div>
-                    @endif
+                        @endif
 
-                </div>
+                    </div>
 
 
             </div>

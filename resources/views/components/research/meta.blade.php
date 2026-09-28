@@ -4,6 +4,7 @@
     // new metadata row added here reaches every surface automatically.
     'show' => ['researchers', 'adviser', 'type', 'year', 'keywords', 'sdgs', 'stats', 'index-status'],
     'compact' => false,
+     'showDownloadCount' => true,
 ])
 
 @php
@@ -73,9 +74,9 @@
         <div class="{{ $rowClass }}"><span class="text-muted">Adviser:</span> {{ $file->adviser }}</div>
     @endif
 
-    @if (in_array('type', $show, true) && $file->research_type)
+    <!--@if (in_array('type', $show, true) && $file->research_type)
         <div class="{{ $rowClass }}"><span class="text-muted">Type:</span> {{ $file->research_type }}</div>
-    @endif
+    @endif-->
 
     @if (in_array('year', $show, true) && $publishedYear)
         <div class="{{ $rowClass }}"><span class="text-muted">Published:</span> {{ $publishedYear }}</div>
@@ -107,15 +108,30 @@
         </div>
     @endif
 
-    @if (in_array('stats', $show, true))
-        <div class="{{ $rowClass }} text-secondary">
-            @if ($file->pdf_page_count)
-                <span class="me-3"><i class="bi bi-file-earmark-text me-1"></i>{{ $file->pdf_page_count }} pages</span>
-            @endif
-            <span class="me-3"><i class="bi bi-eye me-1"></i>{{ $file->views ?? 0 }}</span>
-            <span><i class="bi bi-download me-1"></i>{{ $file->downloads ?? 0 }}</span>
-        </div>
-    @endif
+   @if (in_array('stats', $show, true))
+    <div class="{{ $rowClass }} text-secondary">
+
+        @if ($file->pdf_page_count)
+            <span class="me-3">
+                <i class="bi bi-file-earmark-text me-1"></i>
+                {{ $file->pdf_page_count }} pages
+            </span>
+        @endif
+
+        <span class="me-3">
+            <i class="bi bi-eye me-1"></i>
+            {{ $file->views ?? 0 }}
+        </span>
+
+        @if ($showDownloadCount)
+            <span>
+                <i class="bi bi-download me-1"></i>
+                {{ $file->downloads ?? 0 }}
+            </span>
+        @endif
+
+    </div>
+@endif
 
     @if (in_array('index-status', $show, true) && $indexNotice && $canSeeIndexStatus)
         <div class="{{ $rowClass }} small {{ $indexNotice[1] }}">

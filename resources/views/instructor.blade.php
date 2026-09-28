@@ -28,7 +28,7 @@
 
                 <div>
                     <p class="text-secondary mb-2">
-                        Total Submissions
+                        Student Submissions
                     </p>
 
                     <h3 class="fw-normal mb-0">
@@ -237,19 +237,6 @@
 
             <span class="badge d-flex align-items-center justify-content-center text-danger">
                 <i class="fa-solid fa-circle fa-2xs text-danger"></i>
-            </span>
-
-        </button>
-
-
-        <!-- Notification -->
-        <button class="nav-link rounded-5 px-1 py-1  d-flex align-items-center gap-2" id="notification-tab" data-bs-toggle="pill"
-            data-bs-target="#notification" type="button" role="tab">
-
-            Notification
-
-            <span class="badge d-flex align-items-center justify-content-center text-dark">
-                <i class="fa-regular fa-bell"></i>
             </span>
 
         </button>
@@ -1026,36 +1013,6 @@
                     @endif
                 @endforeach
             </div>
-        </div>
-
-
-
-
-
-             <!-- ================= NOTIFICATION ================= -->
-        <div class="tab-pane fade" id="notification">
-
-            <div class="card mt-3 shadow-sm border-0 rounded-4">
-                <div class="card-body">
-                    <h5 class="fw-bold">Notifications</h5>
-
-                    @forelse($notifications as $notification)
-                        <div class="border-bottom py-3">
-                            <div class="fw-semibold {{ $notification->read_at ? 'text-secondary' : 'text-primary' }}">
-                                <i class="fa-solid fa-upload"></i>
-                                {{ $notification->data['message'] ?? 'Notification' }}
-                            </div>
-
-                            <small class="text-muted">
-                                {{ $notification->created_at->diffForHumans() }}
-                            </small>
-                        </div>
-                    @empty
-                        <p class="text-secondary">No notifications yet.</p>
-                    @endforelse
-                </div>
-            </div>
-
         </div>
 
 

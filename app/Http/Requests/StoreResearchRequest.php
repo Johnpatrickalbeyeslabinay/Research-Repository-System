@@ -17,7 +17,20 @@ class StoreResearchRequest extends FormRequest
             'title' => 'required|string|max:255',
             'research_type' => 'nullable|string|max:255',
             'publication_year' => 'nullable|integer|min:2000|max:'.(date('Y') + 1),
-            'adviser_id' => 'required|exists:users,id',
+
+            // 'adviser_id' => 'required|exists:users,id',
+
+            'advisers' => [
+                'required',
+                'array',
+            ],
+
+            'advisers.*' => [
+                'required',
+                'integer',
+                'distinct',
+                'exists:users,id',
+            ],
             // Ordered researcher rows from the researcher-input component —
             // replaces the old co_authors[] (bare user ids only, picked
             // from a fixed list). A row may or may not be linked to a

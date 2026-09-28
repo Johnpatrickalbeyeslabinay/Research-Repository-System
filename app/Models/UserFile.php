@@ -44,6 +44,8 @@ class UserFile extends Model
         'search_indexed_at',
         'search_index_error',
         'instructor_feedback',
+        'rejection_reason',
+        'admin_reject',
     ];
 
     protected $casts = [

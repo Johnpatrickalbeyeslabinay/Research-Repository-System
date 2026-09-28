@@ -16,10 +16,10 @@
                         <span class="text-muted">Title:</span>
                         <div class="fw-semibold" data-review="title">—</div>
                     </div>
-                    <div class="col-6">
+                    <!--<div class="col-6">
                         <span class="text-muted">Type:</span>
                         <div data-review="research_type">—</div>
-                    </div>
+                    </div>-->
                     <div class="col-6">
                         <span class="text-muted">Publication Year:</span>
                         <div data-review="publication_year">—</div>

@@ -130,7 +130,35 @@ class StudentController extends Controller
 
     public function store(StoreResearchRequest $request)
     {
-        $adviser = User::findOrFail($request->adviser_id);
+        // $adviser = User::findOrFail($request->adviser_id);
+        $adviserIds = collect($request->input('advisers', []))
+            ->map(fn ($id) => (int) $id)
+            ->filter()
+            ->unique()
+            ->values();
+
+        $advisers = User::whereIn('id', $adviserIds)
+            ->where('role', 'instructor')
+            ->get();
+
+        $advisers = $adviserIds
+            ->map(fn ($id) => $advisers->firstWhere('id', $id))
+            ->filter()
+            ->values();
+
+        if ($advisers->isEmpty()) {
+            return back()
+                ->withErrors([
+                    'advisers' => 'Please select at least one research adviser.',
+                ])
+                ->withInput();
+        }
+
+        $adviserNames = $advisers
+            ->pluck('name')
+            ->implode(', ');
+
+        $primaryAdviser = $advisers->first();
 
         //  Generate auto tags
         $title = strtolower($request->title);
@@ -190,8 +218,11 @@ class StudentController extends Controller
             'user_id' => Auth::id(),
             'title' => $request->title,
             'name' => Auth::user()->name,
-            'adviser' => $adviser->name,
-            'adviser_id' => $adviser->id,
+            // 'adviser' => $adviser->name,
+            // 'adviser_id' => $adviser->id,
+            'adviser' => $adviserNames,
+            'adviser_id' => $primaryAdviser->id,
+
             'research_type' => $request->research_type,
             'publication_year' => $request->publication_year,
             'desc' => $request->desc,
@@ -216,10 +247,13 @@ class StudentController extends Controller
 
         $this->dispatchIndexing($fileRecord->id);
 
-        self::forgetAdminDashboardCache($fileRecord, $adviser->id);
-        $adviser->notify(new ResearchSubmitted($fileRecord));
+        foreach ($advisers as $adviser) {
+            self::forgetAdminDashboardCache($fileRecord, $adviser->id);
+            $adviser->notify(new ResearchSubmitted($fileRecord));
+        }
 
         return redirect()->route('student')->with('success', 'Research submitted successfully!');
+
     }
 
     /**
