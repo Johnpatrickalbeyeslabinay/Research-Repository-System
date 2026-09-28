@@ -22,12 +22,12 @@
 
             <div class="d-flex gap-2 flex-wrap">
                 @if ($canAccessPdf)
-                    <a href="{{ route('file.view', ['id' => $file->id]) }}"
+                    <a data-turbo="false" href="{{ route('file.view', ['id' => $file->id]) }}"
                         class="btn text-white rounded-2 px-4 py-2" style="background:#072a89;">
                         <i class="bi bi-eye me-2"></i>View PDF
                     </a>
 
-                    <a href="{{ route('file.download', $file->id) }}"
+                    <a data-turbo="false" href="{{ route('file.download', $file->id) }}"
                         class="btn btn-outline-secondary rounded-2 px-4 py-2">
                         <i class="bi bi-download me-2"></i>Download
                     </a>
@@ -58,7 +58,6 @@
              for the anonymous /public visitors this page is otherwise
              open to. --}}
         <x-chat.widget :stud-file-id="$file->id" :stud-file-title="$file->title" />
-        @vite(['resources/js/chat.js'])
     @endif
 
 @endsection

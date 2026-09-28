@@ -1,12 +1,28 @@
 {
     "version": 2,
-    "builds": [
-        {
-            "src": "api/index.php",
-            "use": "vercel-php@0.9.0"
+    "framework": null,
+    "regions": ["hnd1"],
+    "buildCommand": "npm run build",
+    "outputDirectory": "public",
+    "functions": {
+        "api/index.php": {
+            "runtime": "vercel-php@0.9.0"
         }
-    ],
+    },
     "routes": [
+        {
+            "src": "/build/(.*)",
+            "headers": { "cache-control": "public, max-age=31536000, immutable" },
+            "continue": true
+        },
+        {
+            "src": "/images/(.*)",
+            "headers": { "cache-control": "public, max-age=604800" },
+            "continue": true
+        },
+        {
+            "handle": "filesystem"
+        },
         {
             "src": "/(.*)",
             "dest": "/api/index.php"

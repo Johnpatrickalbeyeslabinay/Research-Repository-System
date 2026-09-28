@@ -11,7 +11,7 @@
     <div class="card h-100 shadow-sm border-0 rounded-4">
         <div class="card-body d-flex flex-column">
             <h5 class="fw-bold mb-2">
-                <a href="{{ $url }}" class="text-decoration-none text-dark">{{ $file->title }}</a>
+                <a data-turbo-frame="_top" href="{{ $url }}" class="text-decoration-none text-dark">{{ $file->title }}</a>
             </h5>
 
             <x-research.meta :file="$file" compact :show="['researchers', 'type', 'year']" />
@@ -37,7 +37,7 @@
             </div>
 
             <div class="d-flex gap-2 mt-auto">
-                <a href="{{ $url }}"
+                <a data-turbo-frame="_top" href="{{ $url }}"
                     class="btn d-flex justify-content-center align-items-center flex-grow-1 rounded py-1 bg-white"
                     style="border: 1px solid #1d0677; color: navy;">
                     <i class="bi bi-folder me-2"></i>
@@ -49,7 +49,7 @@
                      worse than not showing it; they get a proper prompt on
                      the detail page instead (research/show.blade.php). --}}
                 @if ($showDownload)
-                    <a href="{{ route('file.download', $file->id) }}"
+                    <a data-turbo="false" href="{{ route('file.download', $file->id) }}"
                         class="btn d-flex justify-content-center align-items-center rounded py-1 px-3 bg-white"
                         style="border: 1px solid #dee2e6; color: #072a89;"
                         title="Download PDF">

@@ -3,6 +3,7 @@
 namespace App\Jobs;
 
 use App\Exceptions\PdfProcessingException;
+use App\Models\AiUsageLog;
 use App\Models\ResearchChunk;
 use App\Models\UserFile;
 use App\Services\Pdf\PdfTextExtractor;
@@ -17,6 +18,7 @@ use Illuminate\Queue\SerializesModels;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Str;
 
 /**
  * Makes a submitted research document searchable by chunking its extracted
@@ -91,11 +93,43 @@ class ProcessResearchDocument implements ShouldQueue
                 $extracted['pages'],
                 $extracted['full_text'],
                 $detected['sections'],
-                $this->documentSummary($studFile)
+                $this->documentSummary($studFile),
+                // Used only when no ABSTRACT heading was detected in the PDF.
+                // Prefers the student's typed abstract over the parsed one, the
+                // same precedence documentSummary() uses.
+                $studFile->desc ?: $studFile->extracted_abstract,
             );
             $chunks = $chunkResult['chunks'];
 
-            $rows = empty($chunks) ? [] : $this->resolveEmbeddings($chunks, $embedder);
+            $embedded = empty($chunks)
+                ? ['rows' => [], 'prompt_tokens' => 0, 'embedded_chunks' => 0]
+                : $this->resolveEmbeddings($chunks, $embedder);
+
+            $rows = $embedded['rows'];
+
+            // Indexing is the single largest consumer of the OpenAI key, and
+            // until this line it wrote nothing to ai_usage_logs at all —
+            // even though that table's own migration comment lists
+            // 'doc_embedding' as an expected operation. Document embedding
+            // spend was therefore invisible, which makes any claim about
+            // reducing token usage unverifiable.
+            //
+            // Logged only when tokens were actually spent: content-hash
+            // reuse (see resolveEmbeddings) means a re-index of an unchanged
+            // PDF makes no API call, and a zero-token row would misreport
+            // that as spend.
+            if ($embedded['prompt_tokens'] > 0) {
+                AiUsageLog::record([
+                    'user_id' => $studFile->user_id,
+                    'request_id' => (string) Str::uuid(),
+                    'operation' => 'doc_embedding',
+                    'model' => $this->embeddingModel(),
+                    'prompt_tokens' => $embedded['prompt_tokens'],
+                    'total_tokens' => $embedded['prompt_tokens'],
+                    'chunks_retrieved' => $embedded['embedded_chunks'],
+                    'success' => true,
+                ]);
+            }
 
             // Embeddings are fully resolved above BEFORE anything is
             // deleted. Previously the old index was deleted first and only
@@ -215,8 +249,13 @@ class ProcessResearchDocument implements ShouldQueue
      * need a second OpenAI call.
      *
      * @param  array<int, array{chunk_index:int, section:?string, page_number:?int, content:string, token_count:int, content_hash:string}>  $chunks
-     * @return array<int, array<string, mixed>> each chunk plus an
-     *                                           'embedding_literal' key (a pgvector text literal, e.g. "[0.1,0.2,...]") ready for the ::vector cast
+     * @return array{rows: array<int, array<string, mixed>>, prompt_tokens: int, embedded_chunks: int}
+     *         'rows' is each chunk plus an 'embedding_literal' key (a
+     *         pgvector text literal, e.g. "[0.1,0.2,...]") ready for the
+     *         ::vector cast. 'prompt_tokens' and 'embedded_chunks' cover
+     *         only the chunks that actually went to the API — the ones
+     *         served by content-hash reuse cost nothing and are excluded, so
+     *         the caller's AiUsageLog row reports real spend.
      */
     private function resolveEmbeddings(array $chunks, EmbeddingService $embedder): array
     {
@@ -247,9 +286,13 @@ class ProcessResearchDocument implements ShouldQueue
         }
 
         $newByHash = [];
+        $promptTokens = 0;
+
         if (! empty($textByMissingHash)) {
             $missingHashes = array_keys($textByMissingHash);
-            $vectors = $embedder->embedBatch(array_values($textByMissingHash));
+            $result = $embedder->embedBatch(array_values($textByMissingHash));
+            $vectors = $result['embeddings'];
+            $promptTokens = $result['prompt_tokens'];
 
             if (count($vectors) !== count($missingHashes)) {
                 throw new \RuntimeException('Embedding count did not match chunk count.');
@@ -258,7 +301,7 @@ class ProcessResearchDocument implements ShouldQueue
             $newByHash = array_combine($missingHashes, $vectors);
         }
 
-        return array_map(function (array $chunk) use ($existing, $newByHash) {
+        $rows = array_map(function (array $chunk) use ($existing, $newByHash) {
             $hash = $chunk['content_hash'];
             $chunk['embedding_literal'] = $existing->has($hash)
                 ? $existing[$hash]->embedding
@@ -266,6 +309,12 @@ class ProcessResearchDocument implements ShouldQueue
 
             return $chunk;
         }, $chunks);
+
+        return [
+            'rows' => $rows,
+            'prompt_tokens' => $promptTokens,
+            'embedded_chunks' => count($newByHash),
+        ];
     }
 
     /**

@@ -23,7 +23,7 @@ function formatBytes(bytes) {
     return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
 }
 
-// One bad dropzone used to throw out of the DOMContentLoaded callback and
+// One bad dropzone used to throw out of the page-load callback and
 // silently disable every other control on the page. Each init is isolated.
 function safeInit(label, fn) {
     try {
@@ -1070,7 +1070,7 @@ function initWizard(root) {
  * click didn't register) would fire two submissions.
  *
  * Registered last among this form's 'submit' listeners (see the
- * DOMContentLoaded block below — the dropzone's required-file check, the
+ * init() block below — the dropzone's required-file check, the
  * one other listener that can call preventDefault() on this form, is
  * attached earlier), so by the time this one runs, e.defaultPrevented
  * correctly reflects whether the submission is actually going through.
@@ -1150,24 +1150,38 @@ function initReviewSummary(form) {
     update();
 }
 
-document.addEventListener('DOMContentLoaded', () => {
-    document.querySelectorAll('[data-dropzone]').forEach((root) =>
+// Called by resources/js/app.js on every 'turbo:load' — a Turbo visit
+// swaps in fresh form markup without a DOMContentLoaded. Forms seen before
+// are skipped so nothing is bound twice (a WeakSet, not a data-* flag, so
+// the clones Turbo restores from its back/forward cache still get bound).
+const initialized = new WeakSet();
+
+function once(el) {
+    if (initialized.has(el)) return false;
+    initialized.add(el);
+    return true;
+}
+
+export function init() {
+    document.querySelectorAll('[data-dropzone]').forEach((root) => once(root) &&
         safeInit(`dropzone#${root.id || root.dataset.prefix}`, () => initDropzone(root))
     );
 
-    document.querySelectorAll('[data-keyword-input]').forEach((root) =>
+    document.querySelectorAll('[data-keyword-input]').forEach((root) => once(root) &&
         safeInit(`keyword-input#${root.id || root.dataset.prefix}`, () => initKeywordInput(root))
     );
 
-    document.querySelectorAll('[data-researcher-input]').forEach((root) =>
+    document.querySelectorAll('[data-researcher-input]').forEach((root) => once(root) &&
         safeInit(`researcher-input#${root.id || root.dataset.prefix}`, () => initResearcherInput(root))
     );
 
-    document.querySelectorAll('[data-wizard]').forEach((root) =>
+    document.querySelectorAll('[data-wizard]').forEach((root) => once(root) &&
         safeInit('wizard', () => initWizard(root))
     );
 
     document.querySelectorAll('form').forEach((form) => {
+        if (!once(form)) return;
+
         if (form.querySelector('[data-sdg-done]')) {
             safeInit('sdg-section', () => initSdgSection(form));
         }
@@ -1187,4 +1201,4 @@ document.addEventListener('DOMContentLoaded', () => {
             safeInit('submit-loading-state', () => initSubmitLoadingState(form));
         }
     });
-});
+}

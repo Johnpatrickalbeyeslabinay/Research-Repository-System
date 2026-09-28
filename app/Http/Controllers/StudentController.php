@@ -77,43 +77,34 @@ class StudentController extends Controller
     {
         $view = request('view', 'dashboard');
 
+        // Every list and count on this page is a view of the same rows — the
+        // student's own submissions — so they're fetched once and sliced in
+        // PHP. This used to be 7 separate queries against the same WHERE
+        // user_id = ?, each a full round trip to the remote database.
         $studFiles = UserFile::where('user_id', Auth::id())
             ->with(['user', 'authors', 'keywords', 'sdgs'])
-            ->get();
-
-        $notifications = UserFile::where('user_id', Auth::id())
             ->latest()
             ->get();
 
-        // Rejected submissions
-        $rejectedFiles = UserFile::where('user_id', Auth::id())
-            ->where('status', 'rejected')
-            ->latest()
-            ->get();
+        $notifications = $studFiles;
+        $rejectedFiles = $studFiles->where('status', 'rejected')->values();
 
-        $totalUploads = UserFile::where('user_id', Auth::id())->count();
+        $totalUploads = $studFiles->count();
+        $pendingUploads = $studFiles->where('status', 'pending')->count();
+        $approvedUploads = $studFiles->where('status', 'approved')->count();
+        $rejectedUploads = $rejectedFiles->count();
 
-        $pendingUploads = UserFile::where('user_id', Auth::id())
-            ->where('status', 'pending')
-            ->count();
+        $sdgs = Sdg::cachedList();
 
-        $approvedUploads = UserFile::where('user_id', Auth::id())
-            ->where('status', 'approved')
-            ->count();
-
-        $rejectedUploads = UserFile::where('user_id', Auth::id())
-            ->where('status', 'rejected')
-            ->count();
-
-        // Get all SDGs
-        $sdgs = Sdg::orderBy('number')->get();
-
-        // For the "Research Adviser" select and "+ Add Researcher" picker.
-        $instructors = User::where('role', 'instructor')->orderBy('name')->get();
-        $otherStudents = User::where('role', 'student')
+        // For the "Research Adviser" select and "+ Add Researcher" picker —
+        // only id/name are rendered, so that's all that's fetched.
+        $people = User::whereIn('role', ['instructor', 'student'])
             ->where('id', '!=', Auth::id())
             ->orderBy('name')
-            ->get();
+            ->get(['id', 'name', 'role']);
+
+        $instructors = $people->where('role', 'instructor')->values();
+        $otherStudents = $people->where('role', 'student')->values();
 
         // Real in-app notification count (adviser feedback, instructor/admin
         // review decisions) for the bell icon — separate from $notifications
@@ -242,6 +233,7 @@ class StudentController extends Controller
     {
         Cache::forget('admin_dashboard_stats:'.$file->created_at->year);
         Cache::forget('instructor_dashboard_counts:'.$adviserId);
+        RepositoryController::forgetFacets();
     }
 
     /**

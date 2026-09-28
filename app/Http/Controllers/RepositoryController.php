@@ -6,6 +6,7 @@ use App\Models\Sdg;
 use App\Models\UserFile;
 use App\Support\ResearchAccess;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Cache;
 
 /**
  * Backs both /repository (any authenticated user) and /public (anonymous
@@ -16,6 +17,20 @@ use Illuminate\Support\Facades\Auth;
  */
 class RepositoryController extends Controller
 {
+    private const FACETS_CACHE_KEY = 'repository_facets';
+
+    private const FACETS_CACHE_TTL = 600;
+
+    /**
+     * Called wherever a write can change what's approved+public, so a
+     * newly approved paper's year/type shows up in the filters at once.
+     */
+    public static function forgetFacets(): void
+    {
+        Cache::forget(self::FACETS_CACHE_KEY);
+        Cache::forget(self::FACETS_CACHE_KEY.':public');
+    }
+
     public function index()
     {
         return $this->listing(publicOnly: false, view: 'repository');
@@ -34,19 +49,27 @@ class RepositoryController extends Controller
             ->paginate(12)
             ->withQueryString();
 
-        $years = $this->baseQuery($publicOnly)
-            ->selectRaw('DISTINCT publication_year as year')
-            ->whereNotNull('publication_year')
-            ->orderByDesc('year')
-            ->pluck('year');
+        // The filter dropdowns only change when research is approved or
+        // edited, so they're cached (and busted by forgetFacets() on those
+        // writes) instead of costing two DISTINCT scans per page view.
+        ['years' => $years, 'types' => $types] = Cache::remember(
+            self::FACETS_CACHE_KEY.($publicOnly ? ':public' : ''),
+            self::FACETS_CACHE_TTL,
+            fn () => [
+                'years' => $this->baseQuery($publicOnly)
+                    ->selectRaw('DISTINCT publication_year as year')
+                    ->whereNotNull('publication_year')
+                    ->orderByDesc('year')
+                    ->pluck('year'),
+                'types' => $this->baseQuery($publicOnly)
+                    ->selectRaw('DISTINCT research_type as type')
+                    ->whereNotNull('research_type')
+                    ->orderBy('type')
+                    ->pluck('type'),
+            ]
+        );
 
-        $types = $this->baseQuery($publicOnly)
-            ->selectRaw('DISTINCT research_type as type')
-            ->whereNotNull('research_type')
-            ->orderBy('type')
-            ->pluck('type');
-
-        $sdgs = Sdg::orderBy('number')->get();
+        $sdgs = Sdg::cachedList();
 
         return view($view, [
             'studFiles' => $studFiles,

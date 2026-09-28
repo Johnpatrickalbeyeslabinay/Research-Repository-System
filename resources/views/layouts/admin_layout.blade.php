@@ -2,61 +2,8 @@
 <html lang="en">
 
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>@yield('title', 'ADMIN')</title>
-
-    <!--icons-->
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
-   <link rel="shortcut icon" href="{{ asset('images/logo.png') }}">
-
-    <!-- Bootstrap -->
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
-
+    @include('partials.head', ['layoutCss' => 'resources/css/layouts/admin.css'])
 </head>
-
-<style>
-    .nav-pills .nav-link {
-        color: black;
-        background: #fff;
-        transition: .2s;
-    }
-
-    .nav-pills .nav-link:hover {
-        background: #f8f9fa;
-    }
-
-    .nav-pills .nav-link.active {
-        background: #f3f4f6;
-        color: #374151;
-    }
-
-
-    @media (max-width: 767.98px) {
-
-    .stats-scroll {
-        flex-wrap: nowrap;
-        overflow-x: auto;
-        overflow-y: hidden;
-    }
-
-    .stats-scroll > div {
-        flex: 0 0 85%;
-    }
-
-    .stats-scroll::-webkit-scrollbar {
-        display: none;
-    }
-
-    .stats-scroll {
-        scrollbar-width: none;
-    }
-}
-
-
-</style>
-
 
 <body class="text-dark" style="font-family: sans-serif, arial;
   font-size: var(--font-size-sm);            /* 14px base */
@@ -85,7 +32,7 @@
                     <!-- Logo + Program -->
                     <div class="d-flex align-items-center">
 
-                    <img src="{{ asset('images/logo.png') }}"
+                    <img width="90" height="90" decoding="async" src="{{ asset('images/logo-192.webp') }}"
                         alt="CSU Aparri Logo"
                         class="me-3 rounded-circle"
                         style="width:90px;height:90px;object-fit:cover;">
@@ -133,7 +80,7 @@
                     <!-- Logo + Program -->
                     <div class="d-flex align-items-center">
 
-                    <img src="{{ asset('images/logo.png') }}"
+                    <img width="70" height="70" decoding="async" src="{{ asset('images/logo-192.webp') }}"
                         alt="CSU Aparri Logo"
                         class="me-3 rounded-circle"
                         style="width:70px;height:70px;object-fit:cover;">
@@ -229,7 +176,7 @@
                     Manage Account
                 </button>
 
-                    <form action="{{ route('logout') }}" method="POST" class="mt-3">
+                    <form action="{{ route('logout') }}" data-turbo="false" method="POST" class="mt-3">
                         @csrf
 
                         <button class="btn btn-outline-danger w-100 text-start">
@@ -261,7 +208,7 @@
 
                 <div class="d-flex align-items-center">
 
-                    <img src="{{ asset('images/logo.png') }}"
+                    <img width="90" height="90" decoding="async" src="{{ asset('images/logo-192.webp') }}"
                         alt="CSU Aparri Logo"
                         class="me-3 rounded-circle"
                         style="width:90px;height:90px;object-fit:cover;">
@@ -366,7 +313,7 @@
                     Manage Account
                 </button>
 
-                    <form action="{{ route('logout') }}" method="POST" class="mt-3">
+                    <form action="{{ route('logout') }}" data-turbo="false" method="POST" class="mt-3">
                         @csrf
 
                         <button class="btn btn-outline-danger w-100 text-start">
@@ -408,17 +355,12 @@
 
 
 
+@include('partials.flash')
+
 <x-chat.widget />
 
-    <!-- Bootstrap JS -->
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
-<script src="https://unpkg.com/lucide@latest"></script>
 
-    @vite(['resources/js/chat.js'])
 
-  <script>
-    lucide.createIcons();
-  </script>
 </body>
 
 </html>

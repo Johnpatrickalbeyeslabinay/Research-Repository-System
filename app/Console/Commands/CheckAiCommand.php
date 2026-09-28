@@ -5,6 +5,8 @@ namespace App\Console\Commands;
 use App\Services\Ai\MetadataAnalysisService;
 use App\Services\Research\EmbeddingService;
 use Illuminate\Console\Command;
+use Illuminate\Database\QueryException;
+use Illuminate\Support\Str;
 
 /**
  * One-shot smoke test for both OpenAI-backed services used by the research
@@ -44,7 +46,8 @@ class CheckAiCommand extends Command
         });
 
         if ($metadataOk && $embeddingOk) {
-            $this->info('Both OpenAI-backed services are reachable and authenticated.');
+            $this->info('No OpenAI failures. (A check reported SKIPPED above means the database '
+                .'was unreachable, not that the key is bad.)');
 
             return self::SUCCESS;
         }
@@ -62,6 +65,17 @@ class CheckAiCommand extends Command
             $fn();
             $ms = round((microtime(true) - $start) * 1000);
             $this->info("  OK ({$ms}ms)");
+
+            return true;
+        } catch (QueryException $e) {
+            // NOT an AI failure, and saying so matters. MetadataAnalysisService
+            // caches by fingerprint, and the cache store is the database — so a
+            // database outage surfaces here as "the metadata check failed" and
+            // sends whoever ran this looking at their OpenAI key when the key
+            // is fine. Observed exactly that way against a wrong DB_PASSWORD.
+            $this->warn('  SKIPPED: the database is unreachable, so this check could not run.');
+            $this->line('  '.Str::limit($e->getMessage(), 120));
+            $this->line('  This says nothing about the OpenAI key — fix the database and re-run.');
 
             return true;
         } catch (\Throwable $e) {

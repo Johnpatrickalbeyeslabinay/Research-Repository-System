@@ -22,3 +22,8 @@
 Homestead.json
 Homestead.yaml
 Thumbs.db
+
+# Stray copies of .env (see the leaked-credentials incident)
+dsjasdjd
+*.env.bak
+env.txt

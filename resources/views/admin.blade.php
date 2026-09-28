@@ -1,6 +1,6 @@
 @extends('layouts.admin_layout')
 
-@section('title', 'ADMIN')
+@section('title', 'Admin Dashboard')
 
 @section('admin')
 
@@ -155,7 +155,7 @@
 
                     <div class="mt-2">
                         <small class="text-secondary">Total Users</small>
-                        <h4 class="fw-bold mb-0">{{ count($users) }}</h4>
+                        <h4 class="fw-bold mb-0">{{ $userCounts->sum() }}</h4>
                     </div>
 
                 </div>
@@ -175,9 +175,7 @@
 
                     <div class="mt-2">
                         <small class="text-secondary">Total Students</small>
-                        <h4 class="fw-bold mb-0">
-                            {{ $users->where('role', 'student')->count() }}
-                        </h4>
+                        <h4 class="fw-bold mb-0">{{ $userCounts->get('student', 0) }}</h4>
                     </div>
 
                 </div>
@@ -197,9 +195,7 @@
 
                     <div class="mt-2">
                         <small class="text-secondary">Total Instructors</small>
-                        <h4 class="fw-bold mb-0">
-                            {{ $users->where('role', 'instructor')->count() }}
-                        </h4>
+                        <h4 class="fw-bold mb-0">{{ $userCounts->get('instructor', 0) }}</h4>
                     </div>
 
                 </div>
@@ -335,6 +331,21 @@
             <div class="card shadow-sm h-100">
                 <div class="card-body">
                     <div id="lineChart" style="width:100%; height:350px;"></div>
+                    {{-- Read by resources/js/admin-charts.js. --}}
+                    @php
+                        $chartData = [
+                            'uploads' => $uploadData,
+                            'approvals' => $approvalData,
+                            'views' => $viewData,
+                            'downloads' => $downloadData,
+                            'status' => [
+                                'approved' => $approvedCount,
+                                'pending' => $pendingCount,
+                                'rejected' => $rejectedCount,
+                            ],
+                        ];
+                    @endphp
+                    <script type="application/json" data-admin-charts>@json($chartData)</script>
                 </div>
             </div>
         </div>
@@ -508,31 +519,36 @@
 
                     <td class="text-end">
 
-                        <button class="btn btn-outline-primary rounded py-1"
-                            popovertarget="popover-{{ $file->id }}">
+                        <div class="d-flex flex-column flex-md-row gap-1">
 
-                            <i class="bi bi-folder me-2"></i>
-                            View
+                            <button type="button"
+                                    class="btn btn-outline-primary btn-sm rounded py-1 px-2"
+                                    popovertarget="popover-{{ $file->id }}">
 
-                        </button>
-
-                        <form action="{{ route('admin.files.destroy', $file->id) }}"
-                            method="POST"
-                            class="d-inline">
-
-                            @csrf
-                            @method('DELETE')
-
-                            <button type="submit"
-                                    class="btn btn-outline-danger rounded py-1"
-                                    onclick="return confirm('Are you sure you want to delete this research?')">
-
-                                <i class="bi bi-trash me-2"></i>
-                                Delete
+                                <i class="bi bi-folder me-1"></i>
+                                View
 
                             </button>
 
-                        </form>
+                            <form action="{{ route('admin.files.destroy', $file->id) }}"
+                                method="POST"
+                                class="m-0">
+
+                                @csrf
+                                @method('DELETE')
+
+                                <button type="submit"
+                                        class="btn btn-outline-danger btn-sm rounded py-1 px-2"
+                                        onclick="return confirm('Are you sure you want to delete this research?')">
+
+                                    <i class="bi bi-trash me-1"></i>
+                                    Delete
+
+                                </button>
+
+                            </form>
+
+                        </div>
 
 
 
@@ -596,12 +612,12 @@
 
                     <div class="d-flex gap-2 mt-3 mt-md-0">
 
-                        <!--<a href="{{ route('file.view', $file->id) }}" target="_blank"
+                        <!--<a data-turbo="false" href="{{ route('file.view', $file->id) }}" target="_blank"
                             class="btn btn-outline-primary">
                             <i class="bi bi-eye me-2"></i>
                             View
                         </a>-->
-                        <a href="{{ route('file.view', ['id' => $file->id, 'v' => time()]) }}" target="_blank"
+                        <a data-turbo="false" href="{{ route('file.view', ['id' => $file->id, 'v' => time()]) }}" target="_blank"
                             class="btn btn-outline-primary mt-2">
                             <i class="bi bi-eye me-2"></i>
                             View
@@ -999,7 +1015,7 @@
                                     The system will automatically create student accounts and generate temporary passwords.
                                 </div>
 
-                                <form action="{{ route('admin.students.import') }}"
+                                <form data-turbo="false" action="{{ route('admin.students.import') }}"
                                     method="POST"
                                     enctype="multipart/form-data">
 
@@ -1073,7 +1089,7 @@
                 <div>
                     <p class="text-secondary mb-2">Total Users</p>
                     <h3 class="fw-normal mb-0">
-                        {{ count($users) }}
+                        {{ $userCounts->sum() }}
                     </h3>
                 </div>
 
@@ -1094,7 +1110,7 @@
                 <div>
                     <p class="text-secondary mb-2">Students</p>
                     <h3 class="fw-normal mb-0">
-                        {{ $users->where('role', 'student')->count() }}
+                        {{ $userCounts->get('student', 0) }}
                     </h3>
                 </div>
 
@@ -1115,7 +1131,7 @@
                 <div>
                     <p class="text-secondary mb-2">Instructor</p>
                     <h3 class="fw-normal mb-0">
-                        {{ $users->where('role', 'instructor')->count() }}
+                        {{ $userCounts->get('instructor', 0) }}
                     </h3>
                 </div>
 
@@ -1136,7 +1152,7 @@
                 <div>
                     <p class="text-secondary mb-2">Admin</p>
                     <h3 class="fw-normal mb-0">
-                        {{ $users->where('role', 'admin')->count() }}
+                        {{ $userCounts->get('admin', 0) }}
                     </h3>
                 </div>
 
@@ -1214,7 +1230,7 @@
                 </div>
 
 
-                    <p class="text-secondary small mt-3 mb-2">Showing {{ $users->count() }} user{{ $users->count() === 1 ? '' : 's' }}</p>
+                    <p class="text-secondary small mt-3 mb-2">Showing {{ $users->total() }} user{{ $users->total() === 1 ? '' : 's' }}</p>
 
                     <!-- Table -->
                     <div class="table-responsive">
@@ -1311,6 +1327,10 @@
                 </tbody>
                 </table>
                     </div>
+
+                    <div class="mt-3">
+                        {{ $users->links() }}
+                    </div>
                     </div>
                     </div>
                     </div>
@@ -1322,263 +1342,6 @@
 
 
 
-<script src="https://cdn.jsdelivr.net/npm/echarts@5/dist/echarts.min.js"></script>
 
-
-<!--bar graph-->
-<script>
-var chart = echarts.init(document.getElementById('monthlyChart'));
-
-var option = {
-
-    title: {
-    text: 'Monthly Upload Trends',
-    left: 'left',
-
-    textStyle: {
-        color: '#1F2937',
-        fontSize: 13,
-    }
-    },
-
-
-    tooltip:{
-        trigger:'axis'
-    },
-
-    legend: {
-    data: ['Uploads', 'Approvals'],
-    bottom: 10,
-    left: 'center'
-},
-
-    xAxis:{
-        type:'category',
-        data:['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec']
-    },
-
-    yAxis:{
-        type:'value'
-    },
-
-   series: [
-    {
-        name: 'Uploads',
-        type: 'bar',
-        itemStyle: {
-            color: '#1E3A8A'
-        },
-        data: @json($uploadData)
-    },
-    {
-        name: 'Approvals',
-        type: 'bar',
-        itemStyle: {
-            color: '#10B981'
-        },
-        data: @json($approvalData)
-    }
-]
-
-};
-
-chart.setOption(option);
-window.addEventListener('resize', function () {
-    chart.resize();
-    pieChart.resize();
-});
-</script>
-
-
-
-
-
-
-
-
-
-
-
-<!--Pie chart-->
-<script>
-var pieChart = echarts.init(document.getElementById('pieChart'));
-
-var option = {
-
- title: {
-    text: 'Research Status Distribution',
-    left: 'left',
-
-    textStyle: {
-        color: '#1F2937',
-        fontSize: 13,
-    }
-    },
-    tooltip: {
-        trigger: 'item'
-    },
-
-    legend: {
-        bottom: '10',
-        left: 'center',
-    },
-
-    series: [
-        {
-            name: 'Research Status',
-            type: 'pie',
-            radius: ['40%', '70%'],
-
-            avoidLabelOverlap: false,
-
-            label: {
-                show: false,
-                position: 'center'
-            },
-
-            emphasis: {
-                label: {
-                    show: true,
-                    fontSize: 24,
-                    fontWeight: 'bold'
-                }
-            },
-
-            labelLine: {
-                show: false
-            },
-
-            data: [
-                {
-                    value: {{ $approvedCount }},
-                    name: 'Approved',
-                    itemStyle: {
-                        color: '#198754'
-                    }
-                },
-                {
-                    value: {{ $pendingCount }},
-                    name: 'Pending',
-                    itemStyle: {
-                        color: '#FFC107'
-                    }
-                },
-                {
-                    value: {{ $rejectedCount }},
-                    name: 'Rejected',
-                    itemStyle: {
-                        color: '#DC3545'
-                    }
-                }
-            ]
-        }
-    ]
-};
-
-pieChart.setOption(option);
-window.addEventListener('resize', function () {
-    chart.resize();
-    pieChart.resize();
-});
-</script>
-
-<!--Linechart-->
-<script>
-    var chart = echarts.init(document.getElementById('lineChart'));
-
-var option = {
-
-    title: {
-        text: 'Downloads & Engagement Trends (Views vs Downloads)',
-        left: 'left',
-        textStyle: {
-            color: '#1F2937',
-            fontSize: 13,
-        }
-    },
-
-    tooltip: {
-        trigger: 'axis'
-    },
-
-    legend: {
-        bottom: 10,
-        left: 'center',
-        data: ['Views', 'Downloads']
-    },
-
-    grid: {
-        top: 70,
-        left: '8%',
-        right: '5%',
-        bottom: 60,
-        containLabel: true
-    },
-
-    xAxis: {
-        type: 'category',
-        boundaryGap: false,
-        data:['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec']
-    },
-
-    yAxis: {
-        type: 'value'
-    },
-
-    series: [
-    {
-        name: 'Views',
-        type: 'line',
-        smooth: true,
-        data: @json($viewData),
-
-        lineStyle: {
-            color: '#7C4DFF',
-            width: 3
-        },
-
-        itemStyle: {
-            color: '#FFFFFF',
-            borderColor: '#7C4DFF',
-            borderWidth: 3
-        },
-
-        symbol: 'circle',
-        symbolSize: 8
-    },
-
-    {
-        name: 'Downloads',
-        type: 'line',
-        smooth: true,
-        data: @json($downloadData),
-
-        lineStyle: {
-            color: '#10B981',
-            width: 3
-        },
-
-        itemStyle: {
-            color: '#FFFFFF',
-            borderColor: '#10B981',
-            borderWidth: 3
-        },
-
-        symbol: 'circle',
-        symbolSize: 8
-    }
-]
-};
-
-chart.setOption(option);
-
-window.addEventListener('resize', function () {
-    chart.resize();
-});
-</script>
-
-
-<!--list of users-->
-<script src="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.3/js/bootstrap.bundle.min.js"></script>
 
 @endsection

@@ -157,7 +157,144 @@ return [
         'max_chunk_chars' => (int) env('CHAT_MAX_CHUNK_CHARS', 1600),
         'history_messages' => (int) env('CHAT_HISTORY_MESSAGES', 8),
         'max_history_assistant_chars' => (int) env('CHAT_MAX_HISTORY_ASSISTANT_CHARS', 400),
+
+        // Prior USER turns were uncapped on the reasoning that questions are
+        // short. Nothing enforced it: 'max_question_chars' below allows 1000,
+        // so four earlier questions could add ~1,100 tokens to every prompt.
+        // A prior question only has to be recognisable; the CURRENT question
+        // is never truncated.
+        'max_history_user_chars' => (int) env('CHAT_MAX_HISTORY_USER_CHARS', 300),
+
         'max_question_chars' => 1000,
+
+        // A ceiling over the WHOLE assembled prompt — system message, history,
+        // active context and evidence together. Until App\Services\Chat\
+        // PromptBudget existed, only the evidence set was budgeted
+        // ('max_evidence_tokens' above) and everything else rode free on top,
+        // so the real prompt had no ceiling at all.
+        //
+        // Deliberately generous: this is a pathological-case backstop, not the
+        // working budget. The per-tier evidence budgets (chat.tiers.*) are what
+        // shape a normal turn; if this one is binding regularly, something
+        // upstream is wrong and the fix is there, not here.
+        'max_prompt_tokens' => (int) env('CHAT_MAX_PROMPT_TOKENS', 6000),
+
+        // Caps on the "Studies discussed earlier" line PromptBuilder emits
+        // from ChatConversation::active_context. ConversationContext tracks
+        // up to 8 documents and titles run 60-120 chars, so an uncapped line
+        // cost ~250 tokens on EVERY turn of a long chat. The 4 most recent
+        // resolve "the second one" just as well.
+        'max_context_documents' => (int) env('CHAT_MAX_CONTEXT_DOCUMENTS', 4),
+        'max_context_title_chars' => (int) env('CHAT_MAX_CONTEXT_TITLE_CHARS', 60),
+    ],
+
+    /*
+    |--------------------------------------------------------------------------
+    | Token estimation
+    |--------------------------------------------------------------------------
+    |
+    | Tunables for App\Support\TokenEstimator, the one place that guesses
+    | what a string will cost. There is no BPE tokenizer in this project, so
+    | every budget in this file is spent against an estimate; the estimator
+    | takes max() of a character- and a word-based figure so it errs HIGH.
+    |
+    | Do not tune these by intuition. Run:
+    |
+    |     php artisan research:calibrate-token-estimator --days=30
+    |
+    | which compares these estimates against the prompt_tokens OpenAI
+    | actually billed (recorded on chat_messages.retrieval_meta) and reports
+    | how often the estimate came in UNDER the real cost. Lowering
+    | 'chars_per_token' makes the estimator more conservative.
+    |
+    */
+
+    'estimator' => [
+        'chars_per_token' => (float) env('CHAT_ESTIMATOR_CHARS_PER_TOKEN', 4.0),
+        'tokens_per_word' => (float) env('CHAT_ESTIMATOR_TOKENS_PER_WORD', 4 / 3),
+    ],
+
+    /*
+    |--------------------------------------------------------------------------
+    | Small talk
+    |--------------------------------------------------------------------------
+    |
+    | App\Services\Chat\SmallTalk\SmallTalkDetector — zero-token handling of
+    | greetings, thanks and gibberish. The vocabulary itself is a const in
+    | SmallTalkLexicon rather than config: it is reviewed as data, and a typo
+    | in an env var should not be able to make "great findings on tilapia"
+    | read as chatter.
+    |
+    | 'fuzzy_enabled' controls typo tolerance ("helo", "hii", "kamusat"),
+    | matched with levenshtein() against greeting words only.
+    | 'fuzzy_min_length' is load-bearing at 3: below it, "no" -> "yo",
+    | "of" -> "ok" and "is" -> "hi" are all one edit away, and a real question
+    | would be swallowed. Raise it to disable fuzzy matching on short words
+    | entirely; never lower it.
+    |
+    */
+
+    'smalltalk' => [
+        'fuzzy_enabled' => (bool) env('CHAT_SMALLTALK_FUZZY', true),
+        'fuzzy_min_length' => (int) env('CHAT_SMALLTALK_FUZZY_MIN_LENGTH', 3),
+    ],
+
+    /*
+    |--------------------------------------------------------------------------
+    | Retrieval tiers (abstract-first)
+    |--------------------------------------------------------------------------
+    |
+    | How much of a document a turn reads. The chat path used to retrieve body
+    | chunks unconditionally — 6-8 chunks, up to 1600 chars each, ~4000
+    | evidence tokens — even for "what is this study about", which the abstract
+    | answers completely.
+    |
+    | App\Services\Retrieval\RetrievalTierPlanner picks the starting tier
+    | deterministically, and EvidenceSufficiencyGate escalates to full text
+    | in the SAME turn when the abstract evidence will not do. That escalation
+    | is nearly free: the query vector is already cached
+    | (cache.query_embedding_ttl), so a second pass costs one Postgres round
+    | trip and zero API tokens. Guessing the tier wrong costs latency, not
+    | money — which is why the gate is allowed to escalate readily.
+    |
+    | 'max_output_tokens' is the item to tune first if cost is the concern.
+    | gpt-4o-mini bills output at 4x input ($0.60 vs $0.15 per million), so an
+    | answer ceiling moves the bill more than any prompt-side trimming does.
+    |
+    | 'min_similarity' is looser than the full-text threshold
+    | (retrieval.min_similarity, 0.25) for the same reason catalog's is: a
+    | metadata/abstract chunk is a summary, so it matches a question's wording
+    | less tightly than the body passage that actually discusses it.
+    |
+    */
+
+    'tiers' => [
+
+        'metadata' => [
+            'max_evidence_tokens' => (int) env('CHAT_TIER_METADATA_EVIDENCE_TOKENS', 800),
+        ],
+
+        'abstract' => [
+            'max_evidence_tokens' => (int) env('CHAT_TIER_ABSTRACT_EVIDENCE_TOKENS', 1200),
+            'max_output_tokens' => (int) env('CHAT_TIER_ABSTRACT_OUTPUT_TOKENS', 350),
+            'max_chunks' => (int) env('CHAT_TIER_ABSTRACT_MAX_CHUNKS', 6),
+            'max_per_document' => (int) env('CHAT_TIER_ABSTRACT_MAX_PER_DOC', 2),
+            'max_documents' => (int) env('CHAT_TIER_ABSTRACT_MAX_DOCS', 3),
+            'min_similarity' => (float) env('CHAT_TIER_ABSTRACT_MIN_SIMILARITY', 0.18),
+
+            // Escalate to full text, in the same turn, when the selected
+            // documents produced no abstract-section chunk at all. That happens
+            // on short or scanned PDFs where SectionDetector found no abstract
+            // heading: the synthetic metadata chunk alone is too thin to answer
+            // anything but the most general question from.
+            'escalate_when_no_abstract_chunks' => (bool) env('CHAT_TIER_ABSTRACT_ESCALATE_NO_ABSTRACT', true),
+
+            // Escalate when the question's content terms are barely present in
+            // the abstract evidence — a proxy for "this question is about
+            // something the abstract does not discuss".
+            'min_term_coverage' => (float) env('CHAT_TIER_ABSTRACT_MIN_TERM_COVERAGE', 0.40),
+        ],
+
     ],
 
     /*

@@ -2,6 +2,8 @@
 
 namespace App\Services\Retrieval;
 
+use App\Support\TokenEstimator;
+
 /**
  * Narrows pgvector's candidate chunks (config('chat.retrieval.candidates'),
  * default 24) down to the small, diverse, budget-bounded evidence set
@@ -19,11 +21,17 @@ namespace App\Services\Retrieval;
  *                            already selected (adjacent overlapping chunks
  *                            commonly are, given ChunkingService's word
  *                            overlap between consecutive chunks)
- *   4. Token budget         — stop once either final_chunks or
- *                            max_evidence_tokens binds, whichever first
+ *   4. Token budget         — stop once final_chunks binds, or skip a chunk
+ *                            that would not fit in max_evidence_tokens.
+ *                            Budgeted against the TRUNCATED text that will
+ *                            actually reach the prompt (see select()), and
+ *                            measured by App\Support\TokenEstimator rather
+ *                            than a local word count.
  */
 class ChunkReranker
 {
+    public function __construct(private TokenEstimator $tokens) {}
+
     /**
      * @param  array<int, array{id:int, stud_file_id:int, section:?string, page_number:?int, content:string, similarity:float}>  $chunks
      * @param  bool  $isComparison  when true, each distinct document's best
@@ -42,8 +50,12 @@ class ChunkReranker
      *                         chunks happened to score highest.
      * @return array<int, array{id:int, stud_file_id:int, section:?string, page_number:?int, content:string, similarity:float, weighted_score:float}>
      */
-    public function rerank(array $chunks, bool $isComparison = false, bool $isBroad = false): array
-    {
+    public function rerank(
+        array $chunks,
+        bool $isComparison = false,
+        bool $isBroad = false,
+        ?Tier $tier = null,
+    ): array {
         $weighted = $this->applySectionWeights($chunks);
 
         usort($weighted, fn ($a, $b) => $b['weighted_score'] <=> $a['weighted_score']);
@@ -52,7 +64,7 @@ class ChunkReranker
             ? $this->pullOneRepresentativePerDocumentToFront($weighted)
             : $weighted;
 
-        return $this->select($ordered, $this->chunkBudget($isComparison, $isBroad));
+        return $this->select($ordered, $this->chunkBudget($isComparison, $isBroad, $tier), $tier);
     }
 
     /**
@@ -65,8 +77,16 @@ class ChunkReranker
      * tokens without adding evidence — config('chat.retrieval.final_chunks')
      * stays the ceiling, and 'final_chunks_focused' is the cheaper default.
      */
-    private function chunkBudget(bool $isComparison, bool $isBroad): int
+    private function chunkBudget(bool $isComparison, bool $isBroad, ?Tier $tier = null): int
     {
+        // A tier's own ceiling wins. The Abstract tier reads at most 2 chunks
+        // from each of 3 documents, so borrowing the full-text allowance of 8
+        // would let it quietly spend a full-text budget on abstracts and
+        // deliver none of the saving it exists for.
+        if ($tier !== null && $tier !== Tier::FullText) {
+            return $tier->maxChunks();
+        }
+
         $max = (int) config('chat.retrieval.final_chunks', 8);
 
         if ($isComparison || $isBroad) {
@@ -113,11 +133,13 @@ class ChunkReranker
         return array_merge($representatives, $rest);
     }
 
-    private function select(array $ordered, int $maxChunks): array
+    private function select(array $ordered, int $maxChunks, ?Tier $tier = null): array
     {
-        $maxPerDoc = (int) config('chat.retrieval.max_per_document', 3);
-        $maxDocs = (int) config('chat.retrieval.max_documents', 5);
-        $maxTokens = (int) config('chat.context.max_evidence_tokens', 4000);
+        // Per-tier caps where a tier was given, falling back to the
+        // full-text config otherwise so existing callers behave identically.
+        $maxPerDoc = $tier?->maxPerDocument() ?? (int) config('chat.retrieval.max_per_document', 3);
+        $maxDocs = $tier?->maxDocuments() ?? (int) config('chat.retrieval.max_documents', 5);
+        $maxTokens = $tier?->evidenceTokenBudget() ?? (int) config('chat.context.max_evidence_tokens', 4000);
         $overlapThreshold = (float) config('chat.retrieval.mmr_overlap_threshold', 0.80);
 
         $selected = [];
@@ -145,12 +167,27 @@ class ChunkReranker
                 continue;
             }
 
-            // Rough words-to-tokens estimate (~1.33 tokens/word), same
-            // convention ChunkingService uses.
-            $tokenCount = (int) round(str_word_count($chunk['content']) * 4 / 3);
+            // Budget the text that will ACTUALLY be sent, not the raw chunk.
+            // PromptBuilder::renderEvidence() cuts every chunk to
+            // config('chat.context.max_chunk_chars') on the way into the
+            // prompt, so budgeting the full content spent the allowance on
+            // characters that never left the app — and could skip a chunk
+            // over tokens nobody was going to pay for.
+            $budgetedContent = mb_substr(
+                $chunk['content'],
+                0,
+                (int) config('chat.context.max_chunk_chars', 1600)
+            );
+
+            $tokenCount = $this->tokens->estimate($budgetedContent);
 
             if ($usedTokens + $tokenCount > $maxTokens) {
-                break; // whichever limit binds first stops selection
+                // continue, not break: one oversized chunk must not discard
+                // every smaller chunk ranked behind it. With a 4000-token
+                // budget that rarely mattered, but the abstract retrieval
+                // tier runs a far tighter budget where a single long chunk
+                // arriving early would otherwise empty the evidence set.
+                continue;
             }
 
             $selected[] = $chunk;

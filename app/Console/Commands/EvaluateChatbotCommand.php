@@ -9,9 +9,13 @@ use App\Services\Chat\CitationBuilder;
 use App\Services\Chat\ConversationContext;
 use App\Services\Chat\IntentDetector;
 use App\Services\Chat\PromptBuilder;
+use App\Services\Chat\Routing\Intent;
+use App\Services\Chat\Routing\IntentRouter;
+use App\Services\Chat\Routing\RoutedIntent;
 use App\Services\Retrieval\CatalogService;
 use App\Services\Retrieval\QueryPlanner;
 use App\Services\Retrieval\RetrievalService;
+use App\Support\AiCost;
 use Illuminate\Console\Command;
 use Illuminate\Support\Str;
 
@@ -29,13 +33,38 @@ use Illuminate\Support\Str;
  */
 class EvaluateChatbotCommand extends Command
 {
+    /**
+     * Documents an unrelated user must never be able to retrieve: everything
+     * that is not both approved AND public.
+     *
+     * THESE IDS MUST BE KEPT CURRENT. The permission probes are the harness's
+     * one hard pass/fail, and they work by asserting that none of these ids
+     * appear in a probe user's results — so an id that no longer exists makes
+     * the assertion vacuously true. This list previously read [26, 29, 30],
+     * none of which were still in the corpus, which meant "Permission
+     * violations: 0" was reporting on nothing at all for that probe.
+     *
+     * Verify with:
+     *   select id, status, visibility from stud_file
+     *    where not (status = 'approved' and visibility = 'public');
+     */
+    private const PRIVATE_DOCUMENT_IDS = [33, 35, 36, 37];
+
     protected $signature = 'research:eval-chat
         {--user= : User id to run the (non-probe) questions as — defaults to the first admin}
         {--probe-user= : User id with NO relation to the permission-probe document — a throwaway account is created and cleaned up if omitted}
         {--show : Print each answer in full, plus its token counts — the summary table says whether a turn was cited, not whether it read well}
-        {--filter= : Only run fixtures whose type or question contains this string}';
+        {--filter= : Only run fixtures whose type or question contains this string}
+        {--tokens : Print the per-fixture token and cost report}
+        {--save-baseline= : Write this run to a JSON file to diff future runs against}
+        {--baseline= : Diff this run against a saved baseline}';
 
     protected $description = 'Run a fixture set of questions through the chatbot pipeline and report retrieval/citation/groundedness/permission results';
+
+    public function __construct(private IntentRouter $router)
+    {
+        parent::__construct();
+    }
 
     public function handle(
         RetrievalService $retrieval,
@@ -57,6 +86,9 @@ class EvaluateChatbotCommand extends Command
         $permissionViolations = 0;
         $noEvidenceCount = 0;
         $answeredCount = 0;
+
+        /** @var array<int, array{type: string, question: string, expected: string, actual: string}> */
+        $routingMismatches = [];
 
         foreach ($this->selectedFixtures() as $fixture) {
             // Every probe type must run as the unrelated throwaway user —
@@ -90,12 +122,40 @@ class EvaluateChatbotCommand extends Command
 
             $conversation = ChatConversation::create(['user_id' => $runningAs->id]);
 
+            // Dispatch on what the ROUTER decides, not on the fixture's type
+            // label. Those are different things, and conflating them is how a
+            // harness stops measuring the product: a fixture typed 'catalog'
+            // used to be forced down the catalog path regardless of how the
+            // real chatbot would route that same sentence, so a mis-route was
+            // structurally undetectable here and the token numbers described a
+            // path the user might never take.
+            //
+            // The label is now an EXPECTATION, checked against the routed
+            // intent and reported when the two disagree.
+            $routed = $this->router->route($fixture['question']);
+            $this->recordRouting($fixture, $routed, $routingMismatches);
+
+            // Zero-token intents are the whole point of the routing work, so
+            // the harness has to prove they cost nothing rather than assume it.
+            if ($routed->isZeroToken()) {
+                $this->recordTokens($fixture, $routed, outcome: 'free (no API call)');
+                $rows[] = [
+                    $fixture['type'],
+                    Str::limit($fixture['question'], 45),
+                    $routed->intent->value,
+                    '0 / 0',
+                    'free (no API call)',
+                ];
+
+                $conversation->messages()->delete();
+                $conversation->delete();
+
+                continue;
+            }
+
             // Catalog fixtures exercise the document-level path
-            // (App\Services\Retrieval\CatalogService), not chunk retrieval —
-            // mirroring ChatController::message()'s branching, so this
-            // harness measures what the chatbot actually does rather than
-            // what it would do if every question were a research question.
-            if (in_array($fixture['type'], ['catalog', 'catalog-permission-probe'], true)) {
+            // (App\Services\Retrieval\CatalogService), not chunk retrieval.
+            if ($routed->intent === Intent::Catalog) {
                 $rows[] = $this->evaluateCatalogFixture(
                     $fixture,
                     $runningAs,
@@ -146,10 +206,28 @@ class EvaluateChatbotCommand extends Command
                 $noEvidenceCount++;
             }
 
+            $this->recordTokens(
+                $fixture,
+                $routed,
+                tier: $result->tier?->tier->value,
+                escalated: (bool) $result->tier?->escalated,
+                answer: $answer ?? null,
+                evidenceChunks: count($result->chunks),
+                evidenceDocuments: count($result->documentIds()),
+                outcome: $outcome,
+            );
+
             $rows[] = [
                 $fixture['type'],
                 Str::limit($fixture['question'], 45),
-                $hasEvidence ? 'yes' : 'no',
+                // Tier, not just "did we find anything". Which tier answered —
+                // and whether the gate escalated — is the number that says
+                // whether abstract-first actually paid off; a token total alone
+                // cannot tell "the cheap tier worked" from "everything
+                // escalated to full text anyway".
+                $hasEvidence
+                    ? ($result->tier?->tier->value ?? 'yes').($result->tier?->escalated ? ' ↑' : '')
+                    : 'no',
                 $citationCount ?: '—',
                 $outcome,
             ];
@@ -163,10 +241,32 @@ class EvaluateChatbotCommand extends Command
         $this->line("Answered with evidence: {$answeredCount}");
         $this->line("No-evidence (zero-token) responses: {$noEvidenceCount}");
 
+        if (! empty($routingMismatches)) {
+            $this->newLine();
+            $this->warn('Routing disagreed with the fixture label on '.count($routingMismatches).' question(s):');
+            $this->table(
+                ['Question', 'Fixture expects', 'Router chose', 'Via'],
+                array_map(array_values(...), $routingMismatches),
+            );
+            $this->line('Either the fixture label is stale, or a classifier is claiming a turn it should not.');
+        }
+
         if ($permissionViolations > 0) {
             $this->error("Permission violations: {$permissionViolations} — CRITICAL, must be zero.");
         } else {
             $this->info('Permission violations: 0');
+        }
+
+        if ($this->option('tokens') || $this->option('save-baseline') || $this->option('baseline')) {
+            $this->reportTokens();
+        }
+
+        if ($path = $this->option('baseline')) {
+            $this->diffBaseline((string) $path);
+        }
+
+        if ($path = $this->option('save-baseline')) {
+            $this->saveBaseline((string) $path);
         }
 
         if ($probeUserIsThrowaway && $probeUser) {
@@ -174,6 +274,99 @@ class EvaluateChatbotCommand extends Command
         }
 
         return $permissionViolations === 0 ? self::SUCCESS : self::FAILURE;
+    }
+
+    /**
+     * Per-fixture token ledger, keyed by question.
+     *
+     * Every turn records here, INCLUDING the zero-token ones — a report that
+     * only lists turns that spent something cannot show that a path became
+     * free, which is precisely the change most of this work made.
+     *
+     * @var array<string, array<string, mixed>>
+     */
+    private array $ledger = [];
+
+    private function recordTokens(
+        array $fixture,
+        RoutedIntent $routed,
+        ?string $tier = null,
+        bool $escalated = false,
+        ?array $answer = null,
+        int $evidenceChunks = 0,
+        int $evidenceDocuments = 0,
+        string $outcome = '',
+    ): void {
+        $prompt = (int) ($answer['prompt_tokens'] ?? 0);
+        $completion = (int) ($answer['completion_tokens'] ?? 0);
+        $cached = (int) ($answer['cached_prompt_tokens'] ?? 0);
+
+        $this->ledger[$fixture['question']] = [
+            'type' => $fixture['type'],
+            'question' => $fixture['question'],
+            'intent' => $routed->intent->value,
+            'classifier' => $routed->classifier,
+            'tier' => $tier,
+            'escalated' => $escalated,
+            'llm_calls' => $answer === null ? 0 : 1,
+            'prompt_tokens' => $prompt,
+            'cached_prompt_tokens' => $cached,
+            'completion_tokens' => $completion,
+            'estimated_prompt_tokens' => (int) ($answer['estimated_prompt_tokens'] ?? 0),
+            'evidence_chunks' => $evidenceChunks,
+            'evidence_documents' => $evidenceDocuments,
+            'outcome' => $outcome,
+            'usd' => AiCost::usd($answer['model'] ?? null, $prompt, $completion, $cached ?: null),
+        ];
+    }
+
+    /**
+     * Compares the fixture's type label against what the router actually did.
+     *
+     * A fixture type is a claim about how a sentence SHOULD be handled. The
+     * routed intent is how it IS handled. When those disagree, one of the two
+     * is wrong and a developer needs to see which — silently trusting the label
+     * (as this harness used to) means a routing regression shows up as a
+     * perfectly normal-looking results table.
+     *
+     * @param  array{type: string, question: string}  $fixture
+     * @param  array<int, array<string, string>>  $mismatches
+     */
+    private function recordRouting(array $fixture, RoutedIntent $routed, array &$mismatches): void
+    {
+        // A SET, not a single intent: one label can legitimately cover a family.
+        // 'smalltalk' has to accept Acknowledgement too, because "salamat" and
+        // "thanks" are small talk to a reader but a different intent to the
+        // router — and a harness that flags that as a regression is a harness
+        // developers learn to ignore.
+        $expected = match ($fixture['type']) {
+            'catalog', 'catalog-permission-probe' => [Intent::Catalog, Intent::CatalogCount],
+            'smalltalk' => [Intent::SmallTalk, Intent::Acknowledgement, Intent::Unintelligible],
+            'identity' => [Intent::Identity],
+            'out-of-scope' => [Intent::OutOfScope],
+            'platform' => [Intent::Platform],
+            // Author, year and SDG questions are DOCUMENT-level: they ask which
+            // studies exist matching a filter, not what any one study says. The
+            // router sends them to the catalog path, which is correct — these
+            // labels used to expect research_qa and reported three mismatches
+            // every run, which is how a harness trains people to ignore it.
+            'author-filter', 'year-filter', 'sdg-filter' => [Intent::Catalog, Intent::CatalogCount, Intent::ResearchQa],
+            // Everything else is expected to reach research retrieval. That
+            // includes the permission probes, whose whole purpose is to prove
+            // retrieval excludes documents the user may not read.
+            default => [Intent::ResearchQa],
+        };
+
+        if (in_array($routed->intent, $expected, true)) {
+            return;
+        }
+
+        $mismatches[] = [
+            'question' => Str::limit($fixture['question'], 50),
+            'expected' => implode(' | ', array_map(fn (Intent $i) => $i->value, $expected)),
+            'actual' => $routed->intent->value,
+            'classifier' => $routed->classifier,
+        ];
     }
 
     /**
@@ -374,6 +567,192 @@ class EvaluateChatbotCommand extends Command
     }
 
     /** Prints a full answer under --show; a no-op otherwise. */
+    /** The per-fixture token and cost table. */
+    private function reportTokens(): void
+    {
+        if (empty($this->ledger)) {
+            return;
+        }
+
+        $rows = [];
+        $totals = ['calls' => 0, 'in' => 0, 'out' => 0, 'usd' => 0.0, 'free' => 0];
+
+        foreach ($this->ledger as $entry) {
+            $rows[] = [
+                $entry['type'],
+                Str::limit($entry['question'], 34),
+                $entry['intent'],
+                $entry['tier'] ? $entry['tier'].($entry['escalated'] ? ' ↑' : '') : '—',
+                $entry['llm_calls'],
+                $entry['prompt_tokens'] ?: '—',
+                $entry['completion_tokens'] ?: '—',
+                $entry['usd'] > 0 ? '$'.number_format($entry['usd'], 5) : 'free',
+            ];
+
+            $totals['calls'] += $entry['llm_calls'];
+            $totals['in'] += $entry['prompt_tokens'];
+            $totals['out'] += $entry['completion_tokens'];
+            $totals['usd'] += $entry['usd'];
+            $totals['free'] += $entry['llm_calls'] === 0 ? 1 : 0;
+        }
+
+        $this->newLine();
+        $this->line('Token report');
+        $this->newLine();
+        $this->table(['Type', 'Question', 'Intent', 'Tier', 'Calls', 'In', 'Out', 'Cost'], $rows);
+
+        $this->line(sprintf(
+            'TOTAL  %d turns, %d LLM calls (%d free)  ·  %s in / %s out  ·  $%s',
+            count($this->ledger),
+            $totals['calls'],
+            $totals['free'],
+            number_format($totals['in']),
+            number_format($totals['out']),
+            number_format($totals['usd'], 5),
+        ));
+
+        $this->reportEstimatorAccuracy();
+    }
+
+    /**
+     * How the estimator did on this run. Surfaced here as well as in
+     * research:calibrate-token-estimator because a fixture run is the one place
+     * both numbers are in hand at once.
+     */
+    private function reportEstimatorAccuracy(): void
+    {
+        $ratios = [];
+
+        foreach ($this->ledger as $entry) {
+            if ($entry['prompt_tokens'] > 0 && $entry['estimated_prompt_tokens'] > 0) {
+                $ratios[] = $entry['prompt_tokens'] / $entry['estimated_prompt_tokens'];
+            }
+        }
+
+        if (empty($ratios)) {
+            return;
+        }
+
+        $under = count(array_filter($ratios, fn (float $r) => $r > 1.0));
+
+        $this->line(sprintf(
+            '       estimator: mean actual/estimated %.2f, %d of %d turns under-estimated',
+            array_sum($ratios) / count($ratios),
+            $under,
+            count($ratios),
+        ));
+    }
+
+    private function saveBaseline(string $path): void
+    {
+        $directory = dirname($path);
+
+        if (! is_dir($directory)) {
+            mkdir($directory, 0775, true);
+        }
+
+        file_put_contents($path, json_encode([
+            'saved_at' => now()->toIso8601String(),
+            'prompt_version' => \App\Services\Chat\PromptBuilder::promptVersion(),
+            'model' => config('chat.models.answer'),
+            'fixtures' => $this->ledger,
+        ], JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE));
+
+        $this->newLine();
+        $this->info("Baseline written to {$path}");
+        $this->line('Diff a later run against it with --baseline='.$path);
+    }
+
+    /**
+     * The before/after table this whole measurement effort exists to produce.
+     *
+     * The OUTCOME column is the point. A token saving that also turned
+     * "grounded, cited" into "answered, NO citations" is not a saving, it is a
+     * regression wearing one — and a table of Δtokens alone would report it as
+     * a success.
+     */
+    private function diffBaseline(string $path): void
+    {
+        if (! is_file($path)) {
+            $this->error("No baseline at {$path}");
+
+            return;
+        }
+
+        $baseline = json_decode((string) file_get_contents($path), true);
+
+        if (! is_array($baseline) || ! isset($baseline['fixtures'])) {
+            $this->error("{$path} is not a baseline file this command wrote.");
+
+            return;
+        }
+
+        $rows = [];
+        $deltaIn = 0;
+        $deltaOut = 0;
+        $deltaUsd = 0.0;
+        $changed = 0;
+
+        foreach ($this->ledger as $question => $now) {
+            $then = $baseline['fixtures'][$question] ?? null;
+
+            if ($then === null) {
+                $rows[] = [Str::limit($question, 34), 'NEW', '—', '—', $now['outcome']];
+
+                continue;
+            }
+
+            $in = $now['prompt_tokens'] - (int) ($then['prompt_tokens'] ?? 0);
+            $out = $now['completion_tokens'] - (int) ($then['completion_tokens'] ?? 0);
+            $usd = $now['usd'] - (float) ($then['usd'] ?? 0);
+
+            $deltaIn += $in;
+            $deltaOut += $out;
+            $deltaUsd += $usd;
+
+            $outcomeChanged = ($then['outcome'] ?? '') !== $now['outcome'];
+
+            if ($outcomeChanged) {
+                $changed++;
+            }
+
+            $rows[] = [
+                Str::limit($question, 34),
+                $this->signed($in),
+                $this->signed($out),
+                ($usd >= 0 ? '+' : '').number_format($usd, 5),
+                $outcomeChanged
+                    ? '⚠ '.($then['outcome'] ?? '—').' → '.$now['outcome']
+                    : $now['outcome'],
+            ];
+        }
+
+        $this->newLine();
+        $this->line('Diff against '.($baseline['saved_at'] ?? 'baseline')
+            .' (prompt '.($baseline['prompt_version'] ?? '?').' → '.\App\Services\Chat\PromptBuilder::promptVersion().')');
+        $this->newLine();
+        $this->table(['Question', 'Δ in', 'Δ out', 'Δ USD', 'Outcome'], $rows);
+
+        $this->line(sprintf(
+            'TOTAL  %s input tokens, %s output tokens, %s USD',
+            $this->signed($deltaIn),
+            $this->signed($deltaOut),
+            ($deltaUsd >= 0 ? '+' : '').number_format($deltaUsd, 5),
+        ));
+
+        if ($changed > 0) {
+            $this->newLine();
+            $this->error("{$changed} fixture(s) changed outcome — read those rows before believing any saving above.");
+        } else {
+            $this->info('No fixture changed outcome.');
+        }
+    }
+
+    private function signed(int $value): string
+    {
+        return ($value > 0 ? '+' : '').number_format($value);
+    }
+
     private function showAnswer(string $question, string $text, ?int $promptTokens, ?int $completionTokens): void
     {
         if (! $this->option('show')) {
@@ -435,18 +814,42 @@ class EvaluateChatbotCommand extends Command
             // list of the repository's contents). Before
             // App\Services\Retrieval\CatalogService existed, every one of
             // these returned the no-evidence reply.
+            // Zero-token intents. These are in the fixture set specifically so
+            // the harness PROVES they cost nothing rather than assuming it —
+            // every one of them used to reach the API. The Tagalog and Ilocano
+            // greetings are here because the users are at CSU Aparri in
+            // Cagayan and the old anchored regex missed all of them.
+            ['type' => 'smalltalk', 'question' => 'hi'],
+            ['type' => 'smalltalk', 'question' => 'hi there'],
+            ['type' => 'smalltalk', 'question' => 'good day sir'],
+            ['type' => 'smalltalk', 'question' => 'kumusta po'],
+            ['type' => 'smalltalk', 'question' => 'magandang umaga'],
+            ['type' => 'smalltalk', 'question' => 'naimbag nga bigat'],
+            ['type' => 'smalltalk', 'question' => 'salamat'],
+            ['type' => 'identity', 'question' => 'who are you?'],
+            ['type' => 'identity', 'question' => 'what can you do?'],
+            ['type' => 'identity', 'question' => 'are you chatgpt'],
+            ['type' => 'out-of-scope', 'question' => 'recommend a good restaurant'],
+            ['type' => 'out-of-scope', 'question' => 'what is the weather today'],
+
+            // The counterpart guard: a greeting PREFIX on a real question must
+            // still be answered as the question. If routing ever regresses to
+            // answering this with "Hello!", it shows up here as an
+            // out-of-scope/smalltalk mismatch rather than passing silently.
+            ['type' => 'catalog', 'question' => 'hi, list repository available'],
+
             ['type' => 'catalog', 'question' => 'list repository available'],
             ['type' => 'catalog', 'question' => 'What research is available?'],
             ['type' => 'catalog', 'question' => 'How many studies are in the repository?'],
             ['type' => 'catalog', 'question' => 'What topics are covered?'],
-            ['type' => 'catalog', 'question' => 'recommend papers related to fish'],
-            ['type' => 'catalog', 'question' => 'suggest studies about aquaculture'],
-            ['type' => 'catalog', 'question' => 'Which studies are related to SDG 14?'],
+            ['type' => 'catalog', 'question' => 'recommend papers about document management'],
+            ['type' => 'catalog', 'question' => 'suggest studies about artificial intelligence in education'],
+            ['type' => 'catalog', 'question' => 'Which studies are related to SDG 9?'],
             ['type' => 'catalog', 'question' => 'What studies were published from 2024 to 2026?'],
             // Catalog must honour ResearchAccess exactly as chunk retrieval
             // does — a second, independent way into the same corpus is
             // exactly where a permission model tends to spring a leak.
-            ['type' => 'catalog-permission-probe', 'question' => 'list repository available', 'disallowed_stud_file_ids' => [26, 29, 30, 33]],
+            ['type' => 'catalog-permission-probe', 'question' => 'list repository available', 'disallowed_stud_file_ids' => self::PRIVATE_DOCUMENT_IDS],
 
             // Multi-turn continuity — the "the chatbot is stateless"
             // complaint. Each ↳ turn is a follow-up that carries no topic of
@@ -454,36 +857,57 @@ class EvaluateChatbotCommand extends Command
             // documents (see App\Services\Chat\QueryCondenser and
             // ConversationContext).
             ['type' => 'conversation', 'turns' => [
-                'What research is available about seaweed diversity?',
+                'What research is available about GPS tracking for passenger boats?',
                 'what methodology did it use?',
                 'summarize the findings of this research',
-                'why did the results differ between seasons?',
+                'why was real-time tracking needed?',
             ]],
 
-            ['type' => 'topic-discovery', 'question' => 'What research is available about seaweed diversity?'],
-            ['type' => 'methodology', 'question' => 'What methodology was used to survey the seaweed sites?'],
-            ['type' => 'findings', 'question' => 'What were the key findings about seaweed species dominance?'],
-            ['type' => 'direct-fact', 'question' => 'How many seaweed species were identified in the study?'],
-            ['type' => 'comparison', 'question' => 'Compare the diversity findings between the dry and wet seasons.'],
+            // --- Abstract tier is expected to answer these on its own -------
+            //
+            // Overview, authorship and provenance questions. The answer lives
+            // in a study's title, abstract and catalogued metadata, so these
+            // should NOT escalate to full text — that is the whole point of
+            // App\Services\Retrieval\Tier::Abstract. An escalation here (shown
+            // with ↑ in the results) is a tuning signal, not a pass.
+            ['type' => 'abstract-tier', 'question' => 'What is the GPS boat tracking study about?'],
+            ['type' => 'abstract-tier', 'question' => 'What is the document management system research about?'],
+            ['type' => 'abstract-tier', 'question' => 'Is there anything on information literacy and student performance?'],
+            ['type' => 'author-filter', 'question' => 'What research did Marinette Peralta work on?'],
+            ['type' => 'year-filter', 'question' => 'What studies were published in 2024?'],
             ['type' => 'sdg-filter', 'question' => 'Which studies support SDG 4?'],
-            ['type' => 'year-filter', 'question' => 'What studies were published in 2026?'],
-            ['type' => 'author-filter', 'question' => 'What research did John Patrick Labinay work on?'],
+
+            // --- Full text is expected: these need the body ----------------
+            ['type' => 'methodology', 'question' => 'What methodology was used in the AI learning efficiency study?'],
+            ['type' => 'findings', 'question' => 'What were the key findings about AI tool usage and academic performance?'],
+            ['type' => 'direct-fact', 'question' => 'How many respondents took part in the AI tool usage study?'],
+            ['type' => 'comparison', 'question' => 'Compare the document management study with the archives management study.'],
+            ['type' => 'drill-down', 'question' => 'Give me the full details of the SeawatchWeb safety protocols.'],
+
+            // The one genuinely marine paper in the corpus — filed under the
+            // title "Research Repository System" but its actual content is a
+            // seaweed diversity survey in Gonzaga, Cagayan. Kept because a
+            // title/content mismatch is a real retrieval challenge: the answer
+            // must come from the body text, not the title.
+            ['type' => 'findings', 'question' => 'What were the findings about seaweed species in Gonzaga, Cagayan?'],
+
             // Deliberately out-of-corpus. The correct behavior is to
             // decline — ideally via the zero-token no-evidence path, but
             // an explicit "the evidence doesn't cover this" is equally
             // correct and simply costs more. What must NEVER happen is a
             // confident answer, or a citation to an unrelated study.
-            //
-            // These are pinned to the research path on purpose: the catalog
-            // path has its own out-of-corpus fixtures above, and this is
-            // where chunk-level grounding honesty is measured.
             ['type' => 'unanswerable', 'question' => 'What studies discuss blockchain applications in supply chains?'],
-            ['type' => 'unanswerable', 'question' => 'Summarize the findings on renewable energy adoption.'],
+            ['type' => 'unanswerable', 'question' => 'Summarize the findings on vaccine hesitancy in rural clinics.'],
             ['type' => 'catalog', 'question' => 'find research about rice disease detection'],
-            // stud_file_id 26 is private+pending, owned by user id 2 — the
-            // probe user has no relation to it at all and must never
-            // retrieve chunks from it, by any path (vector or lexical).
-            ['type' => 'permission-probe', 'question' => 'What were the seaweed survey findings?', 'disallowed_stud_file_ids' => [26, 29, 30]],
+
+            // The probe user has NO relation to any of these documents and must
+            // never retrieve a chunk from one, by any path (vector or lexical).
+            //
+            // The question deliberately targets private content: asking about
+            // AI tool usage aims squarely at document 35, which is approved but
+            // PRIVATE. A probe that asks about public content proves nothing.
+            ['type' => 'permission-probe', 'question' => 'What did the study find about AI tool usage and learning efficiency?', 'disallowed_stud_file_ids' => self::PRIVATE_DOCUMENT_IDS],
+            ['type' => 'permission-probe', 'question' => 'What were the findings about seaweed species in Gonzaga?', 'disallowed_stud_file_ids' => self::PRIVATE_DOCUMENT_IDS],
         ];
     }
 }

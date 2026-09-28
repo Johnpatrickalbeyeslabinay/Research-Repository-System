@@ -59,7 +59,6 @@ class SectionDetector
      * submission for no reason, since detection is a pure function of hash).
      *
      * @param  string[]  $pages
-     *
      * @return array{
      *     sections: array<int, array{key: string, heading: string, start: int, end: int, page_number: ?int}>,
      *     abstract: array{text: ?string, confidence: ?string, word_count: int},
@@ -78,7 +77,6 @@ class SectionDetector
 
     /**
      * @param  string[]  $pages  Per-page extracted text, joined with "\n" to form $fullText.
-     *
      * @return array{
      *     sections: array<int, array{key: string, heading: string, start: int, end: int, page_number: ?int}>,
      *     abstract: array{text: ?string, confidence: ?string, word_count: int},

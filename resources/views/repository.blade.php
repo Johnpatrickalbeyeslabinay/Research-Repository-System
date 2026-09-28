@@ -1,6 +1,6 @@
 @extends('layouts.repository_layout')
 
-@section('title', 'REPOSITORY')
+@section('title', 'Repository')
 
 @section('repository')
 
@@ -14,12 +14,17 @@
     <div class="d-flex flex-column justify-content-center align-items-center text-center bg-light shadow-sm border border-1 rounded p-4 mx-auto mt-3 mb-3"
         style="width: 170px; height: 150px;">
         <i class="fa-solid fa-book fa-2xl text-primary mb-3"></i>
-        <h1 class="fw-bold">{{ $studFiles->total() }}</h1>
+        <h1 class="fw-bold" data-results-total-display>{{ $studFiles->total() }}</h1>
         <small>Research Papers</small>
     </div>
 
     <!-- Search + filters -->
-    <form method="GET" action="{{ route('repository') }}" class="mb-3 mx-auto" style="max-width: 900px;">
+    {{-- data-live-search: resources/js/app.js submits this as you type
+         (debounced) into the research-results frame below, so only the
+         results are swapped in — the search box keeps focus and the URL
+         stays shareable. --}}
+    <form method="GET" action="{{ route('repository') }}" class="mb-3 mx-auto" style="max-width: 900px;"
+        data-live-search data-turbo-frame="research-results">
         <div class="d-flex align-items-center gap-2 flex-wrap">
             <input type="search" name="search" value="{{ $search }}"
                 placeholder=" Search by title, author, tag, or keywords..."
@@ -62,7 +67,9 @@
         </div>
     </form>
 
+    <turbo-frame id="research-results" data-turbo-action="advance">
     <div class="container py-5">
+        <span data-results-total hidden>{{ $studFiles->total() }}</span>
 
         @if ($studFiles->isEmpty())
             <div class="text-center text-secondary py-5">
@@ -87,5 +94,6 @@
         @endif
 
     </div>
+    </turbo-frame>
 
 @endsection

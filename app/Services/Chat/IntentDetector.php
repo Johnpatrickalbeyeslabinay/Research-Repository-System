@@ -89,17 +89,18 @@ class IntentDetector
      * recommendation pattern ("what studies ... about"), but answering it
      * needs the Methodology sections themselves, which the catalog path
      * (metadata only) cannot see.
+     *
+     * Sourced from App\Services\Chat\QuestionFeatures::CONTENT_PATTERNS rather
+     * than held here, so the retrieval tier planner can build on the same base
+     * instead of keeping a second copy that drifts.
+     *
+     * Note it is CONTENT_PATTERNS, not that class's DEPTH_PATTERNS. Depth adds
+     * quantity phrasings ("how many", "what percentage") because an abstract
+     * rarely carries a number — but those must NOT reach this constant, since
+     * "how many studies are in the repository?" is a catalog question and
+     * pointing this at DEPTH_PATTERNS silently turned it into a research one.
      */
-    private const CONTENT_QUESTION_PATTERNS = [
-        '/\b(methodolog|method|approach|technique|procedure|instrument|sampling)\w*\b/i',
-        '/\b(finding|result|conclusion|recommendation|implication|outcome)s?\b/i',
-        '/\b(summari[sz]e|summary|explain|describe in detail|elaborate)\b/i',
-        '/\b(compare|comparison|versus|vs\.?|difference between)\b/i',
-        '/\b(data|dataset|sample size|respondents|participants|variables?)\b/i',
-        '/\bwhat did\b/i',
-        '/\bhow (did|was|were)\b/i',
-        '/\bwhy\b/i',
-    ];
+    private const CONTENT_QUESTION_PATTERNS = QuestionFeatures::CONTENT_PATTERNS;
 
     /**
      * True when this question should be answered from document metadata
