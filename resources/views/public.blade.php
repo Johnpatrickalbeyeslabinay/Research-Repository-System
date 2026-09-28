@@ -4,11 +4,12 @@
 
 @section('public')
 
+<br><br><br><br><br>
     <a href="{{ route('home') }}" class="text-decoration-none text-secondary ms-1">
         <i class="fa-solid fa-arrow-left fa-xl"></i>
     </a>
 
-    <br><br><br><br><br>
+    <br><br>
     <div class="container text-center mt-5">
         <h1>Fisheries Research Repository</h1>
         <p>Explore academic research from students and faculty of the Fisheries Program</p>
@@ -34,12 +35,12 @@
                 placeholder=" Search by title, author, tag, or keywords..."
                 class="form-control bg-light" style="min-width: 220px; flex: 2 1 220px;">
 
-            <select name="type" class="form-select bg-light" style="max-width: 160px;">
+            <!--<select name="type" class="form-select bg-light" style="max-width: 160px;">
                 <option value="">All Types</option>
                 @foreach ($types as $t)
                     <option value="{{ $t }}" {{ (string) $type === (string) $t ? 'selected' : '' }}>{{ $t }}</option>
                 @endforeach
-            </select>
+            </select>-->
 
             <select name="year" class="form-select bg-light" style="max-width: 140px;">
                 <option value="">All Years</option>
@@ -91,6 +92,7 @@
                     <x-research.card
                         :file="$file"
                         :show-download="false"
+                        :show-download-count="false"
                         :url="route('public.research.show', $file->id)"
                     />
                 @endforeach

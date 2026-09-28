@@ -29,7 +29,7 @@
                 <img src="{{ asset('images/logo.png') }}"
                     alt="CSU Aparri Logo"
                     class="me-3 rounded-circle"
-                    style="width:90px;height:90px;object-fit:cover;">
+                    style="width:70px;height:70px;object-fit:cover;">
 
                 <div class="d-flex flex-column">
                     <h5 class="fw-bold mb-0">CSU APARRI</h5>

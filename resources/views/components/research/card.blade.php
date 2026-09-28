@@ -1,4 +1,9 @@
-@props(['file', 'url' => null, 'showDownload' => true])
+@props([
+    'file',
+    'showDownload' => true,
+    'showDownloadCount' => true,
+    'url' => null,
+])
 
 @php
     // Replaces what used to be a full hidden detail <div popover> injected
@@ -33,7 +38,11 @@
 
             <div class="text-secondary small mb-3">
                 <i class="bi bi-eye"></i> {{ $file->views ?? 0 }}
-                <span class="ms-3"><i class="bi bi-download"></i> {{ $file->downloads ?? 0 }}</span>
+                @if ($showDownloadCount)
+                <span class="ms-3">
+                    <i class="bi bi-download"></i> {{ $file->downloads ?? 0 }}
+                </span>
+                @endif
             </div>
 
             <div class="d-flex gap-2 mt-auto">

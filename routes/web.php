@@ -172,6 +172,7 @@ Route::middleware(['auth', 'role:student'])->group(function () {
     Route::post('/student/store', [StudentController::class, 'store'])
         ->name('student.store');
 
+    Route::post('/adviser-stage', [StudentController::class, 'stageAdviser'])->name('adviser.stage');
     // research update
     Route::put('/student/submission/{id}', [StudentController::class, 'update'])
         ->name('student.update');
@@ -213,6 +214,9 @@ Route::get('/home', [HomeController::class, 'index'])->name('home');
 
 Route::get('/public', [PublicController::class, 'index'])
     ->name('public');
+
+Route::get('/public/research/{id}/pdf', [PublicController::class, 'viewPdf'])
+    ->name('public.research.pdf');
 
 // view route
 Route::get('/view/{id}', [StudentController::class, 'view'])

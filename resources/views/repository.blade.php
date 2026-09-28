@@ -30,12 +30,12 @@
                 placeholder=" Search by title, author, tag, or keywords..."
                 class="form-control bg-light" style="min-width: 220px; flex: 2 1 220px;">
 
-            <select name="type" class="form-select bg-light" style="max-width: 160px;">
+            <!--<select name="type" class="form-select bg-light" style="max-width: 160px;">
                 <option value="">All Types</option>
                 @foreach ($types as $t)
                     <option value="{{ $t }}" {{ (string) $type === (string) $t ? 'selected' : '' }}>{{ $t }}</option>
                 @endforeach
-            </select>
+            </select>-->
 
             <select name="year" class="form-select bg-light" style="max-width: 140px;">
                 <option value="">All Years</option>

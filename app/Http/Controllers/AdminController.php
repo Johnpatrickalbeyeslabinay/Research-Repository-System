@@ -70,6 +70,22 @@ class AdminController extends Controller
                 $studFilesQuery->where('status', $statusFilter);
             }
 
+            // Year range filter
+            $yearFrom = request('year_from');
+            $yearTo = request('year_to');
+
+            if ($yearFrom) {
+                $studFilesQuery->where('publication_year', '>=', $yearFrom);
+            }
+
+            if ($yearTo) {
+                $studFilesQuery->where('publication_year', '<=', $yearTo);
+            }
+
+            $studFiles = $studFilesQuery
+                ->paginate(10)
+                ->withQueryString();
+
             $studFiles = $studFilesQuery->paginate(10)->withQueryString();
         }
 
@@ -293,20 +309,39 @@ class AdminController extends Controller
     }
 
     // REJECT BTN
-    public function reject($id)
+    public function reject(Request $request, $id)
     {
         $file = UserFile::findOrFail($id);
 
-        abort_if($file->status !== 'admin_pending', 409, 'This research is not awaiting admin review.');
+        abort_if(
+            $file->status !== 'admin_pending',
+            409,
+            'This research is not awaiting admin review.'
+        );
+
+        $request->validate([
+            'admin_reject' => 'required|string|max:1000',
+        ]);
 
         $file->status = 'rejected';
+
+        // Admin comment
+        $file->admin_reject = $request->admin_reject;
+
+        $file->rejected_at = now();
+
         $file->save();
 
         self::forgetResearchCaches($file);
 
-        $file->user->notify(new ResearchReviewedByAdmin($file, 'rejected'));
+        $file->user->notify(
+            new ResearchReviewedByAdmin($file, 'rejected')
+        );
 
-        return back()->with('success', 'Research rejected successfully.');
+        return back()->with(
+            'success',
+            'Research rejected successfully.'
+        );
     }
 
     public function toggleStatus($id)

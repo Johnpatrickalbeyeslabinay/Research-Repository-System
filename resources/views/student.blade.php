@@ -186,7 +186,7 @@
                 // the error alert below (errors are a single session-wide
                 // bag shared with the Update Research forms).
                 $wizardStepFields = [
-                    1 => ['title', 'research_type', 'publication_year', 'adviser_id'],
+                    1 => ['title', 'research_type', 'publication_year', 'advisers'],
                     2 => ['researchers'],
                     3 => ['file', 'desc', 'keywords', 'keyword_sources', 'sdg'],
                     4 => ['visibility'],
@@ -270,27 +270,63 @@
 
                             <div data-step-body="1">
                                 <div class="rw-field">
-                                    <label>Research Title <span class="text-danger">*</span></label>
+                                    <label>Research Title</label>
                                     <input type="text" name="title" class="form-control" required
                                         value="{{ old('title') }}"
                                         placeholder="Enter the title of your research">
                                 </div>
 
                                 <div class="row g-2">
-                                    <div class="col-6">
+
+                                    <!--<div class="col-6">
                                         <div class="rw-row">
                                             <span class="rw-row-label">Type</span>
-                                            <select name="research_type" class="form-select form-select-sm">
-                                                <option value="">Select</option>
-                                                @foreach(['Thesis'] as $type)
-                                                    <option value="{{ $type }}" {{ old('research_type') === $type ? 'selected' : '' }}>{{ $type }}</option>
-                                                @endforeach
-                                            </select>
+                                            <input type="text" name="type" value="Thesis">
                                         </div>
-                                    </div>
+                                    </div>-->
+
+
+
+                                    <!--<div class="rw-row">
+                                        <span class="rw-row-label">Adviser <span class="text-danger">*</span></span>
+                                        <select name="adviser_id" class="form-select form-select-sm" required>
+                                            <option value="">Select adviser</option>
+                                            @foreach($instructors as $instructor)
+                                                <option value="{{ $instructor->id }}" {{ (int) old('adviser_id') === $instructor->id ? 'selected' : '' }}>
+                                                    {{ $instructor->name }}
+                                                </option>
+                                            @endforeach
+                                        </select>
+                                    </div>-->
+
+
+                            <div class="mb-3">
+                                <small class="fw-semibold">Thesis Adviser</small>
+                                <div class="input-group input-group-sm" style="max-width: 100%;">
+
+                                    <select
+                                        name="advisers[]"
+                                        class="form-select"
+                                        multiple
+                                        size="1"
+                                        required>
+
+                                        @foreach ($instructors as $instructor)
+                                            <option value="{{ $instructor->id }}">
+                                                {{ $instructor->name }}
+                                            </option>
+                                        @endforeach
+
+                                    </select>
+
+                                </div>
+
+                            </div>
+
+
 
                                     <div class="col-6">
-                                        <div class="rw-row">
+                                      <div class="rw-row">
                                             <span class="rw-row-label">Year</span>
                                             <select name="publication_year" class="form-select form-select-sm">
                                                 @php $currentYear = (int) date('Y'); @endphp
@@ -302,17 +338,7 @@
                                     </div>
                                 </div>
 
-                                <div class="rw-row">
-                                    <span class="rw-row-label">Adviser <span class="text-danger">*</span></span>
-                                    <select name="adviser_id" class="form-select form-select-sm" required>
-                                        <option value="">Select adviser</option>
-                                        @foreach($instructors as $instructor)
-                                            <option value="{{ $instructor->id }}" {{ (int) old('adviser_id') === $instructor->id ? 'selected' : '' }}>
-                                                {{ $instructor->name }}
-                                            </option>
-                                        @endforeach
-                                    </select>
-                                </div>
+
                             </div>
                         </section>
 
@@ -750,22 +776,29 @@
 
 
                                         <!--Rejected resaon-->
-                                        @if($file->status === 'rejected' && !empty($file->rejection_reason))
-                                            <div class="alert alert-danger rounded-3 mb-3 py-2 px-3">
+                                        @if($file->status === 'rejected' && ($file->rejection_reason || $file->admin_reject))
                                                 <div class="d-flex align-items-start">
-                                                    <i class="fa-solid fa-circle-exclamation me-2 mt-1"></i>
+
+                                                    <i class="fa-solid fa-circle-exclamation me-2 mt-1" style="color: #e57373;"></i>
 
                                                     <div>
-                                                        <div class="fw-semibold mb-1">
-                                                            Reason for Rejection
+
+                                                        <div class="fw-semibold mb-1" style="color: #e57373;">
+                                                            @if(!empty($file->admin_reject))
+                                                                <small>Admin rejected your paper</small>
+                                                            @else
+                                                                <small>{{ $file->adviser }} rejected your paper</small>
+                                                            @endif
                                                         </div>
 
-                                                        <div class="small">
-                                                            {{ $file->rejection_reason }}
-                                                        </div>
+                                                        <!--<div class="small">
+                                                            {{ $file->admin_reject ?? $file->rejection_reason }}
+                                                        </div>-->
+
                                                     </div>
-                                                </div>
+
                                             </div>
+
                                         @endif
 
                                         <!--@if($file->instructor_feedback)
@@ -1155,44 +1188,58 @@
                                         </div>
 
 
-                                            <!--Rejected resaon-->
-                                        @if($file->status === 'rejected' && !empty($file->rejection_reason))
-                                            <div class="alert alert-danger rounded-3 mb-3 py-2 px-3">
+                                         <!-- Rejected Reason -->
+                                            @if($file->status === 'rejected' && ($file->rejection_reason || $file->admin_reject))
 
-                                                <div class="d-flex align-items-start">
-                                                    <i class="fa-solid fa-circle-exclamation me-2 mt-1"></i>
+                                                <div class="alert alert-danger rounded-3 mb-3 py-2 px-3">
 
-                                                    <div class="w-100">
+                                                    <div class="d-flex align-items-start">
 
-                                                        <div class="fw-semibold mb-1">
-                                                            Reason for Rejection
-                                                        </div>
+                                                        <i class="fa-solid fa-circle-exclamation me-2 mt-1"></i>
 
-                                                        <div class="mb-1">
-                                                                <strong>{{ $file->adviser }}</strong>
-                                                        </div>
+                                                        <div class="w-100">
 
-                                                        <div class="small text-secondary d-flex align-items-center flex-wrap gap-3">
-
-                                                            <div>
-                                                                <small>{{ $file->rejected_at?->format('M d, Y') ?? $file->updated_at?->format('M d, Y') }}</small>
+                                                            <div class="fw-semibold mb-1">
+                                                                Reason for Rejection
                                                             </div>
 
-                                                            <div>
-                                                                <small>{{ $file->rejected_at?->format('h:i A') ?? $file->updated_at?->format('h:i A') }}</small>
+                                                            <div class="mb-1">
+                                                                <strong>
+                                                                    @if(!empty($file->admin_reject))
+                                                                        Admin
+                                                                    @else
+                                                                        {{ $file->adviser }}
+                                                                    @endif
+                                                                </strong>
                                                             </div>
 
-                                                        </div>
+                                                            <div class="small text-secondary d-flex align-items-center flex-wrap gap-3">
 
-                                                        <div class="small mt-1 mb-2">
-                                                            {{ $file->rejection_reason }}
+                                                                <div>
+                                                                    <small>
+                                                                        {{ $file->rejected_at?->format('M d, Y') ?? $file->updated_at?->format('M d, Y') }}
+                                                                    </small>
+                                                                </div>
+
+                                                                <div>
+                                                                    <small>
+                                                                        {{ $file->rejected_at?->format('h:i A') ?? $file->updated_at?->format('h:i A') }}
+                                                                    </small>
+                                                                </div>
+
+                                                            </div>
+
+                                                            <div class="small mt-1 mb-2">
+                                                                {{ $file->admin_reject ?? $file->rejection_reason }}
+                                                            </div>
+
                                                         </div>
 
                                                     </div>
+
                                                 </div>
 
-                                            </div>
-                                        @endif
+                                            @endif
 
 
                                     <div
@@ -1396,7 +1443,6 @@
     }
   }
 </script>
-
 
 
 

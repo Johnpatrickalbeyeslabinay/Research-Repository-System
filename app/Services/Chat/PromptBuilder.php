@@ -302,9 +302,9 @@ class PromptBuilder
                 $header .= ' — Authors: '.implode(', ', $authors);
             }
 
-            if ($file->research_type) {
-                $header .= " — Type: {$file->research_type}";
-            }
+            // if ($file->research_type) {
+            // $header .= " — Type: {$file->research_type}";
+            // }
 
             $lines[] = '';
             $lines[] = $header;

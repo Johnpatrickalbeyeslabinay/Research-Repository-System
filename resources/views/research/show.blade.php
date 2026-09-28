@@ -4,16 +4,21 @@
 
 @section('public')
 
+<br><br><br><br><br>
+
     <a href="{{ url()->previous(route('repository')) }}" class="text-decoration-none text-secondary mb-3 d-inline-block">
         <i class="fa-solid fa-arrow-left me-2"></i>Back
     </a>
 
     <div class="card shadow-sm border-0 rounded-4">
         <div class="card-body p-4 p-md-5">
-
             <h3 class="fw-bold mb-3">{{ $file->title }}</h3>
 
-            <x-research.meta :file="$file" />
+            {{-- <x-research.meta :file="$file" /> --}}
+            <x-research.meta
+    :file="$file"
+    :show-download-count="false"
+/>
 
             <hr class="my-4">
 
@@ -43,9 +48,25 @@
                          just silently redirected to /login (the old
                          behavior on the repository/public listing pages)
                          is worse than not showing one at all. --}}
-                    <a href="{{ route('login') }}" class="btn text-white rounded-2 px-4 py-2" style="background:#072a89;">
-                        <i class="bi bi-box-arrow-in-right me-2"></i>Sign in to view &amp; download
+                   <div class="d-flex gap-2 align-items-center">
+
+                    <a data-turbo="false"
+                        href="{{ route('public.research.pdf', $file->id) }}"
+                        target="_blank"
+                        class="btn btn-sm text-white rounded-2 px-3"
+                        style="background:#072a89;">
+                        <i class="bi bi-eye me-1"></i>
+                        View PDF
                     </a>
+
+                    <a href="{{ route('public') }}"
+                        class="btn btn-sm btn-outline-secondary rounded-2 px-3">
+                        <i class="fa-solid fa-xmark me-1"></i>
+                        Close
+                    </a>
+
+                </div>
+
                 @endif
             </div>
 

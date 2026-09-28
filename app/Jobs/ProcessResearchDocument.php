@@ -200,9 +200,9 @@ class ProcessResearchDocument implements ShouldQueue
             $parts[] = "Year: {$studFile->publication_year}.";
         }
 
-        if ($studFile->research_type) {
-            $parts[] = "Type: {$studFile->research_type}.";
-        }
+        // if ($studFile->research_type) {
+        // $parts[] = "Type: {$studFile->research_type}.";
+        // }
 
         if ($studFile->keywords->isNotEmpty()) {
             $parts[] = 'Keywords: '.$studFile->keywords->pluck('display_name')->implode(', ').'.';
