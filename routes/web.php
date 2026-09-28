@@ -155,6 +155,9 @@ Route::middleware(['auth', 'role:admin'])->group(function () {
 
     Route::post('/research/{id}/reject', [AdminController::class, 'reject'])
         ->name('research.reject');
+
+    Route::delete('/admin/files/{file}', [AdminController::class, 'destroy'])
+        ->name('admin.files.destroy');
 });
 
 // student routes

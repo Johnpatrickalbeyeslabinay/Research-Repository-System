@@ -516,6 +516,24 @@
 
                         </button>
 
+                        <form action="{{ route('admin.files.destroy', $file->id) }}"
+                            method="POST"
+                            class="d-inline">
+
+                            @csrf
+                            @method('DELETE')
+
+                            <button type="submit"
+                                    class="btn btn-outline-danger rounded py-1"
+                                    onclick="return confirm('Are you sure you want to delete this research?')">
+
+                                <i class="bi bi-trash me-2"></i>
+                                Delete
+
+                            </button>
+
+                        </form>
+
 
 
 
