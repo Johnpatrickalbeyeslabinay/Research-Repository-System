@@ -16,19 +16,18 @@
 
     <!--navbar-->
 
-    <nav class="navbar navbar-expand-lg navbar-light bg-white text-dark fixed-top shadow-sm">
+    <nav class="navbar navbar-light bg-white text-dark fixed-top shadow-sm home-navbar">
 
-        <div class="container-fluid">
+        <div class="container-fluid home-navbar-inner">
 
             <!-- Title -->
-            <div class="d-flex align-items-center">
+            <div class="d-flex align-items-center home-brand">
 
                     <img width="70" height="70" decoding="async" src="{{ asset('images/logo-192.webp') }}"
                         alt="CSU Aparri Logo"
-                        class="me-3 rounded-circle"
-                        style="width:70px;height:70px;object-fit:cover;">
+                        class="me-3 rounded-circle home-brand-logo">
 
-                    <div class="d-flex flex-column">
+                    <div class="d-flex flex-column home-brand-copy">
                         <h5 class="fw-bold mb-0">CSU APARRI</h5>
                         <small class="fw-bold text-secondary">Fisheries Program</small>
                     </div>
@@ -36,15 +35,15 @@
                 </div>
 
             <!-- login and register buttons -->
-            <div class="ms-auto d-flex gap-2">
+            <div class="ms-auto d-flex gap-2 home-nav-actions">
                 @if (Route::has('public'))
-                    <a href="{{ route('public') }}" class="btn border border-dark text-dark px-2 py-1">Browse Repository</a>
+                    <a href="{{ route('public') }}" class="btn home-browse-button">Browse Repository</a>
                 @else
                     <a href="#" class="btn">Browse Repository</a>
                 @endif
 
                 @if (Route::has('login'))
-                    <a href="{{ route('login') }}" class="btn text-white px-2 py-1 me-3" style="background:navy;">Student Login</a>
+                    <a href="{{ route('login') }}" class="btn home-login-button">Student Login</a>
                 @else
                     <a href="#" class="btn btn-outline-light text-white fw-bold px-2 py-1">Student Login</a>
                 @endif

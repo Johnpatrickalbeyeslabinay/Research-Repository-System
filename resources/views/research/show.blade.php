@@ -1,63 +1,136 @@
-@extends('layouts.public_layout')
+@extends($isPublicView ? 'layouts.public_layout' : 'layouts.repository_layout')
 
 @section('title', $file->title)
 
-@section('public')
+@section($isPublicView ? 'public' : 'repository')
+    @php
+        $researchers = $file->researcherNames();
+        $publishedYear = $file->publication_year ?? $file->created_at?->format('Y');
+    @endphp
 
-    <a href="{{ url()->previous(route('repository')) }}" class="text-decoration-none text-secondary mb-3 d-inline-block">
-        <i class="fa-solid fa-arrow-left me-2"></i>Back
-    </a>
+    <main class="research-detail">
+        <a href="{{ $backUrl }}" class="research-back-link">
+            <i data-lucide="arrow-left" aria-hidden="true"></i>
+            <span>Back to repository</span>
+        </a>
 
-    <div class="card shadow-sm border-0 rounded-4">
-        <div class="card-body p-4 p-md-5">
+        <header class="research-detail-header">
+            <div class="research-detail-heading">
+                <div class="research-detail-kicker">
+                    @if ($file->research_type)
+                        <span>{{ $file->research_type }}</span>
+                    @endif
+                    @if ($publishedYear)
+                        <span>{{ $publishedYear }}</span>
+                    @endif
+                </div>
 
-            <h3 class="fw-bold mb-3">{{ $file->title }}</h3>
+                <h1>{{ $file->title }}</h1>
 
-            <x-research.meta :file="$file" />
-
-            <hr class="my-4">
-
-            <h6 class="text-uppercase text-secondary small fw-bold mb-2">Abstract</h6>
-            <p class="mb-4">{{ $file->desc ?? 'No abstract available.' }}</p>
-
-            <div class="d-flex gap-2 flex-wrap">
-                @if ($canAccessPdf)
-                    <a data-turbo="false" href="{{ route('file.view', ['id' => $file->id]) }}"
-                        class="btn text-white rounded-2 px-4 py-2" style="background:#072a89;">
-                        <i class="bi bi-eye me-2"></i>View PDF
-                    </a>
-
-                    <a data-turbo="false" href="{{ route('file.download', $file->id) }}"
-                        class="btn btn-outline-secondary rounded-2 px-4 py-2">
-                        <i class="bi bi-download me-2"></i>Download
-                    </a>
-
-                    <button type="button" popovertarget="ai-chat-panel"
-                        class="btn btn-outline-secondary rounded-2 px-4 py-2">
-                        <i class="bi bi-chat-left-text me-2"></i>Ask about this research
-                    </button>
-                @else
-                    {{-- file.view AND file.download are both auth-only, and
-                         this page is deliberately open to anonymous
-                         /public visitors — a View/Download button that
-                         just silently redirected to /login (the old
-                         behavior on the repository/public listing pages)
-                         is worse than not showing one at all. --}}
-                    <a href="{{ route('login') }}" class="btn text-white rounded-2 px-4 py-2" style="background:#072a89;">
-                        <i class="bi bi-box-arrow-in-right me-2"></i>Sign in to view &amp; download
-                    </a>
+                @if (count($researchers))
+                    <p class="research-detail-authors">{{ implode(', ', $researchers) }}</p>
                 @endif
             </div>
 
+            <div class="research-detail-actions">
+                @if ($canAccessPdf)
+                    <a data-turbo="false" href="{{ route('file.view', $file->id) }}" class="btn research-primary-button">
+                        <i data-lucide="eye" aria-hidden="true"></i>
+                        <span>View PDF</span>
+                    </a>
+
+                    <a data-turbo="false" href="{{ route('file.download', $file->id) }}" class="btn repository-secondary-button">
+                        <i data-lucide="download" aria-hidden="true"></i>
+                        <span>Download</span>
+                    </a>
+
+                    <button type="button" popovertarget="ai-chat-panel" class="btn repository-secondary-button">
+                        <i data-lucide="message-circle-question" aria-hidden="true"></i>
+                        <span>Ask about this research</span>
+                    </button>
+                @elseif ($isPublicView && auth()->check())
+                    <a href="{{ route('research.show', $file->id) }}" class="btn research-primary-button">
+                        <span>Open in repository</span>
+                        <i data-lucide="arrow-right" aria-hidden="true"></i>
+                    </a>
+                @else
+                    <a href="{{ route('login') }}" class="btn research-primary-button">
+                        <i data-lucide="log-in" aria-hidden="true"></i>
+                        <span>Sign in to view PDF</span>
+                    </a>
+                @endif
+            </div>
+        </header>
+
+        <div class="research-detail-content">
+            <article class="research-abstract">
+                <p class="research-section-label">Abstract</p>
+                <h2>About this research</h2>
+                <p>{{ $file->desc ?: 'No abstract is available for this research.' }}</p>
+
+                @if ($file->relationLoaded('keywords') && $file->keywords->isNotEmpty())
+                    <section class="research-detail-taxonomy" aria-labelledby="research-keywords-heading">
+                        <h3 id="research-keywords-heading">Keywords</h3>
+                        <div class="research-card-tags">
+                            @foreach ($file->keywords as $keyword)
+                                <span class="research-tag research-tag-keyword">{{ $keyword->display_name }}</span>
+                            @endforeach
+                        </div>
+                    </section>
+                @endif
+
+                @if ($file->relationLoaded('sdgs') && $file->sdgs->isNotEmpty())
+                    <section class="research-detail-taxonomy" aria-labelledby="research-sdgs-heading">
+                        <h3 id="research-sdgs-heading">Sustainable Development Goals</h3>
+                        <div class="research-card-tags">
+                            @foreach ($file->sdgs as $goal)
+                                <span class="research-tag research-tag-sdg">{{ $goal->label }}</span>
+                            @endforeach
+                        </div>
+                    </section>
+                @endif
+            </article>
+
+            <aside class="research-detail-meta" aria-label="Research information">
+                <p class="research-section-label">Research information</p>
+                <dl>
+                    @if ($file->adviser)
+                        <div>
+                            <dt>Adviser</dt>
+                            <dd>{{ $file->adviser }}</dd>
+                        </div>
+                    @endif
+                    @if ($file->research_type)
+                        <div>
+                            <dt>Research type</dt>
+                            <dd>{{ $file->research_type }}</dd>
+                        </div>
+                    @endif
+                    @if ($publishedYear)
+                        <div>
+                            <dt>Published</dt>
+                            <dd>{{ $publishedYear }}</dd>
+                        </div>
+                    @endif
+                    @if ($file->pdf_page_count)
+                        <div>
+                            <dt>Document</dt>
+                            <dd>{{ $file->pdf_page_count }} pages</dd>
+                        </div>
+                    @endif
+                </dl>
+
+                <div class="research-detail-stats">
+                    <span><i data-lucide="eye" aria-hidden="true"></i>{{ number_format($file->views ?? 0) }} views</span>
+                    <span><i data-lucide="download" aria-hidden="true"></i>{{ number_format($file->downloads ?? 0) }} downloads</span>
+                </div>
+
+                <x-research.meta :file="$file" :show="['index-status']" compact />
+            </aside>
         </div>
-    </div>
+    </main>
 
     @if ($canAccessPdf)
-        {{-- Chat routes are auth-only (routes/web.php) — matches
-             $canAccessPdf (Auth::check()) exactly, so this never renders
-             for the anonymous /public visitors this page is otherwise
-             open to. --}}
         <x-chat.widget :stud-file-id="$file->id" :stud-file-title="$file->title" />
     @endif
-
 @endsection

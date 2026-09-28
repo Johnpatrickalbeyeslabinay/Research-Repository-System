@@ -5,6 +5,49 @@ nav {
     z-index: 1000;
 }
 
+.home-navbar-inner {
+    padding: 8px 20px;
+}
+
+.home-brand-logo {
+    width: 56px;
+    height: 56px;
+    object-fit: cover;
+}
+
+.home-browse-button,
+.home-login-button {
+    display: inline-flex;
+    min-height: 40px;
+    align-items: center;
+    justify-content: center;
+    padding: 8px 12px;
+    border-radius: 6px;
+    font-weight: 600;
+}
+
+.home-browse-button {
+    border: 1px solid #173f6b;
+    color: #173f6b;
+}
+
+.home-browse-button:hover {
+    background: #f1f6fa;
+    color: #0f3156;
+}
+
+.home-login-button {
+    border: 1px solid #173f6b;
+    background: #173f6b;
+    color: #fff;
+}
+
+.home-login-button:hover {
+    border-color: #0f3156;
+    background: #0f3156;
+    color: #fff;
+}
+
 .user-manual-card {
     width: 100%;
     padding: 32px 44px;
@@ -49,6 +92,36 @@ nav {
 }
 
 @media (max-width: 768px) {
+    .home-navbar-inner {
+        flex-wrap: nowrap;
+        padding: 8px 12px;
+    }
+
+    .home-brand-logo {
+        width: 44px;
+        height: 44px;
+        margin-right: 8px !important;
+    }
+
+    .home-brand-copy small {
+        display: none;
+    }
+
+    .home-brand-copy h5 {
+        font-size: 0.86rem;
+    }
+
+    .home-nav-actions {
+        gap: 6px !important;
+    }
+
+    .home-browse-button,
+    .home-login-button {
+        min-height: 38px;
+        padding: 7px 9px;
+        font-size: 0.78rem;
+    }
+
     .user-manual-card {
         padding: 24px;
         flex-direction: column;
@@ -66,5 +139,18 @@ nav {
     .user-manual-btn {
         width: 100%;
         text-align: center;
+    }
+}
+
+@media (max-width: 430px) {
+    .home-brand-copy {
+        display: none !important;
+    }
+
+    .home-browse-button,
+    .home-login-button {
+        max-width: 108px;
+        line-height: 1.15;
+        white-space: normal;
     }
 }

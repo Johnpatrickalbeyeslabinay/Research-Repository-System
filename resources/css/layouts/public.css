@@ -1,3 +1,5 @@
+@import '../components/research-browser.css';
+
 /* Styles for resources/views/layouts/public_layout.blade.php — moved out of an inline <style>
    block so browsers cache them instead of re-downloading on every page. */
 
@@ -24,19 +26,4 @@
    A flex column instead: the content region grows to fill a short page
    (so the footer still sits at the bottom with no content above it) and
    the footer is simply pushed below on a long one. */
-body {
-  display: flex;
-  flex-direction: column;
-  min-height: 100vh;
-}
-
-.page-content {
-  flex: 1 0 auto;
-  /* Clears the .fixed-top navbar, which IS still out of flow. Replaces
-     three <br> tags that approximated the same thing. */
-  padding-top: 88px;
-}
-
-footer {
-  flex-shrink: 0;
-}
+body { display: flex; flex-direction: column; }
