@@ -189,7 +189,7 @@
                     1 => ['title', 'research_type', 'publication_year', 'advisers'],
                     2 => ['researchers'],
                     3 => ['file', 'desc', 'keywords', 'keyword_sources', 'sdg'],
-                    4 => ['visibility'],
+                    4 => [''],
                 ];
                 $createErrorStep = null;
                 if ($errors->any() && old('_popover_target', 'popover') === 'popover') {
@@ -411,37 +411,34 @@
                         </section>
 
                         <section class="rw-step-panel" data-wizard-step="4">
-                            <div data-step-body="4">
-                                <div class="mb-3">
-                                    <label class="form-label fw-semibold">Research Visibility</label>
+                        <div data-step-body="4">
 
-                                    <div class="row g-2">
-                                        <div class="col-6">
-                                            <input type="radio" class="btn-check" name="visibility"
-                                                id="public" value="public">
+                            <div class="mb-3">
 
-                                            <label class="visibility-option rw-visibility border border-1 border-success rounded-3 w-100 p-2 text-dark" for="public">
-                                                <i class="fa-solid fa-globe"></i>
-                                                <span><strong>Public</strong> <small class="text-muted">— visible in repository</small></span>
-                                            </label>
+                                <label class="form-label fw-semibold">
+                                    Research Visibility
+                                </label>
+
+                                <div class="alert alert-info rounded-3 mb-0">
+
+                                    <div class="d-flex align-items-start">
+
+                                        <i class="fa-solid fa-lock me-2 mt-1"></i>
+
+                                        <div>
+                                            <strong>Private during review</strong>
                                         </div>
 
-                                        <div class="col-6">
-                                            <input type="radio" class="btn-check" name="visibility"
-                                                id="private" value="private" checked>
-
-                                            <label class="visibility-private rw-visibility border border-1 border-secondary rounded-3 w-100 p-2" for="private">
-                                                <i class="fa-solid fa-lock"></i>
-                                                <span><strong>Private</strong> <small class="text-muted">— you, adviser &amp; admins</small></span>
-                                            </label>
-                                        </div>
                                     </div>
-                                    <small class="text-muted d-block mt-1">Public visibility takes effect once an admin approves it.</small>
+
                                 </div>
 
-                                <x-research.review-summary prefix="create" :expanded="true" />
                             </div>
-                        </section>
+
+                            <x-research.review-summary prefix="create" :expanded="true" />
+
+                        </div>
+                    </section>
 
                     </div>
 

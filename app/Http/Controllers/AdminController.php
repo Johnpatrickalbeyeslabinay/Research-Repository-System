@@ -285,27 +285,28 @@ class AdminController extends Controller
     {
         $file = UserFile::findOrFail($id);
 
-        // Previously unguarded — findOrFail() with no status check meant
-        // any file id could be "approved" via a direct POST regardless of
-        // where it actually was in the review pipeline (still with the
-        // instructor, already approved, already rejected). The UI only
-        // shows this button for admin_pending rows; now the server
-        // agrees.
-        abort_if($file->status !== 'admin_pending', 409, 'This research is not awaiting admin review.');
+        abort_if(
+            $file->status !== 'admin_pending',
+            409,
+            'This research is not awaiting admin review.'
+        );
 
+        // Final approval by admin = publish publicly
         $file->status = 'approved';
-
-        if ($file->requested_visibility === 'public') {
-            $file->visibility = 'public';
-        }
+        $file->visibility = 'public';
 
         $file->save();
 
         self::forgetResearchCaches($file);
 
-        $file->user->notify(new ResearchReviewedByAdmin($file, 'approved'));
+        $file->user->notify(
+            new ResearchReviewedByAdmin($file, 'approved')
+        );
 
-        return back()->with('success', 'Research approved successfully.');
+        return back()->with(
+            'success',
+            'Research approved and published successfully.'
+        );
     }
 
     // REJECT BTN

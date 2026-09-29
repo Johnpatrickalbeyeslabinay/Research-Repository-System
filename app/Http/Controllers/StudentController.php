@@ -203,6 +203,17 @@ class StudentController extends Controller
         $hash = $processed['hash'];
         $storagePath = "research_files/{$hash}.pdf";
 
+        // detect duplicate thesis
+        $duplicate = UserFile::where('pdf_hash', $hash)->first();
+
+        if ($duplicate) {
+            return back()
+                ->withErrors([
+                    'file' => 'This research document has already been uploaded.',
+                ])
+                ->withInput();
+        }
+
         // Content-addressed filename: re-uploading byte-identical content
         // (e.g. a duplicate submission) reuses the existing stored file
         // instead of writing (and later re-processing) it again. A revised
@@ -232,7 +243,6 @@ class StudentController extends Controller
             'downloads' => 0,
             'status' => 'pending',
             'visibility' => 'private',
-            'requested_visibility' => $request->visibility,
             'pdf_hash' => $hash,
             'pdf_page_count' => $processed['page_count'],
             'extracted_abstract' => $detected['abstract']['text'],
@@ -408,19 +418,38 @@ class StudentController extends Controller
         try {
             $processed = $this->pdfValidation->process($request->file('file'));
         } catch (PdfProcessingException $e) {
-            return response()->json(['success' => false, 'message' => $e->getMessage()], 422);
+            return response()->json([
+                'success' => false,
+                'message' => $e->getMessage(),
+            ], 422);
         }
 
-        $detected = $this->sectionDetector->detectCached($processed['hash'], $processed['pages'], $processed['full_text']);
+        /*
+         * EXACT DUPLICATE CHECK
+         *
+         * The PDF hash is generated from the actual uploaded file.
+         * If the same PDF already exists in UserFile, it is a duplicate.
+         */
+        $duplicate = UserFile::where('pdf_hash', $processed['hash'])->first();
+
+        $detected = $this->sectionDetector->detectCached(
+            $processed['hash'],
+            $processed['pages'],
+            $processed['full_text']
+        );
 
         return response()->json([
             'success' => true,
+
+            'duplicate' => $duplicate !== null,
+
+            'duplicate_message' => $duplicate
+                ? 'This research document has already been uploaded. Please select a different PDF.'
+                : null,
+
             'page_count' => $processed['page_count'],
             'abstract' => $detected['abstract'],
             'keywords' => $detected['keywords'],
-            // Only useful to the client when the abstract itself is
-            // missing/low-confidence — sent back to /research/analyze as
-            // fallback_excerpt in that case (see MetadataAnalysisService).
             'fallback_excerpt' => $detected['fallback_excerpt'],
         ]);
     }
@@ -485,16 +514,6 @@ class StudentController extends Controller
         $file->publication_year = $request->publication_year;
         $file->desc = $request->desc;
 
-        // Visibility changes go through the same admin-approval gate as a
-        // new submission: requesting "public" only takes effect once an
-        // admin approves it (mirrors store()). A student can, however,
-        // immediately self-restrict to private without waiting on approval.
-        $file->requested_visibility = $request->visibility;
-
-        if ($request->visibility === 'private') {
-            $file->visibility = 'private';
-        }
-
         // Keyword provenance: if the PDF isn't being replaced, fall back to
         // whatever this file's pivot already recorded as 'extracted' rather
         // than losing that distinction.
@@ -547,6 +566,8 @@ class StudentController extends Controller
 
         // Send back for approval
         $file->status = 'pending';
+
+        $file->save();
 
         $file->save();
 

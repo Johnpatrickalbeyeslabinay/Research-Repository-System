@@ -36,6 +36,22 @@
 
             <div data-dropzone-status class="small mt-2"></div>
 
+
+
+           <div data-dropzone-duplicate
+            class="alert alert-warning d-none mt-3 mb-0">
+            <div class="fw-semibold">
+                <i class="fa-solid fa-triangle-exclamation me-1"></i>
+                Duplicate Research Detected
+            </div>
+
+            <div data-dropzone-duplicate-message class="small mt-1"></div>
+        </div>
+
+
+
+
+
             <div class="mt-2">
                 <button type="button" class="btn btn-outline-secondary btn-sm" data-dropzone-replace>
                     Replace File

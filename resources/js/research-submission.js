@@ -12,9 +12,9 @@
 // list when the student clicks them.
 
 function csrfTokenFor(root) {
-    const form = root.closest('form');
+    const form = root.closest("form");
     const input = form && form.querySelector('input[name="_token"]');
-    return input ? input.value : '';
+    return input ? input.value : "";
 }
 
 function formatBytes(bytes) {
@@ -29,54 +29,75 @@ function safeInit(label, fn) {
     try {
         fn();
     } catch (error) {
-        console.error(`[research-submission] ${label} failed to initialize`, error);
+        console.error(
+            `[research-submission] ${label} failed to initialize`,
+            error,
+        );
     }
 }
 
 function initDropzone(root) {
-    const input = root.querySelector('[data-dropzone-input]');
-    const empty = root.querySelector('[data-dropzone-empty]');
-    const result = root.querySelector('[data-dropzone-result]');
-    const filename = root.querySelector('[data-dropzone-filename]');
-    const filesize = root.querySelector('[data-dropzone-filesize]');
-    const status = root.querySelector('[data-dropzone-status]');
-    const replaceBtn = root.querySelector('[data-dropzone-replace]');
-    const errorBox = root.closest('.mb-3')?.querySelector('[data-dropzone-error]');
+    const input = root.querySelector("[data-dropzone-input]");
+    const empty = root.querySelector("[data-dropzone-empty]");
+    const result = root.querySelector("[data-dropzone-result]");
+    const filename = root.querySelector("[data-dropzone-filename]");
+    const filesize = root.querySelector("[data-dropzone-filesize]");
+    const status = root.querySelector("[data-dropzone-status]");
+    const replaceBtn = root.querySelector("[data-dropzone-replace]");
+    const errorBox = root
+        .closest(".mb-3")
+        ?.querySelector("[data-dropzone-error]");
     const prefix = root.dataset.prefix;
     // Config comes from data attributes (rendered from config('research.*')
     // and route()) rather than being hardcoded, so both the size limit and
     // the endpoint stay correct if either changes.
     const maxBytes = Number(root.dataset.maxBytes) || 10 * 1024 * 1024;
-    const analyzeUrl = root.dataset.analyzeUrl || '/research/pdf/analyze';
+    const analyzeUrl = root.dataset.analyzeUrl || "/research/pdf/analyze";
 
-    const form = root.closest('form');
-    if (!input || !empty || !result || !filename || !filesize || !status || !errorBox || !form) {
-        console.error('[research-submission] dropzone is missing required markup, skipping init', root);
+    const form = root.closest("form");
+    if (
+        !input ||
+        !empty ||
+        !result ||
+        !filename ||
+        !filesize ||
+        !status ||
+        !errorBox ||
+        !form
+    ) {
+        console.error(
+            "[research-submission] dropzone is missing required markup, skipping init",
+            root,
+        );
         return;
     }
 
-    const abstractField = form.querySelector('[data-abstract-field]');
-    const abstractBadge = form.querySelector('[data-abstract-badge]');
+    const abstractField = form.querySelector("[data-abstract-field]");
+    const abstractBadge = form.querySelector("[data-abstract-badge]");
     const keywordInputEl = form.querySelector(`#keywords-${prefix}`);
-    const fallbackExcerptField = form.querySelector('[data-fallback-excerpt-field]');
+    const fallbackExcerptField = form.querySelector(
+        "[data-fallback-excerpt-field]",
+    );
 
     // Only present on the redesigned wizard's Document step — the Update
     // Research form doesn't have this markup, so every reference below is
     // null-guarded and simply no-ops there (it keeps the plain "couldn't
     // detect / enter manually" message instead).
-    const previewBox = form.querySelector('[data-abstract-preview]');
-    const previewText = form.querySelector('[data-abstract-preview-text]');
-    const previewUseBtn = form.querySelector('[data-abstract-preview-use]');
-    const previewDismissBtn = form.querySelector('[data-abstract-preview-dismiss]');
+    const previewBox = form.querySelector("[data-abstract-preview]");
+    const previewText = form.querySelector("[data-abstract-preview-text]");
+    const previewUseBtn = form.querySelector("[data-abstract-preview-use]");
+    const previewDismissBtn = form.querySelector(
+        "[data-abstract-preview-dismiss]",
+    );
 
     function showError(message) {
-        errorBox.textContent = message || '';
-        root.classList.toggle('border-danger', Boolean(message));
+        errorBox.textContent = message || "";
+        root.classList.toggle("border-danger", Boolean(message));
     }
 
     function showSelected(file) {
-        empty.classList.add('d-none');
-        result.classList.remove('d-none');
+        empty.classList.add("d-none");
+        result.classList.remove("d-none");
         filename.textContent = file.name;
         filesize.textContent = formatBytes(file.size);
     }
@@ -84,67 +105,110 @@ function initDropzone(root) {
     // Purely a panel reset — callers own whether an error message survives
     // the reset (previously this always cleared it via showError(''),
     // which meant every rejection error vanished the instant it was shown).
+    //function showEmpty() {
+    //empty.classList.remove("d-none");
+    //result.classList.add("d-none");
+    //status.innerHTML = "";
+    //input.value = "";
+    //}
+
     function showEmpty() {
-        empty.classList.remove('d-none');
-        result.classList.add('d-none');
-        status.innerHTML = '';
-        input.value = '';
+        empty.classList.remove("d-none");
+        result.classList.add("d-none");
+        status.innerHTML = "";
+        input.value = "";
+        root.dataset.duplicate = "false";
     }
 
     function hidePreview() {
-        if (previewBox) previewBox.classList.add('d-none');
+        if (previewBox) previewBox.classList.add("d-none");
     }
 
     if (previewUseBtn) {
-        previewUseBtn.addEventListener('click', () => {
+        previewUseBtn.addEventListener("click", () => {
             if (abstractField && previewText) {
                 abstractField.value = previewText.textContent;
-                abstractField.dispatchEvent(new Event('input', { bubbles: true }));
+                abstractField.dispatchEvent(
+                    new Event("input", { bubbles: true }),
+                );
             }
             hidePreview();
         });
     }
 
     if (previewDismissBtn) {
-        previewDismissBtn.addEventListener('click', () => {
+        previewDismissBtn.addEventListener("click", () => {
             hidePreview();
             if (abstractField) abstractField.focus();
         });
     }
 
     function analyze(file) {
-        status.innerHTML = '<span class="text-muted"><span class="spinner-border spinner-border-sm me-1"></span>Validating document…</span>';
+        status.innerHTML =
+            '<span class="text-muted"><span class="spinner-border spinner-border-sm me-1"></span>Validating document…</span>';
 
         const data = new FormData();
-        data.append('file', file);
+        data.append("file", file);
 
         fetch(analyzeUrl, {
-            method: 'POST',
+            method: "POST",
             headers: {
-                'X-CSRF-TOKEN': csrfTokenFor(root),
-                Accept: 'application/json',
+                "X-CSRF-TOKEN": csrfTokenFor(root),
+                Accept: "application/json",
             },
             body: data,
         })
             .then((res) => res.json().then((body) => ({ ok: res.ok, body })))
             .then(({ ok, body }) => {
                 if (!ok || !body.success) {
-                    const message = body.message || 'This PDF could not be validated.';
+                    const message =
+                        body.message || "This PDF could not be validated.";
                     status.innerHTML = `<span class="text-danger"><i class="bi bi-exclamation-triangle me-1"></i>${message}</span>`;
                     showError(message);
                     return;
                 }
 
-                let statusHtml = '<span class="text-success"><i class="bi bi-check-circle me-1"></i>Document validated</span>';
+                // EXACT DUPLICATE CHECK
+                if (body.duplicate) {
+                    const message =
+                        body.duplicate_message ||
+                        "This research document has already been uploaded. Please select a different PDF.";
 
-                if (fallbackExcerptField) {
-                    fallbackExcerptField.value = body.fallback_excerpt || '';
+                    status.innerHTML = `
+            <span class="text-danger">
+                <i class="bi bi-exclamation-triangle me-1"></i>
+                ${message}
+            </span>
+        `;
+
+                    showError(message);
+
+                    // Prevent accidental submission of the duplicate file.
+                    root.dataset.duplicate = "true";
+
+                    return;
                 }
 
-                const hasAbstractText = Boolean(body.abstract && body.abstract.text);
-                const isHighConfidence = hasAbstractText && body.abstract.confidence === 'high';
+                // File is not a duplicate.
+                root.dataset.duplicate = "false";
 
-                if (isHighConfidence && abstractField && !abstractField.value.trim()) {
+                let statusHtml =
+                    '<span class="text-success"><i class="bi bi-check-circle me-1"></i>Document validated</span>';
+                if (fallbackExcerptField) {
+                    fallbackExcerptField.value = body.fallback_excerpt || "";
+                }
+
+                const hasAbstractText = Boolean(
+                    body.abstract && body.abstract.text,
+                );
+                const isHighConfidence =
+                    hasAbstractText && body.abstract.confidence === "high";
+
+                if (
+                    isHighConfidence &&
+                    abstractField &&
+                    !abstractField.value.trim()
+                ) {
                     abstractField.value = body.abstract.text;
                     // Setting .value directly doesn't fire 'input', so
                     // the "Analyze Research" button's enable/disable
@@ -153,7 +217,9 @@ function initDropzone(root) {
                     // at the form level) never re-run — the button was
                     // staying disabled forever after an auto-filled
                     // abstract, with no visible sign why.
-                    abstractField.dispatchEvent(new Event('input', { bubbles: true }));
+                    abstractField.dispatchEvent(
+                        new Event("input", { bubbles: true }),
+                    );
 
                     if (abstractBadge) {
                         // A confident word-count match can still be the
@@ -162,44 +228,58 @@ function initDropzone(root) {
                         // this "not right?" escape hatch stays available
                         // even on a high-confidence auto-fill, rather than
                         // only ever surfacing on low confidence.
-                        abstractBadge.innerHTML = '✓ Abstract extracted from document — '
-                            + '<button type="button" class="btn btn-link btn-sm p-0 align-baseline" data-abstract-clear>not right? Clear it</button>';
-                        abstractBadge.classList.remove('d-none', 'text-muted');
-                        abstractBadge.classList.add('text-success');
+                        abstractBadge.innerHTML =
+                            "✓ Abstract extracted from document — " +
+                            '<button type="button" class="btn btn-link btn-sm p-0 align-baseline" data-abstract-clear>not right? Clear it</button>';
+                        abstractBadge.classList.remove("d-none", "text-muted");
+                        abstractBadge.classList.add("text-success");
 
-                        const clearBtn = abstractBadge.querySelector('[data-abstract-clear]');
+                        const clearBtn = abstractBadge.querySelector(
+                            "[data-abstract-clear]",
+                        );
                         if (clearBtn) {
-                            clearBtn.addEventListener('click', () => {
-                                abstractField.value = '';
-                                abstractField.dispatchEvent(new Event('input', { bubbles: true }));
-                                abstractBadge.classList.add('d-none');
+                            clearBtn.addEventListener("click", () => {
+                                abstractField.value = "";
+                                abstractField.dispatchEvent(
+                                    new Event("input", { bubbles: true }),
+                                );
+                                abstractBadge.classList.add("d-none");
                             });
                         }
                     }
 
-                    statusHtml += '<br><span class="text-success"><i class="bi bi-check-circle me-1"></i>Abstract detected</span>';
+                    statusHtml +=
+                        '<br><span class="text-success"><i class="bi bi-check-circle me-1"></i>Abstract detected</span>';
                 } else if (hasAbstractText && previewBox && previewText) {
                     // Low confidence (or the field already has manually-
                     // typed content): show what was found and let the
                     // student decide, rather than silently overwriting or
                     // silently discarding it.
                     previewText.textContent = body.abstract.text;
-                    previewBox.classList.remove('d-none');
-                    if (abstractBadge) abstractBadge.classList.add('d-none');
+                    previewBox.classList.remove("d-none");
+                    if (abstractBadge) abstractBadge.classList.add("d-none");
                 } else if (abstractBadge) {
-                    abstractBadge.textContent = "We couldn't reliably detect an abstract — please enter it manually.";
-                    abstractBadge.classList.remove('d-none', 'text-success');
-                    abstractBadge.classList.add('text-muted');
+                    abstractBadge.textContent =
+                        "We couldn't reliably detect an abstract — please enter it manually.";
+                    abstractBadge.classList.remove("d-none", "text-success");
+                    abstractBadge.classList.add("text-muted");
                 }
 
-                if (keywordInputEl && Array.isArray(body.keywords) && body.keywords.length) {
-                    body.keywords.forEach((kw) => keywordSuggestionAdd(keywordInputEl, kw, 'extracted'));
+                if (
+                    keywordInputEl &&
+                    Array.isArray(body.keywords) &&
+                    body.keywords.length
+                ) {
+                    body.keywords.forEach((kw) =>
+                        keywordSuggestionAdd(keywordInputEl, kw, "extracted"),
+                    );
                 }
 
                 status.innerHTML = statusHtml;
             })
             .catch(() => {
-                const message = 'Could not validate this file right now. You can still submit — it will be re-checked on submission.';
+                const message =
+                    "Could not validate this file right now. You can still submit — it will be re-checked on submission.";
                 status.innerHTML = `<span class="text-danger"><i class="bi bi-exclamation-triangle me-1"></i>${message}</span>`;
             });
     }
@@ -207,9 +287,14 @@ function initDropzone(root) {
     function handleFile(file) {
         if (!file) return;
 
-        if (file.type !== 'application/pdf' && !file.name.toLowerCase().endsWith('.pdf')) {
+        root.dataset.duplicate = "false";
+
+        if (
+            file.type !== "application/pdf" &&
+            !file.name.toLowerCase().endsWith(".pdf")
+        ) {
             showEmpty();
-            showError('Only PDF files are allowed.');
+            showError("Only PDF files are allowed.");
             return;
         }
 
@@ -219,7 +304,7 @@ function initDropzone(root) {
             return;
         }
 
-        showError('');
+        showError("");
         showSelected(file);
         analyze(file);
     }
@@ -228,44 +313,47 @@ function initDropzone(root) {
     // upload or drag and drop") — the inner link is still a real <button>
     // for keyboard/focus semantics, but doesn't need its own handler since
     // its click bubbles up to this one.
-    root.addEventListener('click', (e) => {
+    root.addEventListener("click", (e) => {
         if (replaceBtn && replaceBtn.contains(e.target)) return;
-        if (!empty.classList.contains('d-none')) {
+        if (!empty.classList.contains("d-none")) {
             input.click();
         }
     });
 
-    root.addEventListener('keydown', (e) => {
-        if ((e.key === 'Enter' || e.key === ' ') && !empty.classList.contains('d-none')) {
+    root.addEventListener("keydown", (e) => {
+        if (
+            (e.key === "Enter" || e.key === " ") &&
+            !empty.classList.contains("d-none")
+        ) {
             e.preventDefault();
             input.click();
         }
     });
 
     if (replaceBtn) {
-        replaceBtn.addEventListener('click', () => {
-            showError('');
+        replaceBtn.addEventListener("click", () => {
+            showError("");
             input.click();
         });
     }
 
-    input.addEventListener('change', () => handleFile(input.files[0]));
+    input.addEventListener("change", () => handleFile(input.files[0]));
 
-    ['dragover', 'dragenter'].forEach((evt) =>
+    ["dragover", "dragenter"].forEach((evt) =>
         root.addEventListener(evt, (e) => {
             e.preventDefault();
-            root.classList.add('border-primary');
-        })
+            root.classList.add("border-primary");
+        }),
     );
 
-    ['dragleave', 'drop'].forEach((evt) =>
+    ["dragleave", "drop"].forEach((evt) =>
         root.addEventListener(evt, (e) => {
             e.preventDefault();
-            root.classList.remove('border-primary');
-        })
+            root.classList.remove("border-primary");
+        }),
     );
 
-    root.addEventListener('drop', (e) => {
+    root.addEventListener("drop", (e) => {
         const file = e.dataTransfer.files[0];
         if (file) {
             input.files = e.dataTransfer.files;
@@ -282,50 +370,65 @@ function initDropzone(root) {
     // this too before letting the student leave the Document step — this
     // submit-time check is what catches it on the Update Research form,
     // which has no wizard.)
-    if (root.dataset.required === 'true') {
-        form.addEventListener('submit', (e) => {
+    //if (root.dataset.required === "true") {
+    //  form.addEventListener("submit", (e) => {
+    //     if (input.files.length === 0) {
+    //        e.preventDefault();
+    //        showError("Please attach your research PDF.");
+    //       root.scrollIntoView({ behavior: "smooth", block: "center" });
+    //   }
+    // });
+    // }
+
+    if (root.dataset.required === "true") {
+        form.addEventListener("submit", (e) => {
             if (input.files.length === 0) {
                 e.preventDefault();
-                showError('Please attach your research PDF.');
-                root.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                showError("Please attach your research PDF.");
+                root.scrollIntoView({
+                    behavior: "smooth",
+                    block: "center",
+                });
             }
         });
     }
 }
 
-function keywordInputAdd(root, text, source = 'manual') {
-    text = (text || '').trim();
+function keywordInputAdd(root, text, source = "manual") {
+    text = (text || "").trim();
     if (!text) return;
 
-    const chips = root.querySelector('[data-keyword-chips]');
+    const chips = root.querySelector("[data-keyword-chips]");
     const normalized = text.toLowerCase();
 
-    const already = Array.from(chips.querySelectorAll('[data-keyword-value]'))
-        .some((el) => el.dataset.keywordValue.toLowerCase() === normalized);
+    const already = Array.from(
+        chips.querySelectorAll("[data-keyword-value]"),
+    ).some((el) => el.dataset.keywordValue.toLowerCase() === normalized);
     if (already) return;
 
-    const chip = document.createElement('span');
-    chip.className = 'badge rounded-pill text-dark border d-inline-flex align-items-center gap-2 px-3 py-2';
-    chip.style.background = source === 'ai_suggested' ? '#f3e8ff' : '#eef2ff';
+    const chip = document.createElement("span");
+    chip.className =
+        "badge rounded-pill text-dark border d-inline-flex align-items-center gap-2 px-3 py-2";
+    chip.style.background = source === "ai_suggested" ? "#f3e8ff" : "#eef2ff";
     chip.dataset.keywordValue = text;
     chip.dataset.keywordSource = source;
 
-    const label = document.createElement('span');
-    if (source === 'ai_suggested') {
-        const icon = document.createElement('i');
-        icon.className = 'bi bi-stars';
+    const label = document.createElement("span");
+    if (source === "ai_suggested") {
+        const icon = document.createElement("i");
+        icon.className = "bi bi-stars";
         label.appendChild(icon);
         label.append(` ${text}`);
     } else {
         label.textContent = text;
     }
 
-    const removeBtn = document.createElement('button');
-    removeBtn.type = 'button';
-    removeBtn.className = 'btn-close';
-    removeBtn.style.fontSize = '.55rem';
-    removeBtn.setAttribute('aria-label', 'Remove');
-    removeBtn.addEventListener('click', () => {
+    const removeBtn = document.createElement("button");
+    removeBtn.type = "button";
+    removeBtn.className = "btn-close";
+    removeBtn.style.fontSize = ".55rem";
+    removeBtn.setAttribute("aria-label", "Remove");
+    removeBtn.addEventListener("click", () => {
         chip.remove();
         syncKeywordHiddenInputs(root);
     });
@@ -336,13 +439,13 @@ function keywordInputAdd(root, text, source = 'manual') {
 }
 
 function syncKeywordHiddenInputs(root) {
-    const container = root.querySelector('[data-keyword-hidden-inputs]');
-    container.innerHTML = '';
+    const container = root.querySelector("[data-keyword-hidden-inputs]");
+    container.innerHTML = "";
 
-    root.querySelectorAll('[data-keyword-value]').forEach((chip) => {
-        const hidden = document.createElement('input');
-        hidden.type = 'hidden';
-        hidden.name = 'keywords[]';
+    root.querySelectorAll("[data-keyword-value]").forEach((chip) => {
+        const hidden = document.createElement("input");
+        hidden.type = "hidden";
+        hidden.name = "keywords[]";
         hidden.value = chip.dataset.keywordValue;
         container.appendChild(hidden);
 
@@ -351,10 +454,10 @@ function syncKeywordHiddenInputs(root) {
         // AI suggestion apart from a hand-typed keyword. The server never
         // trusts this for 'extracted': that tag is always re-derived by
         // re-matching against the freshly re-extracted PDF text.
-        const sourceHidden = document.createElement('input');
-        sourceHidden.type = 'hidden';
-        sourceHidden.name = 'keyword_sources[]';
-        sourceHidden.value = chip.dataset.keywordSource || 'manual';
+        const sourceHidden = document.createElement("input");
+        sourceHidden.type = "hidden";
+        sourceHidden.name = "keyword_sources[]";
+        sourceHidden.value = chip.dataset.keywordSource || "manual";
         container.appendChild(sourceHidden);
     });
 }
@@ -365,86 +468,96 @@ function syncKeywordHiddenInputs(root) {
  * added (false if it's a duplicate, already accepted, or was previously
  * dismissed and shouldn't come back on a re-analyze).
  */
-function keywordSuggestionAdd(root, text, source = 'extracted') {
-    text = (text || '').trim();
+function keywordSuggestionAdd(root, text, source = "extracted") {
+    text = (text || "").trim();
     if (!text) return false;
 
     const normalized = text.toLowerCase();
 
-    const acceptedAlready = Array.from(root.querySelectorAll('[data-keyword-value]'))
-        .some((el) => el.dataset.keywordValue.toLowerCase() === normalized);
+    const acceptedAlready = Array.from(
+        root.querySelectorAll("[data-keyword-value]"),
+    ).some((el) => el.dataset.keywordValue.toLowerCase() === normalized);
     if (acceptedAlready) return false;
 
     if (!root._dismissedKeywords) root._dismissedKeywords = new Set();
     if (root._dismissedKeywords.has(normalized)) return false;
 
-    const tray = root.querySelector('[data-keyword-suggestions]');
-    const chips = root.querySelector('[data-keyword-suggestion-chips]');
+    const tray = root.querySelector("[data-keyword-suggestions]");
+    const chips = root.querySelector("[data-keyword-suggestion-chips]");
     if (!tray || !chips) return false;
 
-    const alreadySuggested = Array.from(chips.querySelectorAll('[data-suggestion-value]'))
-        .some((el) => el.dataset.suggestionValue.toLowerCase() === normalized);
+    const alreadySuggested = Array.from(
+        chips.querySelectorAll("[data-suggestion-value]"),
+    ).some((el) => el.dataset.suggestionValue.toLowerCase() === normalized);
     if (alreadySuggested) return false;
 
-    const chip = document.createElement('button');
-    chip.type = 'button';
-    chip.className = 'keyword-suggestion-chip';
+    const chip = document.createElement("button");
+    chip.type = "button";
+    chip.className = "keyword-suggestion-chip";
     chip.dataset.suggestionValue = text;
 
-    const icon = document.createElement('i');
-    icon.className = 'bi bi-plus-lg me-1';
+    const icon = document.createElement("i");
+    icon.className = "bi bi-plus-lg me-1";
     chip.appendChild(icon);
     chip.append(text);
 
-    chip.addEventListener('click', () => {
+    chip.addEventListener("click", () => {
         keywordInputAdd(root, text, source);
         chip.remove();
-        if (!chips.children.length) tray.classList.add('d-none');
+        if (!chips.children.length) tray.classList.add("d-none");
     });
 
     chips.appendChild(chip);
-    tray.classList.remove('d-none');
+    tray.classList.remove("d-none");
 
     return true;
 }
 
 function initKeywordInput(root) {
-    const textInput = root.querySelector('[data-keyword-text-input]');
-    const addBtn = root.querySelector('[data-keyword-add-btn]');
-    const addAllBtn = root.querySelector('[data-keyword-suggestions-add-all]');
-    const dismissBtn = root.querySelector('[data-keyword-suggestions-dismiss]');
+    const textInput = root.querySelector("[data-keyword-text-input]");
+    const addBtn = root.querySelector("[data-keyword-add-btn]");
+    const addAllBtn = root.querySelector("[data-keyword-suggestions-add-all]");
+    const dismissBtn = root.querySelector("[data-keyword-suggestions-dismiss]");
 
     function addFromInput() {
         keywordInputAdd(root, textInput.value);
-        textInput.value = '';
+        textInput.value = "";
     }
 
-    addBtn.addEventListener('click', addFromInput);
-    textInput.addEventListener('keydown', (e) => {
-        if (e.key === 'Enter' || e.key === ',') {
+    addBtn.addEventListener("click", addFromInput);
+    textInput.addEventListener("keydown", (e) => {
+        if (e.key === "Enter" || e.key === ",") {
             e.preventDefault();
             addFromInput();
         }
     });
 
     if (addAllBtn) {
-        addAllBtn.addEventListener('click', () => {
-            const chips = root.querySelector('[data-keyword-suggestion-chips]');
-            Array.from(chips.querySelectorAll('[data-suggestion-value]')).forEach((chip) => chip.click());
+        addAllBtn.addEventListener("click", () => {
+            const chips = root.querySelector("[data-keyword-suggestion-chips]");
+            Array.from(
+                chips.querySelectorAll("[data-suggestion-value]"),
+            ).forEach((chip) => chip.click());
         });
     }
 
     if (dismissBtn) {
-        dismissBtn.addEventListener('click', () => {
-            const chips = root.querySelector('[data-keyword-suggestion-chips]');
+        dismissBtn.addEventListener("click", () => {
+            const chips = root.querySelector("[data-keyword-suggestion-chips]");
             if (!root._dismissedKeywords) root._dismissedKeywords = new Set();
 
-            Array.from(chips.querySelectorAll('[data-suggestion-value]')).forEach((chip) => {
-                root._dismissedKeywords.add(chip.dataset.suggestionValue.toLowerCase());
+            Array.from(
+                chips.querySelectorAll("[data-suggestion-value]"),
+            ).forEach((chip) => {
+                root._dismissedKeywords.add(
+                    chip.dataset.suggestionValue.toLowerCase(),
+                );
                 chip.remove();
             });
 
-            root.querySelector('[data-keyword-suggestions]')?.classList.add('d-none');
+            root.querySelector("[data-keyword-suggestions]")?.classList.add(
+                "d-none",
+            );
         });
     }
 
@@ -455,11 +568,13 @@ function initKeywordInput(root) {
     // StudentController::syncKeywords), so this tag is cosmetic only.
     let seed = [];
     try {
-        seed = JSON.parse(root.dataset.seed || '[]');
+        seed = JSON.parse(root.dataset.seed || "[]");
     } catch {
         seed = [];
     }
-    seed.forEach((k) => keywordInputAdd(root, typeof k === 'string' ? k : k.text, 'extracted'));
+    seed.forEach((k) =>
+        keywordInputAdd(root, typeof k === "string" ? k : k.text, "extracted"),
+    );
 }
 
 function updateSdgSummary(form, prefix) {
@@ -468,27 +583,29 @@ function updateSdgSummary(form, prefix) {
 
     let byId = {};
     try {
-        byId = JSON.parse(section.dataset.sdgById || '{}');
+        byId = JSON.parse(section.dataset.sdgById || "{}");
     } catch {
         byId = {};
     }
 
-    const checked = section.querySelectorAll('.sdg-checkbox:checked');
-    const summary = section.querySelector('[data-sdg-summary]');
+    const checked = section.querySelectorAll(".sdg-checkbox:checked");
+    const summary = section.querySelector("[data-sdg-summary]");
 
-    summary.innerHTML = '';
+    summary.innerHTML = "";
 
     if (checked.length === 0) {
-        summary.classList.add('d-none');
+        summary.classList.add("d-none");
     } else {
-        summary.classList.remove('d-none');
+        summary.classList.remove("d-none");
 
         checked.forEach((cb) => {
             const info = byId[cb.value];
-            const badge = document.createElement('span');
-            badge.className = 'badge rounded-pill text-dark border px-3 py-2';
-            badge.style.background = '#eef2ff';
-            badge.textContent = info ? `SDG ${info.number} – ${info.name}` : `SDG ${cb.value}`;
+            const badge = document.createElement("span");
+            badge.className = "badge rounded-pill text-dark border px-3 py-2";
+            badge.style.background = "#eef2ff";
+            badge.textContent = info
+                ? `SDG ${info.number} – ${info.name}`
+                : `SDG ${cb.value}`;
             summary.appendChild(badge);
         });
     }
@@ -496,7 +613,7 @@ function updateSdgSummary(form, prefix) {
     const dropdownToggle = form.querySelector(`#sdgDropdown-${prefix}`);
     dropdownToggle.textContent = checked.length
         ? `${checked.length} SDG(s) selected — Change SDGs`
-        : 'Select SDG(s)';
+        : "Select SDG(s)";
 }
 
 /**
@@ -514,111 +631,134 @@ function sdgSuggestionAdd(form, prefix, sdg) {
     if (!section._dismissedSdgs) section._dismissedSdgs = new Set();
     if (section._dismissedSdgs.has(sdg.number)) return false;
 
-    const tray = section.querySelector('[data-sdg-suggestions]');
-    const rows = section.querySelector('[data-sdg-suggestion-rows]');
+    const tray = section.querySelector("[data-sdg-suggestions]");
+    const rows = section.querySelector("[data-sdg-suggestion-rows]");
     if (!tray || !rows) return false;
 
-    const alreadySuggested = Array.from(rows.querySelectorAll('[data-suggestion-number]'))
-        .some((el) => Number(el.dataset.suggestionNumber) === sdg.number);
+    const alreadySuggested = Array.from(
+        rows.querySelectorAll("[data-suggestion-number]"),
+    ).some((el) => Number(el.dataset.suggestionNumber) === sdg.number);
     if (alreadySuggested) return false;
 
     let byId = {};
     try {
-        byId = JSON.parse(section.dataset.sdgById || '{}');
+        byId = JSON.parse(section.dataset.sdgById || "{}");
     } catch {
         byId = {};
     }
-    const info = byId[sdg.id] || { number: sdg.number, name: '' };
+    const info = byId[sdg.id] || { number: sdg.number, name: "" };
 
-    const row = document.createElement('div');
-    row.className = 'sdg-suggestion-row';
+    const row = document.createElement("div");
+    row.className = "sdg-suggestion-row";
     row.dataset.suggestionNumber = String(sdg.number);
 
-    const label = document.createElement('span');
+    const label = document.createElement("span");
     label.innerHTML = `<strong>SDG ${info.number}</strong> – ${info.name} `;
-    const confidence = document.createElement('span');
-    confidence.className = 'text-muted';
+    const confidence = document.createElement("span");
+    confidence.className = "text-muted";
     confidence.textContent = `· ${Math.round(sdg.confidence * 100)}%`;
     label.appendChild(confidence);
 
-    const addRowBtn = document.createElement('button');
-    addRowBtn.type = 'button';
-    addRowBtn.className = 'btn btn-sm btn-outline-primary';
-    addRowBtn.textContent = 'Add';
-    addRowBtn.addEventListener('click', () => {
+    const addRowBtn = document.createElement("button");
+    addRowBtn.type = "button";
+    addRowBtn.className = "btn btn-sm btn-outline-primary";
+    addRowBtn.textContent = "Add";
+    addRowBtn.addEventListener("click", () => {
         checkbox.checked = true;
         row.remove();
         updateSdgSummary(form, prefix);
-        if (!rows.children.length) tray.classList.add('d-none');
-        const errorBox = section.querySelector('[data-sdg-error]');
-        if (errorBox) errorBox.classList.add('d-none');
+        if (!rows.children.length) tray.classList.add("d-none");
+        const errorBox = section.querySelector("[data-sdg-error]");
+        if (errorBox) errorBox.classList.add("d-none");
     });
 
     row.append(label, addRowBtn);
     rows.appendChild(row);
-    tray.classList.remove('d-none');
+    tray.classList.remove("d-none");
 
     return true;
 }
 
 function initSdgSection(form) {
-    form.querySelectorAll('[data-sdg-done]').forEach((btn) => {
+    form.querySelectorAll("[data-sdg-done]").forEach((btn) => {
         const prefix = btn.dataset.sdgDone;
 
-        btn.addEventListener('click', () => {
-            const checked = form.querySelectorAll(`#sdgSection-${prefix} .sdg-checkbox:checked`);
-            const errorBox = form.querySelector(`#sdgSection-${prefix} [data-sdg-error]`);
+        btn.addEventListener("click", () => {
+            const checked = form.querySelectorAll(
+                `#sdgSection-${prefix} .sdg-checkbox:checked`,
+            );
+            const errorBox = form.querySelector(
+                `#sdgSection-${prefix} [data-sdg-error]`,
+            );
 
             if (checked.length === 0) {
-                if (errorBox) errorBox.classList.remove('d-none');
+                if (errorBox) errorBox.classList.remove("d-none");
                 return;
             }
 
-            if (errorBox) errorBox.classList.add('d-none');
+            if (errorBox) errorBox.classList.add("d-none");
             updateSdgSummary(form, prefix);
 
             const dropdownToggle = form.querySelector(`#sdgDropdown-${prefix}`);
             if (window.bootstrap) {
-                window.bootstrap.Dropdown.getOrCreateInstance(dropdownToggle).hide();
+                window.bootstrap.Dropdown.getOrCreateInstance(
+                    dropdownToggle,
+                ).hide();
             }
         });
     });
 
     form.querySelectorAll('[id^="sdgSection-"]').forEach((section) => {
-        const prefix = section.id.replace('sdgSection-', '');
+        const prefix = section.id.replace("sdgSection-", "");
 
-        const addAllBtn = section.querySelector('[data-sdg-suggestions-add-all]');
-        const dismissBtn = section.querySelector('[data-sdg-suggestions-dismiss]');
+        const addAllBtn = section.querySelector(
+            "[data-sdg-suggestions-add-all]",
+        );
+        const dismissBtn = section.querySelector(
+            "[data-sdg-suggestions-dismiss]",
+        );
 
         if (addAllBtn) {
-            addAllBtn.addEventListener('click', () => {
-                const rows = section.querySelector('[data-sdg-suggestion-rows]');
-                Array.from(rows.querySelectorAll('[data-suggestion-number]')).forEach((row) => {
-                    row.querySelector('button')?.click();
+            addAllBtn.addEventListener("click", () => {
+                const rows = section.querySelector(
+                    "[data-sdg-suggestion-rows]",
+                );
+                Array.from(
+                    rows.querySelectorAll("[data-suggestion-number]"),
+                ).forEach((row) => {
+                    row.querySelector("button")?.click();
                 });
             });
         }
 
         if (dismissBtn) {
-            dismissBtn.addEventListener('click', () => {
-                const rows = section.querySelector('[data-sdg-suggestion-rows]');
+            dismissBtn.addEventListener("click", () => {
+                const rows = section.querySelector(
+                    "[data-sdg-suggestion-rows]",
+                );
                 if (!section._dismissedSdgs) section._dismissedSdgs = new Set();
 
-                Array.from(rows.querySelectorAll('[data-suggestion-number]')).forEach((row) => {
-                    section._dismissedSdgs.add(Number(row.dataset.suggestionNumber));
+                Array.from(
+                    rows.querySelectorAll("[data-suggestion-number]"),
+                ).forEach((row) => {
+                    section._dismissedSdgs.add(
+                        Number(row.dataset.suggestionNumber),
+                    );
                     row.remove();
                 });
 
-                section.querySelector('[data-sdg-suggestions]')?.classList.add('d-none');
+                section
+                    .querySelector("[data-sdg-suggestions]")
+                    ?.classList.add("d-none");
             });
         }
 
-        section.querySelectorAll('.sdg-checkbox').forEach((cb) => {
-            cb.addEventListener('change', () => {
+        section.querySelectorAll(".sdg-checkbox").forEach((cb) => {
+            cb.addEventListener("change", () => {
                 updateSdgSummary(form, prefix);
                 if (cb.checked) {
-                    const errorBox = section.querySelector('[data-sdg-error]');
-                    if (errorBox) errorBox.classList.add('d-none');
+                    const errorBox = section.querySelector("[data-sdg-error]");
+                    if (errorBox) errorBox.classList.add("d-none");
                 }
             });
         });
@@ -629,37 +769,45 @@ function initSdgSection(form) {
 
 function initAnalyzeButton(form, prefix) {
     const titleField = form.querySelector('[name="title"]');
-    const abstractField = form.querySelector('[data-abstract-field]');
+    const abstractField = form.querySelector("[data-abstract-field]");
     const buttons = form.querySelectorAll(`[data-analyze-btn="${prefix}"]`);
-    const status = form.querySelector('[data-analyze-status]');
-    const staleBanner = form.querySelector('[data-analyze-stale]');
-    const fingerprintField = form.querySelector('[data-ai-fingerprint-field]');
-    const modelField = form.querySelector('[data-ai-model-field]');
-    const fallbackExcerptField = form.querySelector('[data-fallback-excerpt-field]');
+    const status = form.querySelector("[data-analyze-status]");
+    const staleBanner = form.querySelector("[data-analyze-stale]");
+    const fingerprintField = form.querySelector("[data-ai-fingerprint-field]");
+    const modelField = form.querySelector("[data-ai-model-field]");
+    const fallbackExcerptField = form.querySelector(
+        "[data-fallback-excerpt-field]",
+    );
     const keywordInputEl = form.querySelector(`#keywords-${prefix}`);
-    const analyzeUrl = buttons[0]?.dataset.analyzeUrl || '/research/analyze';
+    const analyzeUrl = buttons[0]?.dataset.analyzeUrl || "/research/analyze";
 
     if (!titleField || !abstractField || buttons.length === 0) return;
 
     let lastAnalyzed = null; // { title, abstract }
 
     function currentContent() {
-        return { title: titleField.value.trim(), abstract: abstractField.value.trim() };
+        return {
+            title: titleField.value.trim(),
+            abstract: abstractField.value.trim(),
+        };
     }
 
     function refreshButtonState() {
         const { title, abstract } = currentContent();
         const ready = Boolean(title) && Boolean(abstract);
         buttons.forEach((btn) => {
-            if (btn.hasAttribute('disabled') !== !ready) btn.disabled = !ready;
+            if (btn.hasAttribute("disabled") !== !ready) btn.disabled = !ready;
         });
 
-        if (lastAnalyzed && (title !== lastAnalyzed.title || abstract !== lastAnalyzed.abstract)) {
-            staleBanner.classList.remove('d-none');
-            if (fingerprintField) fingerprintField.value = '';
-            if (modelField) modelField.value = '';
+        if (
+            lastAnalyzed &&
+            (title !== lastAnalyzed.title || abstract !== lastAnalyzed.abstract)
+        ) {
+            staleBanner.classList.remove("d-none");
+            if (fingerprintField) fingerprintField.value = "";
+            if (modelField) modelField.value = "";
         } else {
-            staleBanner.classList.add('d-none');
+            staleBanner.classList.add("d-none");
         }
     }
 
@@ -667,7 +815,8 @@ function initAnalyzeButton(form, prefix) {
         const { title, abstract } = currentContent();
         if (!title || !abstract) return;
 
-        status.innerHTML = '<span class="text-muted"><span class="spinner-border spinner-border-sm me-1"></span>Analyzing title and abstract…</span>';
+        status.innerHTML =
+            '<span class="text-muted"><span class="spinner-border spinner-border-sm me-1"></span>Analyzing title and abstract…</span>';
         buttons.forEach((btn) => (btn.disabled = true));
 
         const payload = { title, abstract };
@@ -677,63 +826,80 @@ function initAnalyzeButton(form, prefix) {
         // threshold, so this and the deterministic confidence check agree
         // on what counts as "too short to classify reliably alone".
         const wordCount = abstract.split(/\s+/).filter(Boolean).length;
-        if (wordCount < 50 && fallbackExcerptField && fallbackExcerptField.value) {
+        if (
+            wordCount < 50 &&
+            fallbackExcerptField &&
+            fallbackExcerptField.value
+        ) {
             payload.fallback_excerpt = fallbackExcerptField.value;
         }
 
         fetch(analyzeUrl, {
-            method: 'POST',
+            method: "POST",
             headers: {
-                'X-CSRF-TOKEN': csrfTokenFor(form),
-                Accept: 'application/json',
-                'Content-Type': 'application/json',
+                "X-CSRF-TOKEN": csrfTokenFor(form),
+                Accept: "application/json",
+                "Content-Type": "application/json",
             },
             body: JSON.stringify(payload),
         })
             .then((res) => res.json().then((body) => ({ ok: res.ok, body })))
             .then(({ ok, body }) => {
                 if (!ok || !body.success) {
-                    status.innerHTML = `<span class="text-danger"><i class="bi bi-exclamation-triangle me-1"></i>${body.message || 'AI suggestions are temporarily unavailable. You can continue by entering keywords and SDGs manually.'}</span>`;
+                    status.innerHTML = `<span class="text-danger"><i class="bi bi-exclamation-triangle me-1"></i>${body.message || "AI suggestions are temporarily unavailable. You can continue by entering keywords and SDGs manually."}</span>`;
                     return;
                 }
 
                 let addedKeywords = false;
                 if (keywordInputEl && Array.isArray(body.keywords)) {
                     body.keywords.forEach((kw) => {
-                        if (keywordSuggestionAdd(keywordInputEl, kw, 'ai_suggested')) addedKeywords = true;
+                        if (
+                            keywordSuggestionAdd(
+                                keywordInputEl,
+                                kw,
+                                "ai_suggested",
+                            )
+                        )
+                            addedKeywords = true;
                     });
                 }
 
                 let addedSdgs = false;
                 if (Array.isArray(body.sdgs)) {
                     body.sdgs.forEach((sdg) => {
-                        if (sdgSuggestionAdd(form, prefix, sdg)) addedSdgs = true;
+                        if (sdgSuggestionAdd(form, prefix, sdg))
+                            addedSdgs = true;
                     });
                 }
 
-                if (fingerprintField) fingerprintField.value = body.fingerprint || '';
-                if (modelField) modelField.value = body.model || '';
+                if (fingerprintField)
+                    fingerprintField.value = body.fingerprint || "";
+                if (modelField) modelField.value = body.model || "";
 
                 lastAnalyzed = { title, abstract };
-                staleBanner.classList.add('d-none');
+                staleBanner.classList.add("d-none");
 
                 // The request can succeed with nothing worth adding (e.g.
                 // no SDG cleared the confidence threshold) — the old
                 // unconditional "suggestions added below" message showed
                 // even then, which read as the click having silently done
                 // nothing since there was no visible change to point at.
-                status.innerHTML = (addedKeywords || addedSdgs)
-                    ? '<span class="text-success"><i class="bi bi-check-circle me-1"></i>Suggestions added below — review before adding them.</span>'
-                    : '<span class="text-muted"><i class="bi bi-info-circle me-1"></i>AI ran, but found no confident keyword or SDG suggestions for this abstract — add them manually below.</span>';
+                status.innerHTML =
+                    addedKeywords || addedSdgs
+                        ? '<span class="text-success"><i class="bi bi-check-circle me-1"></i>Suggestions added below — review before adding them.</span>'
+                        : '<span class="text-muted"><i class="bi bi-info-circle me-1"></i>AI ran, but found no confident keyword or SDG suggestions for this abstract — add them manually below.</span>';
             })
             .catch(() => {
-                status.innerHTML = '<span class="text-danger"><i class="bi bi-exclamation-triangle me-1"></i>AI suggestions are temporarily unavailable. You can continue by entering keywords and SDGs manually.</span>';
+                status.innerHTML =
+                    '<span class="text-danger"><i class="bi bi-exclamation-triangle me-1"></i>AI suggestions are temporarily unavailable. You can continue by entering keywords and SDGs manually.</span>';
             })
             .finally(() => refreshButtonState());
     }
 
-    buttons.forEach((btn) => btn.addEventListener('click', runAnalysis));
-    [titleField, abstractField].forEach((el) => el.addEventListener('input', refreshButtonState));
+    buttons.forEach((btn) => btn.addEventListener("click", runAnalysis));
+    [titleField, abstractField].forEach((el) =>
+        el.addEventListener("input", refreshButtonState),
+    );
 
     refreshButtonState();
 }
@@ -745,40 +911,40 @@ function initAnalyzeButton(form, prefix) {
  * the datalist) or a plain "guest" name with no account.
  */
 function buildResearcherRow(name, linked) {
-    const row = document.createElement('div');
-    row.className = 'researcher-row';
-    row.setAttribute('data-researcher-row', '1');
+    const row = document.createElement("div");
+    row.className = "researcher-row";
+    row.setAttribute("data-researcher-row", "1");
 
-    const left = document.createElement('div');
-    left.className = 'd-flex align-items-center gap-2';
+    const left = document.createElement("div");
+    left.className = "d-flex align-items-center gap-2";
 
-    const avatar = document.createElement('span');
-    avatar.className = 'researcher-avatar';
+    const avatar = document.createElement("span");
+    avatar.className = "researcher-avatar";
     avatar.textContent = name
         .split(/\s+/)
         .filter(Boolean)
         .slice(0, 2)
         .map((w) => w[0].toUpperCase())
-        .join('');
+        .join("");
 
-    const nameEl = document.createElement('span');
-    nameEl.className = 'fw-semibold';
+    const nameEl = document.createElement("span");
+    nameEl.className = "fw-semibold";
     nameEl.textContent = name;
 
     left.append(avatar, nameEl);
 
-    const right = document.createElement('div');
-    right.className = 'd-flex align-items-center gap-2';
+    const right = document.createElement("div");
+    right.className = "d-flex align-items-center gap-2";
 
-    const badge = document.createElement('span');
-    badge.className = 'badge rounded-pill text-bg-light border';
-    badge.textContent = linked ? 'Registered' : 'Guest';
+    const badge = document.createElement("span");
+    badge.className = "badge rounded-pill text-bg-light border";
+    badge.textContent = linked ? "Registered" : "Guest";
 
-    const removeBtn = document.createElement('button');
-    removeBtn.type = 'button';
-    removeBtn.className = 'btn-close';
-    removeBtn.style.fontSize = '.65rem';
-    removeBtn.setAttribute('aria-label', 'Remove');
+    const removeBtn = document.createElement("button");
+    removeBtn.type = "button";
+    removeBtn.className = "btn-close";
+    removeBtn.style.fontSize = ".65rem";
+    removeBtn.setAttribute("aria-label", "Remove");
 
     right.append(badge, removeBtn);
     row.append(left, right);
@@ -787,15 +953,20 @@ function buildResearcherRow(name, linked) {
 }
 
 function initResearcherInput(root) {
-    const list = root.querySelector('[data-researcher-list]');
-    const empty = root.querySelector('[data-researcher-empty]');
-    const textInput = root.querySelector('[data-researcher-text-input]');
-    const addBtn = root.querySelector('[data-researcher-add-btn]');
-    const hiddenContainer = root.querySelector('[data-researcher-hidden-inputs]');
-    const datalist = root.querySelector('datalist');
+    const list = root.querySelector("[data-researcher-list]");
+    const empty = root.querySelector("[data-researcher-empty]");
+    const textInput = root.querySelector("[data-researcher-text-input]");
+    const addBtn = root.querySelector("[data-researcher-add-btn]");
+    const hiddenContainer = root.querySelector(
+        "[data-researcher-hidden-inputs]",
+    );
+    const datalist = root.querySelector("datalist");
 
     if (!list || !empty || !textInput || !addBtn || !hiddenContainer) {
-        console.error('[research-submission] researcher-input is missing required markup, skipping init', root);
+        console.error(
+            "[research-submission] researcher-input is missing required markup, skipping init",
+            root,
+        );
         return;
     }
 
@@ -804,35 +975,39 @@ function initResearcherInput(root) {
     function findUserId(name) {
         if (!datalist) return null;
         const normalized = name.trim().toLowerCase();
-        const option = Array.from(datalist.querySelectorAll('option'))
-            .find((opt) => opt.value.trim().toLowerCase() === normalized);
+        const option = Array.from(datalist.querySelectorAll("option")).find(
+            (opt) => opt.value.trim().toLowerCase() === normalized,
+        );
         return option ? option.dataset.userId : null;
     }
 
     function render() {
-        list.innerHTML = '';
-        empty.classList.toggle('d-none', rows.length > 0);
+        list.innerHTML = "";
+        empty.classList.toggle("d-none", rows.length > 0);
 
         rows.forEach((entry, index) => {
-            const { row, removeBtn } = buildResearcherRow(entry.name, Boolean(entry.userId));
-            removeBtn.addEventListener('click', () => {
+            const { row, removeBtn } = buildResearcherRow(
+                entry.name,
+                Boolean(entry.userId),
+            );
+            removeBtn.addEventListener("click", () => {
                 rows.splice(index, 1);
                 render();
             });
             list.appendChild(row);
         });
 
-        hiddenContainer.innerHTML = '';
+        hiddenContainer.innerHTML = "";
         rows.forEach((entry, index) => {
-            const nameInput = document.createElement('input');
-            nameInput.type = 'hidden';
+            const nameInput = document.createElement("input");
+            nameInput.type = "hidden";
             nameInput.name = `researchers[${index}][name]`;
             nameInput.value = entry.name;
             hiddenContainer.appendChild(nameInput);
 
             if (entry.userId) {
-                const idInput = document.createElement('input');
-                idInput.type = 'hidden';
+                const idInput = document.createElement("input");
+                idInput.type = "hidden";
                 idInput.name = `researchers[${index}][user_id]`;
                 idInput.value = entry.userId;
                 hiddenContainer.appendChild(idInput);
@@ -842,7 +1017,7 @@ function initResearcherInput(root) {
         // Lets the review summary (listening at the form level for
         // 'input'/'change') pick up researcher edits, which otherwise only
         // ever happen via button clicks, not native input/change events.
-        root.dispatchEvent(new Event('change', { bubbles: true }));
+        root.dispatchEvent(new Event("change", { bubbles: true }));
     }
 
     function addFromInput() {
@@ -851,18 +1026,18 @@ function initResearcherInput(root) {
 
         const normalized = name.toLowerCase();
         if (rows.some((r) => r.name.toLowerCase() === normalized)) {
-            textInput.value = '';
+            textInput.value = "";
             return;
         }
 
         rows.push({ name, userId: findUserId(name) });
-        textInput.value = '';
+        textInput.value = "";
         render();
     }
 
-    addBtn.addEventListener('click', addFromInput);
-    textInput.addEventListener('keydown', (e) => {
-        if (e.key === 'Enter') {
+    addBtn.addEventListener("click", addFromInput);
+    textInput.addEventListener("keydown", (e) => {
+        if (e.key === "Enter") {
             e.preventDefault();
             addFromInput();
         }
@@ -870,17 +1045,17 @@ function initResearcherInput(root) {
 
     let seed = [];
     try {
-        seed = JSON.parse(root.dataset.seed || '[]');
+        seed = JSON.parse(root.dataset.seed || "[]");
     } catch {
         seed = [];
     }
 
     rows = seed
         .map((r) => ({
-            name: (r && r.name ? String(r.name) : '').trim(),
+            name: (r && r.name ? String(r.name) : "").trim(),
             userId: r && r.user_id ? String(r.user_id) : null,
         }))
-        .filter((r) => r.name !== '');
+        .filter((r) => r.name !== "");
 
     render();
 }
@@ -893,19 +1068,23 @@ function initResearcherInput(root) {
  * stays a single scrolling panel.
  */
 function initWizard(root) {
-    const form = root.querySelector('.rw-form');
+    const form = root.querySelector(".rw-form");
     if (!form) return;
 
-    const stepSections = Array.from(root.querySelectorAll('[data-wizard-step]'));
+    const stepSections = Array.from(
+        root.querySelectorAll("[data-wizard-step]"),
+    );
     if (stepSections.length === 0) return;
 
     const stepNumbers = stepSections.map((el) => Number(el.dataset.wizardStep));
     const maxStep = Math.max(...stepNumbers);
 
-    const backBtn = root.querySelector('[data-wizard-back]');
-    const nextBtn = root.querySelector('[data-wizard-next]');
-    const submitBtn = root.querySelector('[data-wizard-submit]');
-    const stepIndicators = Array.from(root.querySelectorAll('[data-step-indicator]'));
+    const backBtn = root.querySelector("[data-wizard-back]");
+    const nextBtn = root.querySelector("[data-wizard-next]");
+    const submitBtn = root.querySelector("[data-wizard-submit]");
+    const stepIndicators = Array.from(
+        root.querySelectorAll("[data-step-indicator]"),
+    );
 
     let currentStep = parseInt(root.dataset.wizardErrorStep, 10) || 1;
     if (currentStep < 1 || currentStep > maxStep) currentStep = 1;
@@ -913,19 +1092,21 @@ function initWizard(root) {
     function summaryTextFor(n) {
         if (n === 1) {
             const title = form.querySelector('[name="title"]');
-            const value = title ? title.value.trim() : '';
-            return value ? `Title: ${value}` : 'Research details';
+            const value = title ? title.value.trim() : "";
+            return value ? `Title: ${value}` : "Research details";
         }
 
         if (n === 2) {
-            const rows = root.querySelectorAll('[data-researcher-row]').length;
-            return rows === 0 ? 'No researchers added' : `${rows} researcher${rows === 1 ? '' : 's'} added`;
+            const rows = root.querySelectorAll("[data-researcher-row]").length;
+            return rows === 0
+                ? "No researchers added"
+                : `${rows} researcher${rows === 1 ? "" : "s"} added`;
         }
 
         if (n === 3) {
-            const fileInput = root.querySelector('[data-dropzone-input]');
+            const fileInput = root.querySelector("[data-dropzone-input]");
             const file = fileInput && fileInput.files[0];
-            return file ? `Document: ${file.name}` : 'Document & keywords';
+            return file ? `Document: ${file.name}` : "Document & keywords";
         }
 
         return `Step ${n}`;
@@ -946,7 +1127,9 @@ function initWizard(root) {
                 if (body) body.hidden = true;
                 if (summary) {
                     summary.hidden = false;
-                    const textEl = summary.querySelector('[data-step-summary-text]');
+                    const textEl = summary.querySelector(
+                        "[data-step-summary-text]",
+                    );
                     if (textEl) textEl.textContent = summaryTextFor(n);
                 }
             } else {
@@ -956,15 +1139,15 @@ function initWizard(root) {
 
         stepIndicators.forEach((el) => {
             const n = Number(el.dataset.stepIndicator);
-            el.classList.remove('is-current', 'is-done');
+            el.classList.remove("is-current", "is-done");
 
-            const circle = el.querySelector('.rw-step-circle');
+            const circle = el.querySelector(".rw-step-circle");
 
             if (n === currentStep) {
-                el.classList.add('is-current');
+                el.classList.add("is-current");
                 if (circle) circle.textContent = String(n);
             } else if (n < currentStep) {
-                el.classList.add('is-done');
+                el.classList.add("is-done");
                 if (circle) circle.innerHTML = '<i class="bi bi-check-lg"></i>';
             } else if (circle) {
                 circle.textContent = String(n);
@@ -974,52 +1157,74 @@ function initWizard(root) {
         if (backBtn) backBtn.hidden = currentStep === 1;
 
         const isLastStep = currentStep === maxStep;
-        if (nextBtn) nextBtn.classList.toggle('d-none', isLastStep);
-        if (submitBtn) submitBtn.classList.toggle('d-none', !isLastStep);
+        if (nextBtn) nextBtn.classList.toggle("d-none", isLastStep);
+        if (submitBtn) submitBtn.classList.toggle("d-none", !isLastStep);
     }
 
     function validateStep(n) {
-        const section = stepSections.find((s) => Number(s.dataset.wizardStep) === n);
+        const section = stepSections.find(
+            (s) => Number(s.dataset.wizardStep) === n,
+        );
         if (!section) return true;
 
-        const body = section.querySelector(`[data-step-body="${n}"]`) || section;
+        const body =
+            section.querySelector(`[data-step-body="${n}"]`) || section;
 
-        const invalid = Array.from(body.querySelectorAll('input, select, textarea'))
-            .find((el) => !el.disabled && el.willValidate && !el.checkValidity());
+        const invalid = Array.from(
+            body.querySelectorAll("input, select, textarea"),
+        ).find((el) => !el.disabled && el.willValidate && !el.checkValidity());
 
         if (invalid) {
             invalid.reportValidity();
-            invalid.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            invalid.scrollIntoView({ behavior: "smooth", block: "center" });
             return false;
         }
 
         if (n === 3) {
-            const dropzoneRoot = body.querySelector('[data-dropzone]');
+            const dropzoneRoot = body.querySelector("[data-dropzone]");
 
             if (dropzoneRoot) {
-                const fileInput = dropzoneRoot.querySelector('[data-dropzone-input]');
-                const dropzoneError = dropzoneRoot.closest('.mb-3')?.querySelector('[data-dropzone-error]');
+                const fileInput = dropzoneRoot.querySelector(
+                    "[data-dropzone-input]",
+                );
+                const dropzoneError = dropzoneRoot
+                    .closest(".mb-3")
+                    ?.querySelector("[data-dropzone-error]");
 
-                if (dropzoneRoot.dataset.required === 'true' && fileInput && fileInput.files.length === 0) {
-                    if (dropzoneError) dropzoneError.textContent = 'Please attach your research PDF.';
-                    dropzoneRoot.classList.add('border-danger');
-                    dropzoneRoot.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                if (
+                    dropzoneRoot.dataset.required === "true" &&
+                    fileInput &&
+                    fileInput.files.length === 0
+                ) {
+                    if (dropzoneError)
+                        dropzoneError.textContent =
+                            "Please attach your research PDF.";
+                    dropzoneRoot.classList.add("border-danger");
+                    dropzoneRoot.scrollIntoView({
+                        behavior: "smooth",
+                        block: "center",
+                    });
                     return false;
                 }
             }
 
             const sdgSection = body.querySelector('[id^="sdgSection-"]');
             if (sdgSection) {
-                const checked = sdgSection.querySelectorAll('.sdg-checkbox:checked');
-                const errorBox = sdgSection.querySelector('[data-sdg-error]');
+                const checked = sdgSection.querySelectorAll(
+                    ".sdg-checkbox:checked",
+                );
+                const errorBox = sdgSection.querySelector("[data-sdg-error]");
 
                 if (checked.length === 0) {
-                    if (errorBox) errorBox.classList.remove('d-none');
-                    sdgSection.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                    if (errorBox) errorBox.classList.remove("d-none");
+                    sdgSection.scrollIntoView({
+                        behavior: "smooth",
+                        block: "center",
+                    });
                     return false;
                 }
 
-                if (errorBox) errorBox.classList.add('d-none');
+                if (errorBox) errorBox.classList.add("d-none");
             }
         }
 
@@ -1027,26 +1232,32 @@ function initWizard(root) {
     }
 
     if (nextBtn) {
-        nextBtn.addEventListener('click', () => {
+        nextBtn.addEventListener("click", () => {
             if (!validateStep(currentStep)) return;
             currentStep = Math.min(currentStep + 1, maxStep);
             render();
-            root.querySelector('.rw-body')?.scrollTo({ top: 0, behavior: 'smooth' });
+            root.querySelector(".rw-body")?.scrollTo({
+                top: 0,
+                behavior: "smooth",
+            });
         });
     }
 
     if (backBtn) {
-        backBtn.addEventListener('click', () => {
+        backBtn.addEventListener("click", () => {
             currentStep = Math.max(currentStep - 1, 1);
             render();
         });
     }
 
-    root.querySelectorAll('[data-step-edit]').forEach((btn) => {
-        btn.addEventListener('click', () => {
+    root.querySelectorAll("[data-step-edit]").forEach((btn) => {
+        btn.addEventListener("click", () => {
             currentStep = Number(btn.dataset.stepEdit);
             render();
-            root.querySelector('.rw-body')?.scrollTo({ top: 0, behavior: 'smooth' });
+            root.querySelector(".rw-body")?.scrollTo({
+                top: 0,
+                behavior: "smooth",
+            });
         });
     });
 
@@ -1054,8 +1265,12 @@ function initWizard(root) {
     // the final step's Submit button should ever POST. Textareas are
     // exempt (Enter there means "new line", and never submits a form
     // natively anyway).
-    form.addEventListener('keydown', (e) => {
-        if (e.key === 'Enter' && currentStep !== maxStep && e.target.tagName !== 'TEXTAREA') {
+    form.addEventListener("keydown", (e) => {
+        if (
+            e.key === "Enter" &&
+            currentStep !== maxStep &&
+            e.target.tagName !== "TEXTAREA"
+        ) {
             e.preventDefault();
         }
     });
@@ -1078,75 +1293,97 @@ function initWizard(root) {
  * disabled on a client-side-rejected submit.
  */
 function initSubmitLoadingState(form) {
-    const btn = form.querySelector('[data-submit-btn]');
+    const btn = form.querySelector("[data-submit-btn]");
     if (!btn) return;
 
-    form.addEventListener('submit', (e) => {
+    form.addEventListener("submit", (e) => {
         if (e.defaultPrevented) return;
 
         btn.disabled = true;
-        btn.innerHTML = '<span class="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>Submitting…';
+        btn.innerHTML =
+            '<span class="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>Submitting…';
     });
 }
 
 function initReviewSummary(form) {
-    const summary = form.querySelector('[data-review-summary]');
+    const summary = form.querySelector("[data-review-summary]");
     if (!summary) return;
 
     const prefix = summary.dataset.prefix;
 
     function text(name) {
         const el = form.querySelector(`[name="${name}"]`);
-        return el ? el.value : '';
+        return el ? el.value : "";
     }
 
     function selectedLabel(name) {
         const el = form.querySelector(`[name="${name}"]`);
-        if (!el || el.selectedIndex < 0) return '—';
+        if (!el || el.selectedIndex < 0) return "—";
         const opt = el.options[el.selectedIndex];
-        return opt ? opt.textContent.trim() : '—';
+        return opt ? opt.textContent.trim() : "—";
     }
 
     function update() {
-        summary.querySelector('[data-review="title"]').textContent = text('title') || '—';
-        summary.querySelector('[data-review="research_type"]').textContent = selectedLabel('research_type');
-        summary.querySelector('[data-review="publication_year"]').textContent = text('publication_year') || '—';
-        summary.querySelector('[data-review="adviser"]').textContent = selectedLabel('adviser_id');
-        summary.querySelector('[data-review="desc"]').textContent = text('desc') || '—';
+        summary.querySelector('[data-review="title"]').textContent =
+            text("title") || "—";
+        summary.querySelector('[data-review="research_type"]').textContent =
+            selectedLabel("research_type");
+        summary.querySelector('[data-review="publication_year"]').textContent =
+            text("publication_year") || "—";
+        summary.querySelector('[data-review="adviser"]').textContent =
+            selectedLabel("adviser_id");
+        summary.querySelector('[data-review="desc"]').textContent =
+            text("desc") || "—";
 
-        const researchersEl = summary.querySelector('[data-review="researchers"]');
+        const researchersEl = summary.querySelector(
+            '[data-review="researchers"]',
+        );
         if (researchersEl) {
-            const researcherRoot = form.querySelector('[data-researcher-input]');
+            const researcherRoot = form.querySelector(
+                "[data-researcher-input]",
+            );
             const names = researcherRoot
-                ? Array.from(researcherRoot.querySelectorAll('[data-researcher-row] .fw-semibold')).map((el) => el.textContent)
+                ? Array.from(
+                      researcherRoot.querySelectorAll(
+                          "[data-researcher-row] .fw-semibold",
+                      ),
+                  ).map((el) => el.textContent)
                 : [];
-            researchersEl.textContent = names.length ? names.join(', ') : 'None (you are the sole researcher)';
+            researchersEl.textContent = names.length
+                ? names.join(", ")
+                : "None (you are the sole researcher)";
         }
 
         const keywordInputEl = form.querySelector(`#keywords-${prefix}`);
         const keywords = keywordInputEl
-            ? Array.from(keywordInputEl.querySelectorAll('[data-keyword-value]')).map((el) => el.dataset.keywordValue)
+            ? Array.from(
+                  keywordInputEl.querySelectorAll("[data-keyword-value]"),
+              ).map((el) => el.dataset.keywordValue)
             : [];
-        summary.querySelector('[data-review="keywords"]').textContent = keywords.length ? keywords.join(', ') : '—';
+        summary.querySelector('[data-review="keywords"]').textContent =
+            keywords.length ? keywords.join(", ") : "—";
 
-        const sdgChecked = form.querySelectorAll(`#sdgSection-${prefix} .sdg-checkbox:checked`);
-        summary.querySelector('[data-review="sdgs"]').textContent = sdgChecked.length
-            ? `${sdgChecked.length} selected`
-            : '—';
+        const sdgChecked = form.querySelectorAll(
+            `#sdgSection-${prefix} .sdg-checkbox:checked`,
+        );
+        summary.querySelector('[data-review="sdgs"]').textContent =
+            sdgChecked.length ? `${sdgChecked.length} selected` : "—";
 
-        const fileInput = form.querySelector(`#dropzone-${prefix} [data-dropzone-input]`);
-        summary.querySelector('[data-review="file"]').textContent = fileInput && fileInput.files[0]
-            ? fileInput.files[0].name
-            : '—';
+        const fileInput = form.querySelector(
+            `#dropzone-${prefix} [data-dropzone-input]`,
+        );
+        summary.querySelector('[data-review="file"]').textContent =
+            fileInput && fileInput.files[0] ? fileInput.files[0].name : "—";
 
-        const visibilityChecked = form.querySelector('input[name="visibility"]:checked');
-        summary.querySelector('[data-review="visibility"]').textContent = visibilityChecked
-            ? visibilityChecked.value
-            : '—';
+        const visibilityChecked = form.querySelector(
+            'input[name="visibility"]:checked',
+        );
+        summary.querySelector('[data-review="visibility"]').textContent =
+            visibilityChecked ? visibilityChecked.value : "—";
     }
 
-    form.addEventListener('input', update);
-    form.addEventListener('change', update);
+    form.addEventListener("input", update);
+    form.addEventListener("change", update);
     update();
 }
 
@@ -1163,42 +1400,70 @@ function once(el) {
 }
 
 export function init() {
-    document.querySelectorAll('[data-dropzone]').forEach((root) => once(root) &&
-        safeInit(`dropzone#${root.id || root.dataset.prefix}`, () => initDropzone(root))
-    );
+    document
+        .querySelectorAll("[data-dropzone]")
+        .forEach(
+            (root) =>
+                once(root) &&
+                safeInit(`dropzone#${root.id || root.dataset.prefix}`, () =>
+                    initDropzone(root),
+                ),
+        );
 
-    document.querySelectorAll('[data-keyword-input]').forEach((root) => once(root) &&
-        safeInit(`keyword-input#${root.id || root.dataset.prefix}`, () => initKeywordInput(root))
-    );
+    document
+        .querySelectorAll("[data-keyword-input]")
+        .forEach(
+            (root) =>
+                once(root) &&
+                safeInit(
+                    `keyword-input#${root.id || root.dataset.prefix}`,
+                    () => initKeywordInput(root),
+                ),
+        );
 
-    document.querySelectorAll('[data-researcher-input]').forEach((root) => once(root) &&
-        safeInit(`researcher-input#${root.id || root.dataset.prefix}`, () => initResearcherInput(root))
-    );
+    document
+        .querySelectorAll("[data-researcher-input]")
+        .forEach(
+            (root) =>
+                once(root) &&
+                safeInit(
+                    `researcher-input#${root.id || root.dataset.prefix}`,
+                    () => initResearcherInput(root),
+                ),
+        );
 
-    document.querySelectorAll('[data-wizard]').forEach((root) => once(root) &&
-        safeInit('wizard', () => initWizard(root))
-    );
+    document
+        .querySelectorAll("[data-wizard]")
+        .forEach(
+            (root) => once(root) && safeInit("wizard", () => initWizard(root)),
+        );
 
-    document.querySelectorAll('form').forEach((form) => {
+    document.querySelectorAll("form").forEach((form) => {
         if (!once(form)) return;
 
-        if (form.querySelector('[data-sdg-done]')) {
-            safeInit('sdg-section', () => initSdgSection(form));
+        if (form.querySelector("[data-sdg-done]")) {
+            safeInit("sdg-section", () => initSdgSection(form));
         }
 
-        if (form.querySelector('[data-review-summary]')) {
-            safeInit('review-summary', () => initReviewSummary(form));
+        if (form.querySelector("[data-review-summary]")) {
+            safeInit("review-summary", () => initReviewSummary(form));
         }
 
         const analyzePrefixes = new Set(
-            Array.from(form.querySelectorAll('[data-analyze-btn]')).map((btn) => btn.dataset.analyzeBtn)
+            Array.from(form.querySelectorAll("[data-analyze-btn]")).map(
+                (btn) => btn.dataset.analyzeBtn,
+            ),
         );
         analyzePrefixes.forEach((prefix) =>
-            safeInit(`analyze-button#${prefix}`, () => initAnalyzeButton(form, prefix))
+            safeInit(`analyze-button#${prefix}`, () =>
+                initAnalyzeButton(form, prefix),
+            ),
         );
 
-        if (form.querySelector('[data-submit-btn]')) {
-            safeInit('submit-loading-state', () => initSubmitLoadingState(form));
+        if (form.querySelector("[data-submit-btn]")) {
+            safeInit("submit-loading-state", () =>
+                initSubmitLoadingState(form),
+            );
         }
     });
 }

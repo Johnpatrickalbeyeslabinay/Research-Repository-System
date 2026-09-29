@@ -28,7 +28,6 @@ class UpdateResearchRequest extends FormRequest
             'keyword_sources.*' => 'nullable|in:extracted,ai_suggested,manual',
             'sdg' => 'required|array|min:1',
             'sdg.*' => 'exists:sdgs,id',
-            'visibility' => 'required|in:public,private',
             'file' => 'nullable|mimes:pdf|max:'.(config('research.max_upload_mb', 10) * 1024),
             'ai_analysis_fingerprint' => 'nullable|string',
             'ai_model_used' => 'nullable|string|max:255',

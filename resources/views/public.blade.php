@@ -56,11 +56,11 @@
                 @endforeach
             </select>
 
-            <select name="sort" class="form-select bg-light" style="max-width: 160px;">
+            <!--<select name="sort" class="form-select bg-light" style="max-width: 160px;">
                 <option value="recent" {{ $sort === 'recent' ? 'selected' : '' }}>Newest first</option>
                 <option value="views" {{ $sort === 'views' ? 'selected' : '' }}>Most viewed</option>
                 <option value="downloads" {{ $sort === 'downloads' ? 'selected' : '' }}>Most downloaded</option>
-            </select>
+            </select>-->
 
             <button type="submit" class="border border-secondary bg-light rounded px-3">
                 <i class="fa-solid fa-search"></i>

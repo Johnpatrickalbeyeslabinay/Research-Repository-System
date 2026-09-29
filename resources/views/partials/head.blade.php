@@ -20,7 +20,7 @@
      top. --}}
 <meta name="turbo-refresh-scroll" content="preserve">
 
-<link rel="icon" type="image/png" sizes="32x32" href="{{ asset('images/favicon-32.png') }}">
+<link rel="icon" type="image/png" sizes="32x32" href="{{ asset('images/logo.png') }}">
 <link rel="apple-touch-icon" href="{{ asset('images/apple-touch-icon.png') }}">
 
 {{-- The two icon fonts still come from CDNs; opening those connections

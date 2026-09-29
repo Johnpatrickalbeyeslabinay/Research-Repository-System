@@ -48,10 +48,6 @@
                         <span class="text-muted">Document:</span>
                         <div data-review="file">—</div>
                     </div>
-                    <div class="col-6">
-                        <span class="text-muted">Visibility:</span>
-                        <div data-review="visibility">—</div>
-                    </div>
                 </div>
             </div>
         </div>

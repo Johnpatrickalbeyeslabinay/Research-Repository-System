@@ -55,7 +55,6 @@ class StoreResearchRequest extends FormRequest
             'keyword_sources.*' => 'nullable|in:extracted,ai_suggested,manual',
             'sdg' => 'required|array|min:1',
             'sdg.*' => 'exists:sdgs,id',
-            'visibility' => 'required|in:public,private',
             'file' => 'required|mimes:pdf|max:'.(config('research.max_upload_mb', 10) * 1024),
             // Echoed back from a prior /research/analyze call, purely for
             // audit — the server recomputes and verifies the fingerprint

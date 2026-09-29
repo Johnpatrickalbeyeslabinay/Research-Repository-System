@@ -199,12 +199,7 @@ class RepositoryController extends Controller
 
     private function baseQuery(bool $publicOnly = false)
     {
-        $query = UserFile::where('status', 'approved');
-
-        if ($publicOnly) {
-            $query->where('visibility', 'public');
-        }
-
-        return $query;
+        return UserFile::where('status', 'approved')
+            ->where('visibility', 'public');
     }
 }

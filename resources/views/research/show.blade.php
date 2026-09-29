@@ -26,16 +26,27 @@
             <p class="mb-4">{{ $file->desc ?? 'No abstract available.' }}</p>
 
             <div class="d-flex gap-2 flex-wrap">
-                @if ($canAccessPdf)
-                    <a data-turbo="false" href="{{ route('file.view', ['id' => $file->id]) }}"
-                        class="btn text-white rounded-2 px-4 py-2" style="background:#072a89;">
-                        <i class="bi bi-eye me-2"></i>View PDF
-                    </a>
 
-                    <a data-turbo="false" href="{{ route('file.download', $file->id) }}"
-                        class="btn btn-outline-secondary rounded-2 px-4 py-2">
-                        <i class="bi bi-download me-2"></i>Download
-                    </a>
+            <!--kung file ay repository-->
+                @if ($canAccessPdf)
+
+                    <button type="button"
+                            class="btn btn-sm text-white rounded-2 px-3"
+                            style="background:#072a89;"
+                            data-bs-toggle="modal"
+                            data-bs-target="#permissionModal">
+                        <i class="bi bi-eye me-1"></i>
+                        Request Full Access
+                    </button>
+
+                    <button type="button"
+                            class="btn btn-sm text-white rounded-2 px-3"
+                            style="background:#072a89;"
+                            data-bs-toggle="modal"
+                            data-bs-target="#permissionModal">
+                        <i class="bi bi-download me-1"></i>
+                        Download
+                    </button>
 
                     <button type="button" popovertarget="ai-chat-panel"
                         class="btn btn-outline-secondary rounded-2 px-4 py-2">
@@ -50,14 +61,24 @@
                          is worse than not showing one at all. --}}
                    <div class="d-flex gap-2 align-items-center">
 
+                   <!--kung file ay nasa public viewing
                     <a data-turbo="false"
                         href="{{ route('public.research.pdf', $file->id) }}"
                         target="_blank"
                         class="btn btn-sm text-white rounded-2 px-3"
                         style="background:#072a89;">
                         <i class="bi bi-eye me-1"></i>
-                        View PDF
-                    </a>
+                        Request Full Access
+                    </a>-->
+
+                    <button type="button"
+                            class="btn btn-sm text-white rounded-2 px-3"
+                            style="background:#072a89;"
+                            data-bs-toggle="modal"
+                            data-bs-target="#permissionModal">
+                        <i class="bi bi-eye me-1"></i>
+                        Request Full Access
+                    </button>
 
                     <a href="{{ route('public') }}"
                         class="btn btn-sm btn-outline-secondary rounded-2 px-3">
@@ -80,5 +101,11 @@
              open to. --}}
         <x-chat.widget :stud-file-id="$file->id" :stud-file-title="$file->title" />
     @endif
+
+
+
+      {{-- Permission modal --}}
+    <x-research.permission :file="$file" />
+
 
 @endsection
