@@ -12,16 +12,37 @@ use Illuminate\Support\Facades\Auth;
  */
 class NotificationController extends Controller
 {
+    // public function index()
+    // {
+    // Not paginated — matches every other listing in this app
+    // (UserFile::get(), not paginate()); 50 most recent is enough for
+    // a first working version, and avoids pulling in Laravel's default
+    // Tailwind-styled pagination view into an otherwise Bootstrap app.
+    // $notifications = Auth::user()->notifications()->latest()->limit(50)->get();
+    // $unreadNotificationsCount = Auth::user()->unreadNotifications()->count();
+
+    // return view('notifications', compact('notifications', 'unreadNotificationsCount'));
+    // }
+
     public function index()
     {
-        // Not paginated — matches every other listing in this app
-        // (UserFile::get(), not paginate()); 50 most recent is enough for
-        // a first working version, and avoids pulling in Laravel's default
-        // Tailwind-styled pagination view into an otherwise Bootstrap app.
-        $notifications = Auth::user()->notifications()->latest()->limit(50)->get();
-        $unreadNotificationsCount = Auth::user()->unreadNotifications()->count();
+        $notifications = Auth::user()
+            ->notifications()
+            ->latest()
+            ->limit(50)
+            ->get();
 
-        return view('notifications', compact('notifications', 'unreadNotificationsCount'));
+        $unreadNotificationsCount = Auth::user()
+            ->unreadNotifications()
+            ->count();
+
+        $view = 'notifications';
+
+        return view('notifications', compact(
+            'notifications',
+            'unreadNotificationsCount',
+            'view'
+        ));
     }
 
     public function markRead($id)

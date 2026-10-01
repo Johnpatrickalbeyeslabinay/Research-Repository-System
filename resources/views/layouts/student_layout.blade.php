@@ -241,8 +241,8 @@
 
                 <li class="nav-item">
 
-                    <a class="nav-link {{ request()->query('view') === 'subjects' ? 'active text-white bg-primary rounded' : 'text-dark' }}"
-                        href="{{ url('/student_dashboard?view=subjects') }}">
+                    <a class="nav-link {{ ($view ?? '') == 'dashboard' ? 'active text-white bg-primary rounded' : 'text-dark bg-light rounded' }}"
+                    href="{{ url('/student?view=dashboard') }}">
 
                         <i class="fa-solid fa-book me-2"></i>
 

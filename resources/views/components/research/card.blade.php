@@ -21,11 +21,11 @@
 
             <x-research.meta :file="$file" compact :show="['researchers', 'type', 'year']" />
 
-            <p class="card-text flex-grow-1 mt-2">
+            <p class="card-text flex-grow-1 mt-2 text-justify">
                 {{ \Illuminate\Support\Str::limit($file->desc, 160) }}
             </p>
 
-            @if ($file->relationLoaded('keywords') && $file->keywords->isNotEmpty())
+            <!--@if ($file->relationLoaded('keywords') && $file->keywords->isNotEmpty())
                 <div class="mb-3">
                     @foreach ($file->keywords->take(4) as $keyword)
                         <span class="small rounded me-1 mb-1 px-2 py-1 d-inline-block"
@@ -34,7 +34,7 @@
                         </span>
                     @endforeach
                 </div>
-            @endif
+            @endif-->
 
             <div class="text-secondary small mb-3">
                 <i class="bi bi-eye"></i> {{ $file->views ?? 0 }}

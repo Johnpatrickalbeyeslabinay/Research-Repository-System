@@ -25,6 +25,33 @@
             <h6 class="text-uppercase text-secondary small fw-bold mb-2">Abstract</h6>
             <p class="mb-4">{{ $file->desc ?? 'No abstract available.' }}</p>
 
+
+             <!-- NOTIFICATION ALERT -->
+@if(session('success'))
+    <div class="alert alert-success alert-dismissible fade show"
+        role="alert"
+        id="success-alert">
+
+        <i class="bi bi-check-circle-fill me-2"></i>
+        {{ session('success') }}
+
+    </div>
+
+    <script>
+        setTimeout(function () {
+            const alert = document.getElementById('success-alert');
+
+            if (alert) {
+                alert.classList.remove('show');
+
+                setTimeout(function () {
+                    alert.remove();
+                }, 150);
+            }
+        }, 3000);
+    </script>
+@endif
+
             <div class="d-flex gap-2 flex-wrap">
 
             <!--kung file ay repository-->
@@ -106,6 +133,4 @@
 
       {{-- Permission modal --}}
     <x-research.permission :file="$file" />
-
-
 @endsection

@@ -889,141 +889,114 @@
 
 
 
-    <div class="modal fade" id="addUserModal" tabindex="-1">
-        <div class="modal-dialog modal-dialog-centered modal-lg">
-            <div class="modal-content border-0 rounded-4 shadow">
+    <!-- Add User Modal -->
+                <div class="modal fade" id="addUserModal" tabindex="-1" aria-hidden="true">
+                    <div class="modal-dialog modal-dialog-centered">
+                        <div class="modal-content border-0 rounded-4 shadow">
 
-                <!-- Header -->
-                <div class="modal-header border-0 px-4 pt-4">
-                    <h3 class="fw-bold">Add New User</h3>
+                            <!-- Header -->
+                            <div class="modal-header border-0 px-4 pt-4">
+                                <h5 class="fw-bold mb-0">Add New User</h5>
 
-                    <button type="button" class="btn-close" data-bs-dismiss="modal">
-                    </button>
-                </div>
+                                <button type="button"
+                                        class="btn-close"
+                                        data-bs-dismiss="modal"
+                                        aria-label="Close">
+                                </button>
+                            </div>
 
-                <!-- Body -->
-                <div class="modal-body px-4 pb-4">
+                            <!-- Body -->
+                            <div class="modal-body px-4 pb-4">
 
-                    <form action="{{ route('admin.store') }}" method="POST">
-                        @csrf
+                                <form action="{{ route('admin.store') }}" method="POST">
+                                    @csrf
 
+                                    <!-- Role -->
+                                    <div class="mb-3">
+                                        <label class="form-label fw-semibold">
+                                            Role <span class="text-danger">*</span>
+                                        </label>
 
-                        <!-- Role -->
-                        <div class="mb-3">
-                            <label class="form-label fw-semibold">
-                                Role <span class="text-danger">*</span>
-                            </label>
+                                        <select name="role"
+                                                id="role"
+                                                class="form-select rounded-3">
+                                            <option value="student">Student</option>
+                                            <option value="instructor">Instructor</option>
+                                        </select>
+                                    </div>
 
-                            <select name="role" id="role" class="form-select form-select-lg rounded-3">
+                                    <!-- Email -->
+                                    <div class="mb-3">
+                                        <label class="form-label fw-semibold">
+                                            Email <span class="text-danger">*</span>
+                                        </label>
 
-                                <option value="student">Student</option>
-                                <option value="instructor">Instructor</option>
+                                        <input type="email"
+                                            name="email"
+                                            class="form-control rounded-3"
+                                            placeholder="e.g. john.doe@example.com"
+                                            required>
+                                    </div>
 
-                            </select>
-                        </div>
+                                    <!-- User ID -->
+                                    <div class="mb-3">
+                                        <label class="form-label fw-semibold">
+                                            User ID <span class="text-danger">*</span>
+                                        </label>
 
-                        <!--email-->
-                        <div class="mb-3">
-                            <label class="form-label fw-semibold">
-                                Email <span class="text-danger">*</span>
-                            </label>
+                                        <input type="text"
+                                            name="user_id"
+                                            class="form-control rounded-3"
+                                            placeholder="e.g. 23-001"
+                                            required>
+                                    </div>
 
-                            <input type="email" name="email" class="form-control form-control-lg rounded-3"
-                                placeholder="e.g. john.doe@example.com" required>
-                        </div>
+                                    <!-- Full Name -->
+                                    <div class="mb-3">
+                                        <label class="form-label fw-semibold">
+                                            Full Name <span class="text-danger">*</span>
+                                        </label>
 
-                        <!-- User ID -->
-                        <div class="mb-3">
-                            <label class="form-label fw-semibold">
-                                User ID <span class="text-danger">*</span>
-                            </label>
+                                        <input type="text"
+                                            name="name"
+                                            class="form-control rounded-3"
+                                            placeholder="e.g. Juan Dela Cruz"
+                                            required>
+                                    </div>
 
-                            <input type="text" name="user_id" class="form-control form-control-lg rounded-3"
-                                placeholder="e.g. 23-001" required>
-                        </div>
+                                    <!-- Password -->
+                                    <div class="alert alert-info d-flex align-items-center py-2">
+                                        <i class="fa-solid fa-circle-info me-2"></i>
 
-                        <!-- Full Name -->
-                        <div class="mb-3">
-                            <label class="form-label fw-semibold">
-                                Full Name <span class="text-danger">*</span>
-                            </label>
+                                        <small>
+                                            Password will be generated automatically after creating the account.
+                                        </small>
+                                    </div>
 
-                            <input type="text" name="name" class="form-control form-control-lg rounded-3"
-                                placeholder="e.g. Juan Dela Cruz" required>
-                        </div>
+                                    <!-- Buttons -->
+                                    <div class="d-flex gap-2">
 
+                                        <button type="submit"
+                                                class="btn btn-primary flex-fill rounded-3 fw-semibold">
+                                            <i class="fa-solid fa-user-plus me-2"></i>
+                                            Create User
+                                        </button>
 
+                                        <button type="button"
+                                                class="btn btn-light border rounded-3"
+                                                data-bs-dismiss="modal">
+                                            Cancel
+                                        </button>
 
+                                    </div>
 
+                                </form>
 
-
-
-
-
-
-                        <!-- Year Level
-                        <div class="mb-3" id="yearLevelDiv">
-
-                            <label class="form-label fw-semibold">
-                                Year Level
-                            </label>
-
-                            <select name="year_level" id="yearLevel" class="form-select form-select-lg rounded-3">
-
-                                <option value="">Select Year Level</option>
-                                <option value="1st Year">1st Year</option>
-                                <option value="2nd Year">2nd Year</option>
-                                <option value="3rd Year">3rd Year</option>
-                                <option value="4th Year">4th Year</option>
-
-                            </select>
-
-                        </div>
-                        -->
-
-
-
-
-
-
-
-
-                        <!-- Password -->
-                        <div class="alert alert-info d-flex align-items-center">
-
-                            <i class="fa-solid fa-circle-info me-2"></i>
-
-                            <div>
-                                Password will be generated automatically after creating the account.
                             </div>
 
                         </div>
-
-                        <!-- Buttons -->
-                        <div class="d-flex gap-3">
-
-                            <button type="submit" class="btn btn-primary flex-fill py-3 rounded-3 fw-semibold">
-
-                                <i class="fa-solid fa-user-plus me-2"></i>
-                                Create User
-
-                            </button>
-
-                            <button type="button" class="btn btn-outline-secondary px-4 rounded-3" data-bs-dismiss="modal">
-
-                                Cancel
-
-                            </button>
-
-                        </div>
-
-                    </form>
-
+                    </div>
                 </div>
-
-            </div>
-            </div>
-            </div>
         </div>
     </div>
 

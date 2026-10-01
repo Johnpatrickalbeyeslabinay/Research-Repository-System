@@ -62,14 +62,14 @@
 
                 </div>
 
-                {{-- Request Form --}}
-                <form action="#" method="POST">
 
-                    @csrf
+                {{-- Request Form --}}
+                <form action="{{ route('research.access-request.store', $file->id) }}" method="POST">
+                @csrf
 
                     <div class="row g-3">
 
-                        {{-- Full Name --}}
+                        {{-- Full Name
                         <div class="col-md-6">
 
                             <label for="requesterName"
@@ -84,10 +84,10 @@
                                    placeholder="Your full name"
                                    required>
 
-                        </div>
+                        </div>--}}
 
                         {{-- Email --}}
-                        <div class="col-md-6">
+                        <div class="col-md-12">
 
                             <label for="requesterEmail"
                                    class="form-label small fw-semibold mb-1">
@@ -108,19 +108,55 @@
                     {{-- Reason --}}
                     <div class="mt-3">
 
-                        <label for="requestReason"
-                               class="form-label small fw-semibold mb-1">
+                        <label for="requestReason" class="form-label small fw-semibold mb-1">
                             Reason for Requesting Access
                         </label>
 
-                        <textarea class="form-control rounded-3"
-                                  id="requestReason"
-                                  name="reason"
-                                  rows="3"
-                                  placeholder="Explain why you need access to this research paper..."
-                                  required></textarea>
+                        {{-- Selected reason appears here --}}
+                        <div id="selectedReasonContainer" class="mb-2 d-none">
+                            <div class="d-inline-flex align-items-center gap-2 rounded-pill bg-light p-0 px-1" style="border: 1px solid #072a89;">
+                                <span class="small" id="selectedReasonText"></span>
+
+                                <button type="button"
+                                        class="btn btn-sm p-0 border-0 text-secondary"
+                                        id="removeReason"
+                                        aria-label="Remove selected reason">
+                                    <i class="fa-solid fa-xmark"></i>
+                                </button>
+                            </div>
+                        </div>
+
+                        {{-- Reason dropdown --}}
+                        <select class="form-select rounded-3"
+                                id="requestReason"
+                                name="reason_access"
+                                required>
+
+                            <option value="" selected disabled>
+                                Select a reason for requesting access...
+                            </option>
+
+                            <option value="Research Gap Identification">
+                                Research Gap Identification
+                            </option>
+
+                            <option value="Related Study Comparison">
+                                Related Study Comparison
+                            </option>
+
+                            <option value="Research Problem Identification">
+                                Research Problem Identification
+                            </option>
+
+                            <option value="General Academic Learning">
+                                General Academic Learning
+                            </option>
+
+                        </select>
 
                     </div>
+
+
 
                     {{-- Notice --}}
                     <div class="text-secondary small mt-2">
@@ -162,3 +198,33 @@
         </div>
     </div>
 </div>
+
+
+
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+
+    const reasonSelect = document.getElementById('requestReason');
+    const selectedContainer = document.getElementById('selectedReasonContainer');
+    const selectedText = document.getElementById('selectedReasonText');
+    const removeReason = document.getElementById('removeReason');
+
+    reasonSelect.addEventListener('change', function () {
+
+        if (this.value) {
+            selectedText.textContent = this.value;
+            selectedContainer.classList.remove('d-none');
+        }
+
+    });
+
+    removeReason.addEventListener('click', function () {
+
+        reasonSelect.value = '';
+        selectedText.textContent = '';
+        selectedContainer.classList.add('d-none');
+
+    });
+
+});
+</script>

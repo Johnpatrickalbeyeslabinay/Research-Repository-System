@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\AccessRequestController;
 use App\Http\Controllers\AccountController;
 use App\Http\Controllers\AdminController;
 use App\Http\Controllers\AuthController;
@@ -247,3 +248,10 @@ Route::get('/research/{id}', [RepositoryController::class, 'show'])
 
 Route::get('/public/research/{id}', [RepositoryController::class, 'show'])
     ->name('public.research.show');
+
+// access request to the owner of thesis
+// the request will be sended to the email of owner
+Route::post(
+    '/research/{file}/access-request',
+    [AccessRequestController::class, 'store']
+)->name('research.access-request.store');

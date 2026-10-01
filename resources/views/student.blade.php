@@ -1278,10 +1278,7 @@
                             </div>
                         </div>
                     </div>
-
-
-
-                @endforeach
+               @endforeach
             </div>
         </div>
 

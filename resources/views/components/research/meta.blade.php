@@ -82,6 +82,13 @@
         <div class="{{ $rowClass }}"><span class="text-muted">Published:</span> {{ $publishedYear }}</div>
     @endif
 
+   @if (in_array('year', $show, true) && $file?->created_at)
+    <div class="{{ $rowClass }}">
+        <span class="text-muted">Submitted:</span>
+        {{ $file->created_at->format('F j, Y') }}
+    </div>
+    @endif
+
     @if (in_array('keywords', $show, true) && $keywordNames->isNotEmpty())
         <div class="{{ $rowClass }}">
             <span class="text-muted">Keywords:</span>
