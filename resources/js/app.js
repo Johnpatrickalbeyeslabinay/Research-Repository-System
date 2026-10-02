@@ -13,15 +13,25 @@
 import * as bootstrap from 'bootstrap';
 import '@hotwired/turbo';
 import {
+    ArrowLeft,
+    ArrowRight,
+    BookOpen,
     createIcons,
     Copy,
+    Download,
+    Eye,
+    FileText,
     FileQuestion,
     Fish,
+    FolderOpen,
     History,
+    LayoutDashboard,
+    LogIn,
     MessageCircleQuestion,
     RotateCcw,
     Search,
     Send,
+    SlidersHorizontal,
     Square,
     SquarePen,
     X,
@@ -31,14 +41,24 @@ import {
 window.bootstrap = bootstrap;
 
 const icons = {
+    ArrowLeft,
+    ArrowRight,
+    BookOpen,
     Copy,
+    Download,
+    Eye,
+    FileText,
     FileQuestion,
     Fish,
+    FolderOpen,
     History,
+    LayoutDashboard,
+    LogIn,
     MessageCircleQuestion,
     RotateCcw,
     Search,
     Send,
+    SlidersHorizontal,
     Square,
     SquarePen,
     X,
@@ -144,5 +164,12 @@ document.addEventListener('change', (event) => {
 document.addEventListener('turbo:frame-load', ({ target }) => {
     const total = target.querySelector('[data-results-total]');
     const display = document.querySelector('[data-results-total-display]');
-    if (total && display) display.textContent = total.textContent;
+    const label = target.querySelector('[data-results-label]');
+    const labelDisplay = document.querySelector('[data-results-label-display]');
+
+    if (total && display) {
+        const count = Number(total.textContent);
+        display.textContent = Number.isFinite(count) ? new Intl.NumberFormat().format(count) : total.textContent;
+    }
+    if (label && labelDisplay) labelDisplay.textContent = label.textContent;
 });

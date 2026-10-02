@@ -1,25 +1,39 @@
-@props([
-    'file',
-    'showDownload' => true,
-    'showDownloadCount' => true,
-    'url' => null,
-])
+@props(['file', 'url' => null, 'showDownload' => true])
 
 @php
-    // Replaces what used to be a full hidden detail <div popover> injected
-    // per card (N cards = N hidden detail blocks in the page) — now a
-    // real, citable URL instead.
     $url = $url ?? route('research.show', $file->id);
+    $researchers = $file->researcherNames();
+    $publishedYear = $file->publication_year ?? $file->created_at?->format('Y');
+
+    $tags = collect();
+    if ($file->relationLoaded('keywords')) {
+        foreach ($file->keywords as $keyword) {
+            $tags->push(['label' => $keyword->display_name, 'kind' => 'keyword']);
+        }
+    }
+    if ($file->relationLoaded('sdgs')) {
+        foreach ($file->sdgs as $goal) {
+            $tags->push(['label' => $goal->label, 'kind' => 'sdg']);
+        }
+    }
+    $tags = $tags->unique('label')->values();
 @endphp
 
-<div class="col-lg-4 col-md-6">
-    <div class="card h-100 shadow-sm border-0 rounded-4">
-        <div class="card-body d-flex flex-column">
-            <h5 class="fw-bold mb-2">
-                <a data-turbo-frame="_top" href="{{ $url }}" class="text-decoration-none text-dark">{{ $file->title }}</a>
-            </h5>
+<article class="research-card">
+    <div class="research-card-body">
+        <div class="research-card-heading">
+            <div class="research-card-type-row">
+                @if ($file->research_type)
+                    <span class="research-type-badge">{{ $file->research_type }}</span>
+                @endif
+                @if ($publishedYear)
+                    <span class="research-year">{{ $publishedYear }}</span>
+                @endif
+            </div>
 
-            <x-research.meta :file="$file" compact :show="['researchers', 'type', 'year']" />
+            <h2 class="research-card-title">
+                <a data-turbo-frame="_top" data-research-card-link href="{{ $url }}">{{ $file->title }}</a>
+            </h2>
 
             <p class="card-text flex-grow-1 mt-2 text-justify">
                 {{ \Illuminate\Support\Str::limit($file->desc, 160) }}
@@ -36,36 +50,39 @@
                 </div>
             @endif-->
 
-            <div class="text-secondary small mb-3">
-                <i class="bi bi-eye"></i> {{ $file->views ?? 0 }}
-                @if ($showDownloadCount)
-                <span class="ms-3">
-                    <i class="bi bi-download"></i> {{ $file->downloads ?? 0 }}
-                </span>
+        <p class="research-card-abstract">{{ $file->desc ?: 'No abstract is available for this research.' }}</p>
+
+        @if ($tags->isNotEmpty())
+            <div class="research-card-tags" aria-label="Keywords and sustainable development goals">
+                @foreach ($tags->take(3) as $tag)
+                    <span class="research-tag research-tag-{{ $tag['kind'] }}">{{ $tag['label'] }}</span>
+                @endforeach
+                @if ($tags->count() > 3)
+                    <span class="research-tag research-tag-more">+{{ $tags->count() - 3 }}</span>
                 @endif
             </div>
+        @endif
 
-            <div class="d-flex gap-2 mt-auto">
-                <a data-turbo-frame="_top" href="{{ $url }}"
-                    class="btn d-flex justify-content-center align-items-center flex-grow-1 rounded py-1 bg-white"
-                    style="border: 1px solid #1d0677; color: navy;">
-                    <i class="bi bi-folder me-2"></i>
-                    View Details
-                </a>
-
-                {{-- Anonymous /public visitors never see this — file.download
-                     is auth-only, and a button that just bounces to /login is
-                     worse than not showing it; they get a proper prompt on
-                     the detail page instead (research/show.blade.php). --}}
-                @if ($showDownload)
-                    <a data-turbo="false" href="{{ route('file.download', $file->id) }}"
-                        class="btn d-flex justify-content-center align-items-center rounded py-1 px-3 bg-white"
-                        style="border: 1px solid #dee2e6; color: #072a89;"
-                        title="Download PDF">
-                        <i class="bi bi-download"></i>
-                    </a>
-                @endif
-            </div>
+        <div class="research-card-stats" aria-label="Research statistics">
+            @if ($file->pdf_page_count)
+                <span title="Page count"><i data-lucide="file-text" aria-hidden="true"></i>{{ $file->pdf_page_count }} pages</span>
+            @endif
+            <span title="Views"><i data-lucide="eye" aria-hidden="true"></i>{{ number_format($file->views ?? 0) }}</span>
+            <span title="Downloads"><i data-lucide="download" aria-hidden="true"></i>{{ number_format($file->downloads ?? 0) }}</span>
         </div>
     </div>
-</div>
+
+    <div class="research-card-actions">
+        <a data-turbo-frame="_top" data-research-card-link href="{{ $url }}" class="btn research-card-primary">
+            View details
+            <i data-lucide="arrow-right" aria-hidden="true"></i>
+        </a>
+
+        @if ($showDownload)
+            <a data-turbo="false" href="{{ route('file.download', $file->id) }}"
+                class="btn research-card-icon-button" aria-label="Download {{ $file->title }}" title="Download PDF">
+                <i data-lucide="download" aria-hidden="true"></i>
+            </a>
+        @endif
+    </div>
+</article>
