@@ -6,6 +6,7 @@ use App\Exceptions\PdfProcessingException;
 use App\Http\Requests\StoreResearchRequest;
 use App\Http\Requests\UpdateResearchRequest;
 use App\Jobs\ProcessResearchDocument;
+use App\Models\AccessRequest;
 use App\Models\Keyword;
 use App\Models\Sdg;
 use App\Models\User;
@@ -86,6 +87,14 @@ class StudentController extends Controller
             ->latest()
             ->get();
 
+        $accessRequests = AccessRequest::with('file')
+            ->where('status', 'pending')
+            ->whereHas('file', function ($query) {
+                $query->where('user_id', Auth::id());
+            })
+            ->latest()
+            ->get();
+
         $notifications = $studFiles;
         $rejectedFiles = $studFiles->where('status', 'rejected')->values();
 
@@ -124,7 +133,8 @@ class StudentController extends Controller
             'sdgs',
             'instructors',
             'otherStudents',
-            'unreadNotificationsCount'
+            'unreadNotificationsCount',
+            'accessRequests',
         ));
     }
 

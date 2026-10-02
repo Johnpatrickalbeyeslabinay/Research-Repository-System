@@ -6,6 +6,7 @@ use App\Models\AccessRequest;
 use Illuminate\Bus\Queueable;
 use Illuminate\Notifications\Messages\MailMessage;
 use Illuminate\Notifications\Notification;
+use Illuminate\Support\Facades\URL;
 
 class AccessRequestReceived extends Notification
 {
@@ -24,14 +25,27 @@ class AccessRequestReceived extends Notification
     {
         $file = $this->accessRequest->file;
 
+        $approveUrl = URL::temporarySignedRoute(
+            'access-requests.email.approve',
+            now()->addDays(7),
+            ['accessRequest' => $this->accessRequest->id]
+        );
+
+        $declineUrl = URL::temporarySignedRoute(
+            'access-requests.email.reject',
+            now()->addDays(7),
+            ['accessRequest' => $this->accessRequest->id]
+        );
+
         return (new MailMessage)
             ->subject('New Research Access Request')
             ->view('email.access_request', [
                 'name' => $notifiable->name,
-                'research_title' => $file->title,
+                'research_title' => $file->title ?? 'Research unavailable',
                 'requester_email' => $this->accessRequest->email,
                 'reason_access' => $this->accessRequest->reason_access,
-                'access_request_id' => $this->accessRequest->id,
+                'approve_url' => $approveUrl,
+                'decline_url' => $declineUrl,
             ]);
     }
 

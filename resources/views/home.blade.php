@@ -8,206 +8,81 @@
     <br><br><br>
 
 
-    <div class="text-center">
-        <i class="fa-solid fa-book shadow-sm"
-        style="font-size: 50px;  width: 90px; color: white;
-    height: 90px;
-    margin: 0 auto;
-    border-radius: 50%;
-    background: linear-gradient(135deg, #1E3A8A, #0D9488);
-    display: flex;
-    justify-content: center;
-    align-items: center;"></i>
+    <svg width="0" height="0" style="position:absolute" aria-hidden="true">
+  <symbol id="upload" viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" x2="12" y1="3" y2="15"/></symbol>
+  <symbol id="file" viewBox="0 0 24 24"><path d="M15 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7Z"/><path d="M14 2v4a2 2 0 0 0 2 2h4"/><path d="M10 9H8"/><path d="M16 13H8"/><path d="M16 17H8"/></symbol>
+  <symbol id="search" viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></symbol>
+  <symbol id="award" viewBox="0 0 24 24"><circle cx="12" cy="8" r="6"/><path d="M15.477 12.89 17 22l-5-3-5 3 1.523-9.11"/></symbol>
+  <symbol id="check" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><path d="m9 12 2 2 4-4"/></symbol>
+  <symbol id="book" viewBox="0 0 24 24"><path d="M12 7v14"/><path d="M3 18a1 1 0 0 1-1-1V4a1 1 0 0 1 1-1h5a4 4 0 0 1 4 4 4 4 0 0 1 4-4h5a1 1 0 0 1 1 1v13a1 1 0 0 1-1 1h-6a3 3 0 0 0-3 3 3 3 0 0 0-3-3z"/></symbol>
+</svg>
 
-        <br><br>
 
-        <h1 class="text-dark fw-bold">Fisheries Research Repository</h1>
-        <br>
-        <h5 class="text-secondary w-50 mx-auto text-center">Discover, Access, Preserve fisheries in one centralized repository</h5>
+
+<section class="hero">
+  <span class="bubble"></span><span class="bubble"></span><span class="bubble"></span><span class="bubble"></span><span class="bubble"></span>
+  <div class="wrap grid">
+    <div>
+      <span class="pill"><svg class="i"><use href="#book"/></svg> College of Fisheries and Aquatic Science</span>
+      <h1>Your fisheries research, <span>published and shared.</span></h1>
+      <p class="lead">Submit, track, and share your research with the academic community. Contribute to the growing body of knowledge in fisheries and aquatic sciences.</p>
+      <div class="cta-row">
+         @if (Route::has('public'))
+                    <a href="{{ route('public') }}" class="btn gold">Browse Repository</a>
+                @else
+                    <a href="#" class="btn">Browse Repository</a>
+                @endif
+
+                @if (Route::has('login'))
+                    <a href="{{ route('login') }}" class="btn outline">Student Login</a>
+                @else
+                    <a href="#" class="btn btn-outline-light text-white fw-bold px-2 py-1">Student Login</a>
+                @endif
+
+      </div>
+      <ul class="chips">
+        <li><svg class="i"><use href="#check"/></svg>Two-stage review</li>
+        <li><svg class="i"><use href="#check"/></svg>SDG tagging</li>
+        <li><svg class="i"><use href="#check"/></svg>Request-based downloads</li>
+      </ul>
     </div>
+    <aside class="paper" aria-label="Example of submission tracking">
+      <p class="tag">Sample submission</p>
+      <h3>Growth Performance of Tilapia in Brackish Water Ponds</h3>
+      <ul class="track">
+        <li class="done">Submitted to instructor</li>
+        <li class="done">Instructor approved</li>
+        <li class="now">Admin review in progress</li>
+        <li>Published in repository</li>
+      </ul>
+    </aside>
+  </div>
+  <svg class="wave" viewBox="0 0 1440 90" preserveAspectRatio="none" aria-hidden="true"><path fill="#f4f8fb" d="M0 50C180 100 360 0 600 40s420 60 600 10c90-25 180-20 240-5V90H0Z"/></svg>
+</section>
 
+<main class="wrap">
 
-    <br><br><br><br>
-
-    <div class="container">
-        <div class="row text-center">
-
-            <div class="col-12 col-lg-3 mb-3">
-                <div class="p-4 border rounded shadow-sm h-100">
-                    <i class="fa-solid fa-upload fs-1 mb-3"></i>
-                    <h4 class="fw-bold">Explore Research</h4>
-                    <p>Browse fisheries studies and theses collected in one digital repository</p>
-                </div>
-            </div>
-
-            <div class="col-12 col-lg-3 mb-3">
-                <div class="p-4 border rounded shadow-sm h-100">
-                    <i class="fa-solid fa-chart-line fs-1 mb-3"></i>
-                    <h4 class="fw-bold">Find What You Need</h4>
-                    <p>Search research by title, author, keyword, or topic</p>
-                </div>
-            </div>
-
-            <div class="col-12 col-lg-3 mb-3">
-                <div class="p-4 border rounded shadow-sm h-100">
-                    <i class="fa-solid fa-search fs-1 mb-3"></i>
-                    <h4 class="fw-bold">Access  Knowledge</h4>
-                    <p>View and Access available research for learning and academic reference</p>
-                </div>
-            </div>
-
-            <div class="col-12 col-lg-3 mb-3">
-                <div class="p-4 border rounded shadow-sm h-100">
-                    <i class="fa-solid fa-award fs-1 mb-3"></i>
-                    <h4 class="fw-bold">Ask the Research</h4>
-                    <p>Get summaries and related information from repository content</p>
-                </div>
-            </div>
-
-        </div>
+  <section class="how" id="how">
+    <h2>How It Works</h2>
+    <p class="sub">Six simple steps from signing in to tracking your research</p>
+    <div class="steps">
+      <div class="step"><div class="num">01</div><h3>LOG IN</h3><p>Sign in using your Email or Student ID Number and password.</p></div>
+      <div class="step"><div class="num">02</div><h3>SEARCH</h3><p>Find available research papers and theses by searching keywords, titles, or authors.</p></div>
+      <div class="step"><div class="num">03</div><h3>VIEW</h3><p>Open a research item to view its details, abstract, and available content.</p></div>
+      <div class="step"><div class="num">04</div><h3>UPLOAD</h3><p>Authorized students can upload completed theses for review and approval.</p></div>
+      <div class="step"><div class="num">05</div><h3>ASK AQUA</h3><p>Ask Aqua AI questions, get research assistance, generate summaries, and discover related research.</p></div>
+      <div class="step"><div class="num">06</div><h3>TRACK</h3><p>Monitor your submissions, request status, notifications, and saved research from your account.</p></div>
     </div>
+  </section>
 
-
-
-
-
-    <div class="container py-5">
-
-        <div class="bg-white shadow rounded-5 p-5">
-
-            <h3 class="fw-bold text-center">
-                How It Works
-            </h3>
-
-            <p class="text-secondary text-center mb-5">
-                Simple steps to submit your research
-            </p>
-
-
-            <div class="row text-center g-4">
-
-                <div class="col-12 col-md-4">
-
-                    <div class=" rounded-circle bg-primary bg-opacity-25
-                            d-flex align-items-center justify-content-center
-                            mx-auto" style=" width:80px;
-                height:80px;">
-
-                        <span class="fw-bold fs-1 text-primary">
-                            1
-                        </span>
-
-                    </div>
-
-                    <h3 class="fw-bold mt-4">
-                        Login & Upload
-                    </h3>
-
-                    <p class="text-secondary">
-                        Sign in with your student credentials and upload your research paper with all required metadata
-                    </p>
-
-                </div>
-
-
-                <div class="col-12 col-md-4">
-
-                    <div class="rounded-circle bg-success bg-opacity-25
-                            d-flex align-items-center justify-content-center
-                            mx-auto" style=" width:80px; height:80px;">
-
-                        <span class="fw-bold fs-1 text-success">
-                            2
-                        </span>
-
-                    </div>
-
-                    <h3 class="fw-bold mt-4">
-                        Faculty Review
-                    </h3>
-
-                    <p class="text-secondary">
-                        Your instructor reviews your submission and provides feedback or approval
-                    </p>
-
-                </div>
-
-
-                <div class="col-12 col-md-4">
-
-                    <div class="step rounded-circle bg-success-subtle
-                            d-flex align-items-center justify-content-center
-                            mx-auto" style=" width:80px;
-                height:80px;">
-
-                        <span class="fw-bold fs-1 text-success">
-                            <i class="fa-solid fa-check"></i>
-                        </span>
-
-                    </div>
-
-                    <h3 class="fw-bold mt-4">
-                        Get Published
-                    </h3>
-
-                    <p class="text-secondary">
-                        Once approved, your research becomes part of the public repository
-                    </p>
-
-                </div>
-
-            </div>
-
-        </div>
-
-
-
-
-                <div class="container-fluid px-4 mt-5">
-                    <div class="user-manual-card">
-                        <div>
-                            <h2 class="user-manual-title">
-                                Need help using the repository?
-                            </h2>
-
-                            <p class="user-manual-description mb-0">
-                                Download the user manual for student, instructor, administrator, and guest instructions.
-                            </p>
-                        </div>
-
-                        <a href="{{ asset('documents/user manual.pdf') }}"
-                        class="btn user-manual-btn"
-                        download>
-                            <i class="fa-solid fa-download me-2"></i>
-                            Download User Manual
-                        </a>
-                    </div>
-                </div>
-
-
-
-
-
-        <div class="cta rounded-5 shadow text-center py-5 px-3 mt-5"
-            style=" background:linear-gradient(to right,#1e3c97,#007c78);">
-
-            <h1 class="text-white fw-bold">
-                Ready to Share Your Research?
-            </h1>
-
-            <p class="text-white fs-4 mt-4">
-                Join fellow students in contributing to fisheries research excellence
-            </p>
-
-            <button class="btn btn-light btn-lg px-5 mt-4 fw-semibold text-primary">
-                <a href="{{ route('login') }}" class="text-decoration-none text-primary">
-                    Login to Get Started
-                </a>
+  <section class="cta">
+    <h2>Ready to Share Your Research?</h2>
+    <p>Join fellow students in contributing to fisheries research excellence</p>
+    <button class="btn gold">
+                <a href="{{ route('login') }}" class="btn gold">Login to get started</a>
             </button>
-
-        </div>
-
-    </div>
+  </section>
+</main>
 
 
 

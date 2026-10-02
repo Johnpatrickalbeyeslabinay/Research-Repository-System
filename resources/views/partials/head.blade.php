@@ -31,3 +31,8 @@
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
 
 @vite(array_values(array_filter(['resources/css/layout.css', $layoutCss ?? null, 'resources/js/app.js'])))
+<!--@vite(array_values(array_filter([
+    'resources/css/app.css',
+    $layoutCss ?? null,
+    'resources/js/app.js',
+])))-->

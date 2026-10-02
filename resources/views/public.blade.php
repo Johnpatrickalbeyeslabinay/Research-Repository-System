@@ -4,7 +4,7 @@
 
 @section('public')
 
-<br><br><br><br><br>
+<br><br>
     <a href="{{ route('home') }}" class="text-decoration-none text-secondary ms-1">
         <i class="fa-solid fa-arrow-left fa-xl"></i>
         Home

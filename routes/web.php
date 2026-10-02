@@ -250,8 +250,38 @@ Route::get('/public/research/{id}', [RepositoryController::class, 'show'])
     ->name('public.research.show');
 
 // access request to the owner of thesis
-// the request will be sended to the email of owner
+// the request will be sent to the email of owner
 Route::post(
     '/research/{file}/access-request',
     [AccessRequestController::class, 'store']
 )->name('research.access-request.store');
+
+Route::get(
+    '/access-requests/{accessRequest}/approved',
+    [AccessRequestController::class, 'approvedAccess']
+)
+    ->middleware('signed')
+    ->name('access-requests.approved');
+
+Route::get(
+    '/access-requests/{accessRequest}/pdf',
+    [AccessRequestController::class, 'approvedPdf']
+)
+    ->middleware('signed')
+    ->name('access-requests.approved.pdf');
+
+// Dashboard buttons (owner must be logged in)
+Route::patch('/access-requests/{accessRequest}/approve', [AccessRequestController::class, 'approve'])
+    ->name('access-requests.approve');
+
+Route::patch('/access-requests/{accessRequest}/reject', [AccessRequestController::class, 'reject'])
+    ->name('access-requests.reject');
+
+// Email buttons (signed links, no login needed)
+Route::get('/access-requests/{accessRequest}/accept', [AccessRequestController::class, 'approveFromEmail'])
+    ->name('access-requests.email.approve')
+    ->middleware('signed');
+
+Route::get('/access-requests/{accessRequest}/decline', [AccessRequestController::class, 'rejectFromEmail'])
+    ->name('access-requests.email.reject')
+    ->middleware('signed');

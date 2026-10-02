@@ -69,38 +69,34 @@
 
                     <div class="row g-3">
 
-                        {{-- Full Name
+                        {{-- Full Name --}}
                         <div class="col-md-6">
-
                             <label for="requesterName"
-                                   class="form-label small fw-semibold mb-1">
+                                class="form-label small fw-semibold mb-1">
                                 Full Name
                             </label>
 
                             <input type="text"
-                                   class="form-control rounded-3"
-                                   id="requesterName"
-                                   name="full_name"
-                                   placeholder="Your full name"
-                                   required>
-
-                        </div>--}}
+                                class="form-control rounded-3"
+                                id="requesterName"
+                                name="name"
+                                placeholder="Your full name"
+                                required>
+                        </div>
 
                         {{-- Email --}}
-                        <div class="col-md-12">
-
+                        <div class="col-md-6">
                             <label for="requesterEmail"
-                                   class="form-label small fw-semibold mb-1">
+                                class="form-label small fw-semibold mb-1">
                                 Email Address
                             </label>
 
                             <input type="email"
-                                   class="form-control rounded-3"
-                                   id="requesterEmail"
-                                   name="email"
-                                   placeholder="your.email@example.com"
-                                   required>
-
+                                class="form-control rounded-3"
+                                id="requesterEmail"
+                                name="email"
+                                placeholder="your.email@example.com"
+                                required>
                         </div>
 
                     </div>

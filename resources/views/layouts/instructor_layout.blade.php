@@ -38,8 +38,8 @@
                         style="width:90px;height:90px;object-fit:cover;">
 
                     <div class="d-flex flex-column">
-                        <h5 class="fw-bold mb-0">CSU APARRI</h5>
-                        <small class="text-secondary">Fisheries Program</small>
+                        <h5 class="fw-bold mb-0">Research Repository System</h5>
+                        <small class="text-secondary">CSU Aparri - College of Fisheries and Aquatic Science</small>
                     </div>
 
                 </div>
@@ -86,8 +86,8 @@
                         style="width:70px;height:70px;object-fit:cover;">
 
                     <div class="d-flex flex-column">
-                        <h5 class="fw-bold mb-0">CSU APARRI</h5>
-                        <small class="text-secondary">Fisheries Program</small>
+                        <h5 class="fw-bold mb-0">Research Repository System</h5>
+                        <small class="text-secondary">CSU Aparri - College of Fisheries and Aquatic Science</small>
                     </div>
 
                 </div>
@@ -196,8 +196,8 @@
                         style="width:90px;height:90px;object-fit:cover;">
 
                     <div class="d-flex flex-column">
-                        <h5 class="fw-bold mb-0">CSU APARRI</h5>
-                        <small class="text-secondary">Fisheries Program</small>
+                        <h5 class="fw-bold mb-0">Research Repository System</h5>
+                        <small class="text-secondary">CSU Aparri - College of Fisheries and Aquatic Science</small>
                     </div>
 
                 </div>

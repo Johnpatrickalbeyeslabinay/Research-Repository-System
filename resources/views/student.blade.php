@@ -583,16 +583,19 @@
             My Submissions
         </button>
 
+        <!-- Review Request -->
+        <button class="nav-link rounded-5 px-2 py-1" id="request-tab" data-bs-toggle="pill"
+            data-bs-target="#request" type="button" role="tab">
+            Review Request
+        </button>
+
         <!-- Notifications -->
         <button class="nav-link rounded-5 px-2 py-1  d-flex align-items-center gap-2" id="notification-tab"
             data-bs-toggle="pill" data-bs-target="#notification" type="button" role="tab">
-
             Notifications
-
-            <span class="badge d-flex align-items-center justify-content-center text-danger">
+            <!--<span class="badge d-flex align-items-center justify-content-center text-danger">
                 <i class="fa-solid fa-comment-dots"></i>
-            </span>
-
+            </span>-->
         </button>
 
         <!-- Bookmarks -->
@@ -1281,6 +1284,120 @@
                @endforeach
             </div>
         </div>
+
+
+
+                        <!--=================================== REQUEST ====================================-->
+<div class="tab-pane fade" id="request">
+
+    {{-- Header --}}
+    <div class="d-flex justify-content-between align-items-center mt-4 mb-3">
+        <div>
+            <h4 class="fw-bold mb-0">Access Requests</h4>
+            <p class="text-muted small mb-0">Review who has requested access to your research files.</p>
+        </div>
+        <span class="badge bg-primary-subtle text-primary-emphasis rounded-pill px-3 py-2">
+            {{ $accessRequests->count() }} {{ Str::plural('request', $accessRequests->count()) }}
+        </span>
+    </div>
+
+    <div class="d-flex flex-column gap-2 w-100">
+
+        @forelse ($accessRequests as $request)
+
+            @php
+                $status = strtolower($request->status);
+                $badge = match ($status) {
+                    'approved' => 'bg-success-subtle text-success-emphasis',
+                    'rejected', 'denied' => 'bg-danger-subtle text-danger-emphasis',
+                    default => 'bg-warning-subtle text-warning-emphasis',
+                };
+            @endphp
+
+            <div class="card border-0 shadow-sm rounded-3">
+                <div class="card-body py-2 px-3">
+
+
+                {{-- Timestamp --}}
+                    <div class="text-muted mt-1" style="font-size: .7rem;">
+                        Requested {{ $request->created_at?->diffForHumans() }}
+                    </div>
+
+
+                    {{-- Top row: title + status --}}
+                    <div class="d-flex justify-content-between align-items-center gap-2 mb-2">
+                        <h6 class="fw-semibold mb-0 text-truncate" title="{{ $request->file->title ?? 'Research unavailable' }}">
+                            {{ $request->file->title ?? 'Research unavailable' }}
+                        </h6>
+                        <span class="badge rounded-pill {{ $badge }}" style="font-size: .7rem;">
+                            {{ ucfirst($request->status) }}
+                        </span>
+                    </div>
+
+                    {{-- Requester --}}
+                    <div class="d-flex align-items-center mb-2">
+                        <div class="rounded-circle bg-primary text-white d-flex align-items-center justify-content-center fw-semibold me-2"
+                             style="width: 30px; height: 30px; font-size: .8rem; flex-shrink: 0;">
+                            {{ strtoupper(substr($request->name, 0, 1)) }}
+                        </div>
+                        <div class="overflow-hidden lh-sm">
+                            <div class="small fw-semibold text-truncate">{{ $request->name }}</div>
+                            <a href="mailto:{{ $request->email }}" class="text-muted text-decoration-none text-truncate d-block" style="font-size: .75rem;">
+                                {{ $request->email }}
+                            </a>
+                        </div>
+                    </div>
+
+                    {{-- Reason --}}
+                    <div class="bg-light rounded-2 px-2 py-1">
+                        <span class="text-muted fw-semibold" style="font-size: .7rem;">REASON:</span>
+                        <span class="small">{{ $request->reason_access }}</span>
+                    </div>
+
+                                    {{-- Actions --}}
+                <div class="d-flex justify-content-between align-items-center mt-2">
+                
+                    <div class="d-flex gap-2">
+                        <form action="{{ route('access-requests.approve', $request->id) }}" method="POST">
+                            @csrf
+                            @method('PATCH')
+                            <button type="submit"
+                                    class="btn btn-sm bg-success-subtle text-success-emphasis border-success-subtle rounded-3 px-3"
+                                    @disabled($status !== 'pending')>
+                                Approve
+                            </button>
+                        </form>
+
+                        <form action="{{ route('access-requests.reject', $request->id) }}" method="POST">
+                            @csrf
+                            @method('PATCH')
+                            <button type="submit"
+                                    class="btn btn-sm bg-danger-subtle text-danger-emphasis border-danger-subtle rounded-3 px-3"
+                                    @disabled($status !== 'pending')>
+                                Reject
+                            </button>
+                        </form>
+                    </div>
+                </div>
+
+                </div>
+            </div>
+
+        @empty
+
+            <div class="text-center py-4 bg-light rounded-3 border">
+                <div class="fs-3 mb-1">📭</div>
+                <h6 class="fw-semibold mb-0">No access requests yet</h6>
+                <p class="text-muted small mb-0">New requests will appear here.</p>
+            </div>
+
+        @endforelse
+
+    </div>
+</div>
+
+
+
 
 
 

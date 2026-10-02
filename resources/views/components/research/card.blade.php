@@ -35,9 +35,9 @@
                 <a data-turbo-frame="_top" data-research-card-link href="{{ $url }}">{{ $file->title }}</a>
             </h2>
 
-            <p class="card-text flex-grow-1 mt-2 text-justify">
+            <!--<p class="card-text flex-grow-1 mt-2 text-justify">
                 {{ \Illuminate\Support\Str::limit($file->desc, 160) }}
-            </p>
+            </p>-->
 
             <!--@if ($file->relationLoaded('keywords') && $file->keywords->isNotEmpty())
                 <div class="mb-3">

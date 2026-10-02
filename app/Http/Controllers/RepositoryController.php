@@ -52,21 +52,21 @@ class RepositoryController extends Controller
             ->withQueryString();
 
         $loadFacets = fn () => [
-                'years' => $this->baseQuery($publicOnly, $viewer)
-                    ->selectRaw('DISTINCT publication_year as year')
-                    ->whereNotNull('publication_year')
-                    ->orderByDesc('year')
-                    ->pluck('year'),
-                'types' => $this->baseQuery($publicOnly, $viewer)
-                    ->selectRaw('DISTINCT research_type as type')
-                    ->whereNotNull('research_type')
-                    ->orderBy('type')
-                    ->pluck('type'),
-                'sdgs' => Sdg::query()
-                    ->whereHas('userFiles', fn ($query) => $this->constrainRepositoryQuery($query, $publicOnly, $viewer))
-                    ->orderBy('number')
-                    ->get(),
-            ];
+            'years' => $this->baseQuery($publicOnly, $viewer)
+                ->selectRaw('DISTINCT publication_year as year')
+                ->whereNotNull('publication_year')
+                ->orderByDesc('year')
+                ->pluck('year'),
+            'types' => $this->baseQuery($publicOnly, $viewer)
+                ->selectRaw('DISTINCT research_type as type')
+                ->whereNotNull('research_type')
+                ->orderBy('type')
+                ->pluck('type'),
+            'sdgs' => Sdg::query()
+                ->whereHas('userFiles', fn ($query) => $this->constrainRepositoryQuery($query, $publicOnly, $viewer))
+                ->orderBy('number')
+                ->get(),
+        ];
 
         // Public facets are shared and safe to cache globally. Authenticated
         // facets depend on row-level access, so calculating them per request
@@ -159,7 +159,28 @@ class RepositoryController extends Controller
 
     private function baseQuery(bool $publicOnly, ?User $viewer)
     {
-        return UserFile::where('status', 'approved')
-            ->where('visibility', 'public');
+        return $this->constrainRepositoryQuery(
+            UserFile::query(),
+            $publicOnly,
+            $viewer
+        );
+    }
+
+    private function constrainRepositoryQuery($query, bool $publicOnly, ?User $viewer)
+    {
+        $query->where('status', 'approved');
+
+        if ($publicOnly) {
+            return $query->where('visibility', 'public');
+        }
+
+        return ResearchAccess::scope($query, $viewer);
+    }
+
+    private function repositoryBackUrl(bool $isPublicView): string
+    {
+        return $isPublicView
+            ? route('public')
+            : route('repository');
     }
 }

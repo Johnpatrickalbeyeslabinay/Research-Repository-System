@@ -11,8 +11,8 @@
             <a href="{{ route('repository') }}" class="site-brand" aria-label="CSU Aparri research repository">
                 <img src="{{ asset('images/logo.png') }}" alt="CSU Aparri Logo" class="site-logo">
                 <span class="site-brand-copy">
-                    <strong>CSU APARRI</strong>
-                    <small>Fisheries Program</small>
+                    <strong>Research Repository System</strong>
+                    <small>CSU Aparri - College of Fisheries and Aquatic Science</small>
                 </span>
             </a>
 

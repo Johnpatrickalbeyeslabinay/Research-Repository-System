@@ -56,7 +56,7 @@
                     {{-- Accept --}}
                     <td align="center"
                         style="border-radius:6px; background:#d9f5e5; border:1px solid #a8e6c3;">
-                        <a href="{{ url('/access-requests/' . $access_request_id . '/accept') }}"
+                        <a href="{{ $approve_url }}"
                         style="
                                 display:inline-block;
                                 padding:8px 16px;
@@ -76,7 +76,7 @@
                     {{-- Decline --}}
                     <td align="center"
                         style="border-radius:6px; background:#fdecec; border:1px solid #f6c6c6;">
-                        <a href="{{ url('/access-requests/' . $access_request_id . '/decline') }}"
+                        <a href="{{ $decline_url}}"
                         style="
                                 display:inline-block;
                                 padding:8px 16px;
