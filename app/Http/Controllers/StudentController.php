@@ -257,6 +257,7 @@ class StudentController extends Controller
             'pdf_page_count' => $processed['page_count'],
             'extracted_abstract' => $detected['abstract']['text'],
             'extracted_sections' => $detected['sections'],
+            'extracted_references' => $detected['references'],
         ]);
 
         $fileRecord->sdgs()->sync($request->sdg);
@@ -472,7 +473,10 @@ class StudentController extends Controller
     // drift apart into two different definitions of "who may read this".
     private function authorizeFileAccess(UserFile $file): void
     {
-        abort_unless(ResearchAccess::allows(Auth::user(), $file), 403);
+        abort_unless(
+            ResearchAccess::allowsRepository(Auth::user(), $file),
+            403
+        );
     }
 
     // view function
@@ -511,9 +515,21 @@ class StudentController extends Controller
     // update research
     public function update(UpdateResearchRequest $request, $id)
     {
+
         $file = UserFile::where('id', $id)
             ->where('user_id', Auth::id())
             ->firstOrFail();
+
+        if (! $file->canResubmit()) {
+            return back()
+                ->withErrors([
+                    'limit' => 'You have reached the maximum of '
+                        .$file::MAX_RESUBMITS
+                        .' resubmissions for this research.',
+                ])
+                ->with('_popover_target', 'update-sub-'.$file->id)
+                ->withInput();
+        }
 
         $adviser = User::findOrFail($request->adviser_id);
 
@@ -578,8 +594,7 @@ class StudentController extends Controller
         $file->status = 'pending';
 
         $file->save();
-
-        $file->save();
+        $file->increment('resubmit_count');
 
         $file->sdgs()->sync($request->sdg);
         $this->syncAuthors($file, $request->input('researchers', []));
@@ -602,6 +617,5 @@ class StudentController extends Controller
         return redirect()
             ->back()
             ->with('success', 'Research submission updated successfully.');
-
     }
 }

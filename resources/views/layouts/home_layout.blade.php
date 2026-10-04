@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Research Repository System | CSU Aparri - College of Fisheries and Aquatic Science</title>
+<title>Research Repository System | College of Fisheries and Aquatic Science</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Playfair+Display:wght@600;700&display=swap" rel="stylesheet">
@@ -137,7 +137,7 @@ footer{margin-top:auto;background:var(--deep);border-top:4px solid var(--accent)
   <div class="wrap bar">
     <a class="brand" href="landing.html">
       <img class="logo" src="{{ asset('images/logo.png') }}" alt="College of Fisheries and Aquatic Science logo">
-      <span><b>Research Repository System</b><small>CSU Aparri - College of Fisheries and Aquatic Science</small></span>
+      <span><b>Research Repository System</b><small>College of Fisheries and Aquatic Science</small></span>
     </a>
     <!-- login and register buttons -->
             <div class="ms-auto d-flex gap-2 home-nav-actions">
@@ -173,7 +173,7 @@ footer{margin-top:auto;background:var(--deep);border-top:4px solid var(--accent)
         <span><b>Cagayan State University - Aparri Campus</b><small>College of Fisheries and Aquatic Science Research Repository</small></span>
       </div>
     </div>
-    <p class="copy">Research Repository System, CSU Aparri - College of Fisheries and Aquatic Science</p>
+    <p class="copy">Research Repository System, College of Fisheries and Aquatic Science</p>
   </div>
 </footer>
 

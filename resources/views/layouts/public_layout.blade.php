@@ -19,7 +19,7 @@
 
                 <span class="site-brand-copy">
                     <strong>Research Repository System</strong>
-                    <small>CSU Aparri - College of Fisheries and Aquatic Science</small>
+                    <small>College of Fisheries and Aquatic Science</small>
                 </span>
             </a>
 

@@ -22,18 +22,22 @@ class repositoryMail extends Mailable
 
     public $role;
 
+    public $verificationUrl;
+
     public function __construct(
         $name,
         $user_id,
         $email,
         $password,
-        $role
+        $role,
+        $verificationUrl
     ) {
         $this->name = $name;
         $this->user_id = $user_id;
         $this->email = $email;
         $this->password = $password;
         $this->role = $role;
+        $this->verificationUrl = $verificationUrl;
     }
 
     public function envelope(): Envelope

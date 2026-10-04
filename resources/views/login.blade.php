@@ -117,9 +117,61 @@
 
                             </div>
 
+                            <div class="mb-3">
+                            <div
+                                class="cf-turnstile"
+                                data-sitekey="{{ config('services.turnstile.site_key') }}"
+                            ></div>
+                        </div>
+
+
+
+                        <div class="mb-3 captcha-field">
+
+    <label class="form-label">Security code</label>
+
+    <div class="d-flex align-items-center gap-2">
+
+        <div class="captcha-box flex-grow-1" id="captchaCode">
+            @foreach(str_split($captchaCode) as $character)
+                <span>{{ $character }}</span>
+            @endforeach
+        </div>
+
+        <button
+            type="button"
+            class="btn btn-light border captcha-refresh"
+            onclick="refreshCaptcha()"
+            aria-label="Refresh CAPTCHA"
+            title="Refresh"
+        >
+            <i class="fa-solid fa-rotate"></i>
+        </button>
+
+    </div>
+
+    <input
+        type="text"
+        name="captcha"
+        class="form-control mt-2 @error('captcha') is-invalid @enderror"
+        placeholder="Enter the code"
+        maxlength="6"
+        autocomplete="off"
+        required
+    >
+
+    @error('captcha')
+        <div class="text-danger small mt-1">
+            {{ $message }}
+        </div>
+    @enderror
+
+</div>
+
 
                             <button type="submit" class="btn btn-primary w-100 mb-4" id="loginBtn">
-                                Sign In
+                                <span class="spinner-border spinner-border-sm d-none" id="loginSpinner" role="status" aria-hidden="true"></span>
+                                <span id="loginText">Sign In</span>
                             </button>
 
                             @if ($errors->any())
@@ -145,7 +197,14 @@
 
     </div>
 
-
+    <script>
+document.getElementById('loginBtn').closest('form').addEventListener('submit', function () {
+    const btn = document.getElementById('loginBtn');
+    document.getElementById('loginSpinner').classList.remove('d-none');
+    document.getElementById('loginText').textContent = 'Signing in...';
+    setTimeout(() => btn.disabled = true, 0); // disable after the submit starts
+});
+</script>
 
    <script>
 // Runs inline: under Turbo there's no DOMContentLoaded on a page visit, and
@@ -170,6 +229,25 @@
 })();
 </script>
 
+
+
+<script>
+function refreshCaptcha() {
+    fetch('{{ route('captcha.refresh') }}')
+        .then(response => response.json())
+        .then(data => {
+            const captcha = document.getElementById('captchaCode');
+
+            captcha.innerHTML = '';
+
+            [...data.captcha].forEach(character => {
+                const span = document.createElement('span');
+                span.textContent = character;
+                captcha.appendChild(span);
+            });
+        });
+}
+</script>
 
 
 @endsection

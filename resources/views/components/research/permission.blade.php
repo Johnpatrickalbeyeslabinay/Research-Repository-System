@@ -67,38 +67,38 @@
                 <form action="{{ route('research.access-request.store', $file->id) }}" method="POST">
                 @csrf
 
-                    <div class="row g-3">
+                    {{-- Full Name --}}
+                    <div class="col-md-6">
+                        <label for="requesterName"
+                            class="form-label small fw-semibold mb-1">
+                            Full Name
+                        </label>
 
-                        {{-- Full Name --}}
-                        <div class="col-md-6">
-                            <label for="requesterName"
-                                class="form-label small fw-semibold mb-1">
-                                Full Name
-                            </label>
+                        <input type="text"
+                            class="form-control rounded-3"
+                            id="requesterName"
+                            name="name"
+                            value="{{ auth()->check() ? auth()->user()->name : old('name') }}"
+                            placeholder="Your full name"
+                            {{ auth()->check() ? 'readonly' : '' }}
+                            required>
+                    </div>
 
-                            <input type="text"
-                                class="form-control rounded-3"
-                                id="requesterName"
-                                name="name"
-                                placeholder="Your full name"
-                                required>
-                        </div>
+                    {{-- Email --}}
+                    <div class="col-md-6">
+                        <label for="requesterEmail"
+                            class="form-label small fw-semibold mb-1">
+                            Email Address
+                        </label>
 
-                        {{-- Email --}}
-                        <div class="col-md-6">
-                            <label for="requesterEmail"
-                                class="form-label small fw-semibold mb-1">
-                                Email Address
-                            </label>
-
-                            <input type="email"
-                                class="form-control rounded-3"
-                                id="requesterEmail"
-                                name="email"
-                                placeholder="your.email@example.com"
-                                required>
-                        </div>
-
+                        <input type="email"
+                            class="form-control rounded-3"
+                            id="requesterEmail"
+                            name="email"
+                            value="{{ auth()->check() ? auth()->user()->email : old('email') }}"
+                            placeholder="your.email@example.com"
+                            {{ auth()->check() ? 'readonly' : '' }}
+                            required>
                     </div>
 
                     {{-- Reason --}}

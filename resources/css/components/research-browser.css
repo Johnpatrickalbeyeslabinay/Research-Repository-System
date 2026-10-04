@@ -237,7 +237,10 @@
 }
 
 .repository-filter-panel {
-    grid-template-columns: minmax(112px, 0.8fr) minmax(100px, 0.65fr) minmax(180px, 1.35fr) minmax(130px, 0.9fr) auto;
+    grid-template-columns: minmax(112px, 0.8fr) minmax(100px, 0.65fr) minmax(
+            180px,
+            1.35fr
+        ) minmax(130px, 0.9fr) auto;
     gap: 12px;
     align-items: end;
 }
@@ -328,7 +331,10 @@
     border-radius: 8px;
     background: var(--repository-surface);
     box-shadow: 0 2px 8px rgba(26, 42, 58, 0.05);
-    transition: border-color 0.16s ease, box-shadow 0.16s ease, transform 0.16s ease;
+    transition:
+        border-color 0.16s ease,
+        box-shadow 0.16s ease,
+        transform 0.16s ease;
 }
 
 .research-card:hover {
@@ -658,7 +664,7 @@
     height: 4px;
     border-radius: 50%;
     background: #9aa5b1;
-    content: '';
+    content: "";
     transform: translateY(-50%);
 }
 
@@ -958,4 +964,23 @@
     .research-card {
         transition: none;
     }
+}
+
+.research-detail-references {
+    margin-top: 2.5rem;
+}
+
+.research-detail-references h2 {
+    margin-bottom: 1rem;
+}
+
+.research-references-list {
+    margin: 0;
+    padding-left: 1.5rem;
+}
+
+.research-references-list li {
+    margin-bottom: 0.85rem;
+    line-height: 1.7;
+    text-align: justify;
 }

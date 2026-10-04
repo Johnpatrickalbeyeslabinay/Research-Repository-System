@@ -47,4 +47,9 @@ return [
         'metadata_max_output_tokens' => env('OPENAI_METADATA_MAX_OUTPUT_TOKENS', 300),
     ],
 
+    'turnstile' => [
+        'site_key' => env('TURNSTILE_SITE_KEY'),
+        'secret_key' => env('TURNSTILE_SECRET_KEY'),
+    ],
+
 ];

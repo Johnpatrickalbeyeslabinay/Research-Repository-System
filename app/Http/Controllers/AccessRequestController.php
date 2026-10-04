@@ -18,6 +18,7 @@ class AccessRequestController extends Controller
     public function store(Request $request, UserFile $file)
     {
         $validated = $request->validate([
+            'name' => ['required', 'string', 'max:255'],
             'email' => ['required', 'email'],
             'reason_access' => [
                 'required',
@@ -27,24 +28,73 @@ class AccessRequestController extends Controller
 
         $accessRequest = AccessRequest::create([
             'stud_file_id' => $file->id,
+            'name' => $validated['name'],
             'email' => $validated['email'],
             'reason_access' => $validated['reason_access'],
             'status' => 'pending',
         ]);
 
+        // Remember the requester in this browser session
+        // so Public Viewing can show "Access Request Pending".
+        session([
+            'research_access_email_'.$file->id => $validated['email'],
+        ]);
+
         $uploader = $file->user;
 
         if ($uploader) {
-            $uploader->notify(new AccessRequestReceived($accessRequest));
+            $uploader->notify(
+                new AccessRequestReceived($accessRequest)
+            );
         }
 
-        return redirect()->back()->with(
-            'success',
-            'Your access request has been submitted successfully.'
-        );
+        return redirect()
+            ->back()
+            ->with(
+                'success',
+                'Your access request has been submitted successfully.'
+            );
     }
 
-    // ---------- Approved requester access ----------
+    // ---------- Dashboard approve/reject ----------
+
+    public function approve(Request $request, AccessRequest $accessRequest)
+    {
+        if ($accessRequest->status !== 'pending') {
+            return redirect()->back()->with(
+                'error',
+                'This request has already been processed.'
+            );
+        }
+
+        $accessRequest->update([
+            'status' => 'approved',
+        ]);
+
+        $ownerName = auth()->user()?->name
+            ?? $accessRequest->file?->user?->name
+            ?? 'the owner';
+
+        try {
+            Mail::to($accessRequest->email)->send(
+                new AccessRequestStatusMail($accessRequest, $ownerName)
+            );
+
+            return redirect()->back()->with(
+                'success',
+                'Access request approved successfully.'
+            );
+        } catch (\Throwable $e) {
+            Log::error(
+                'Access request approval email failed: '.$e->getMessage()
+            );
+
+            return redirect()->back()->with(
+                'warning',
+                'Access request approved, but the email could not be sent.'
+            );
+        }
+    }
 
     public function reject(Request $request, AccessRequest $accessRequest)
     {
@@ -73,7 +123,9 @@ class AccessRequestController extends Controller
                 'Access request rejected successfully.'
             );
         } catch (\Throwable $e) {
-            Log::error('Access request rejection email failed: '.$e->getMessage());
+            Log::error(
+                'Access request rejection email failed: '.$e->getMessage()
+            );
 
             return redirect()->back()->with(
                 'warning',

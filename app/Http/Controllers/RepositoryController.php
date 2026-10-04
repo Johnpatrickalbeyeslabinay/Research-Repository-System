@@ -90,28 +90,130 @@ class RepositoryController extends Controller
         ]);
     }
 
+    // public function show($id)
+    // {
+    // $file = UserFile::with(['authors', 'keywords', 'sdgs', 'adviserUser'])
+    // ->findOrFail($id);
+
+    // abort_unless(ResearchAccess::allows(Auth::user(), $file), 404);
+
+    // The legacy /research/{id} URL is also intentionally public for an
+    // approved public record. Anonymous requests therefore use the same
+    // metadata-only shell and actions as /public/research/{id}.
+    // $isPublicView = request()->routeIs('public.research.show') || Auth::guest();
+
+    // Public viewing must never show PDF/download access,
+    // even if the visitor happens to be logged in.
+    // $canAccessPdf = Auth::check() && ! $isPublicView;
+    // $backUrl = $this->repositoryBackUrl($isPublicView);
+
+    // return view('research.show', compact(
+    // 'file', 'canAccessPdf', 'isPublicView','backUrl' ));}
+
     public function show($id)
     {
-        $file = UserFile::with(['authors', 'keywords', 'sdgs', 'adviserUser'])
-            ->findOrFail($id);
+        $file = UserFile::with([
+            'authors',
+            'keywords',
+            'sdgs',
+            'adviserUser',
+        ])->findOrFail($id);
 
-        abort_unless(ResearchAccess::allows(Auth::user(), $file), 404);
+        // Public view
+        $isPublicView = request()->routeIs('public.research.show')
+            || Auth::guest();
 
-        // The legacy /research/{id} URL is also intentionally public for an
-        // approved public record. Anonymous requests therefore use the same
-        // metadata-only shell and actions as /public/research/{id}.
-        $isPublicView = request()->routeIs('public.research.show') || Auth::guest();
+        /*
+        |--------------------------------------------------------------------------
+        | PUBLIC VIEWING
+        |--------------------------------------------------------------------------
+        | Keep the existing public behavior:
+        | only approved + public research can be viewed.
+        */
 
-        // Public viewing must never show PDF/download access,
-        // even if the visitor happens to be logged in.
-        $canAccessPdf = Auth::check() && ! $isPublicView;
+        if ($isPublicView) {
+            abort_unless(
+                $file->status === 'approved' &&
+                $file->visibility === 'public',
+                404
+            );
+
+            $requesterEmail = session(
+                'research_access_email_'.$file->id
+            );
+
+            $accessRequest = null;
+
+            if ($requesterEmail) {
+                $accessRequest = \App\Models\AccessRequest::query()
+                    ->where('stud_file_id', $file->id)
+                    ->where('email', $requesterEmail)
+                    ->latest()
+                    ->first();
+            }
+
+            $hasApprovedAccess =
+                $accessRequest?->status === 'approved';
+
+            $hasPendingAccessRequest =
+                $accessRequest?->status === 'pending';
+
+            $canAccessPdf = $hasApprovedAccess;
+        }
+
+        /*
+        |--------------------------------------------------------------------------
+        | AUTHENTICATED REPOSITORY
+        |--------------------------------------------------------------------------
+        | Registered users can view the research information.
+        | Actual PDF/download access still requires authorization.
+        */
+
+        else {
+
+            abort_unless(
+                $file->status === 'approved',
+                404
+            );
+
+            $accessRequest = \App\Models\AccessRequest::query()
+                ->where('stud_file_id', $file->id)
+                ->where('email', Auth::user()->email)
+                ->latest()
+                ->first();
+
+            // $hasApprovedAccess =
+            // $file->visibility === 'public'
+            // || ResearchAccess::allows(Auth::user(), $file)
+            // || $accessRequest?->status === 'approved';
+
+            $isDirectAuthorizedUser =
+            Auth::user()->role === 'admin'
+            || $file->user_id === Auth::id()
+            || $file->adviser_id === Auth::id()
+            || $file->authors->contains(
+                fn ($author) => $author->user_id === Auth::id()
+            );
+
+            $hasApprovedAccess =
+                $isDirectAuthorizedUser
+                || $accessRequest?->status === 'approved';
+
+            $hasPendingAccessRequest =
+                $accessRequest?->status === 'pending';
+
+            $canAccessPdf = $hasApprovedAccess;
+        }
+
         $backUrl = $this->repositoryBackUrl($isPublicView);
 
         return view('research.show', compact(
             'file',
             'canAccessPdf',
             'isPublicView',
-            'backUrl'
+            'backUrl',
+            'hasApprovedAccess',
+            'hasPendingAccessRequest',
         ));
     }
 
@@ -174,7 +276,10 @@ class RepositoryController extends Controller
             return $query->where('visibility', 'public');
         }
 
-        return ResearchAccess::scope($query, $viewer);
+        // Authenticated Repository:
+        // Show all approved research, including private research.
+        // PDF/download access is checked separately.
+        return $query;
     }
 
     private function repositoryBackUrl(bool $isPublicView): string

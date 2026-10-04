@@ -78,11 +78,11 @@
             <i data-lucide="arrow-right" aria-hidden="true"></i>
         </a>
 
-        @if ($showDownload)
+        <!--@if ($showDownload)
             <a data-turbo="false" href="{{ route('file.download', $file->id) }}"
                 class="btn research-card-icon-button" aria-label="Download {{ $file->title }}" title="Download PDF">
                 <i data-lucide="download" aria-hidden="true"></i>
             </a>
-        @endif
+        @endif-->
     </div>
 </article>

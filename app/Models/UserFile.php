@@ -4,8 +4,6 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
-use App\Models\ResearchFeedback;
-
 
 class UserFile extends Model
 {
@@ -46,6 +44,8 @@ class UserFile extends Model
         'instructor_feedback',
         'rejection_reason',
         'admin_reject',
+        'resubmit_count',
+        'extracted_references',
     ];
 
     protected $casts = [
@@ -55,6 +55,7 @@ class UserFile extends Model
         'ai_analyzed_at' => 'datetime',
         'search_indexed_at' => 'datetime',
         'rejected_at' => 'datetime',
+        'extracted_references' => 'array',
     ];
 
     public function user()
@@ -136,5 +137,20 @@ class UserFile extends Model
             ResearchFeedback::class,
             'stud_file_id'
         )->with('user')->latest();
+    }
+
+    public const MAX_RESUBMITS = 2;
+
+    public function resubmitsLeft(): int
+    {
+        return max(
+            0,
+            self::MAX_RESUBMITS - $this->resubmit_count
+        );
+    }
+
+    public function canResubmit(): bool
+    {
+        return $this->resubmitsLeft() > 0;
     }
 }

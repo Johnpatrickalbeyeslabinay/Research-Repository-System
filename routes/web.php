@@ -91,6 +91,28 @@ Route::post('/login', [AuthController::class, 'login'])
 Route::post('/logout', [AuthController::class, 'logout'])
     ->name('logout');
 
+Route::get('/email/verify/{user}/{hash}', [AuthController::class, 'verifyEmail'])
+    ->middleware('signed')
+    ->name('verification.verify');
+
+// captcha
+
+Route::get('/captcha/refresh', function () {
+    $characters = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
+
+    $code = '';
+
+    for ($i = 0; $i < 6; $i++) {
+        $code .= $characters[random_int(0, strlen($characters) - 1)];
+    }
+
+    session(['login_captcha' => $code]);
+
+    return response()->json([
+        'captcha' => $code,
+    ]);
+})->name('captcha.refresh');
+
 // Role-agnostic authenticated actions — same for student/instructor/admin,
 // so kept in one shared group rather than tripled across the three
 // role-scoped groups below.
@@ -163,6 +185,9 @@ Route::middleware(['auth', 'role:admin'])->group(function () {
 
     Route::delete('/admin/files/{file}', [AdminController::class, 'destroy'])
         ->name('admin.files.destroy');
+
+    Route::post('/admin/research/{file}/reset-resubmits', [AdminController::class, 'resetResubmits'])
+        ->name('admin.research.reset-resubmits');
 });
 
 // student routes

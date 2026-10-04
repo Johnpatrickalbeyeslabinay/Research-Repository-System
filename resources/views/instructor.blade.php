@@ -1037,4 +1037,14 @@
     }
 </script>
 
+
+<script>
+document.getElementById('logoutBtn').closest('form').addEventListener('submit', function () {
+    const btn = document.getElementById('logoutBtn');
+    document.getElementById('logoutIcon').classList.add('d-none');
+    document.getElementById('logoutSpinner').classList.remove('d-none');
+    document.getElementById('logoutText').textContent = 'Logging out...';
+    setTimeout(() => btn.disabled = true, 0);
+});
+</script>
 @endsection

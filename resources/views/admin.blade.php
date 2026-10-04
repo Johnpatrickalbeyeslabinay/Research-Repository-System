@@ -273,6 +273,13 @@
 
         </button>
 
+        <!-- RE-SUBMIT -->
+        <button class="nav-link rounded-5 px-2 py-1" id="resubmissions-tab"
+            data-bs-toggle="pill" data-bs-target="#resubmissions" type="button" role="tab">
+
+            Resubmissions
+
+        </button>
     </div>
 
 
@@ -812,6 +819,7 @@
 
                         @endif
 
+
                     </div>
 
 
@@ -848,8 +856,83 @@
 
 
 
+            <!--MY SUBMISSIONS BUTTONS-->
+            <div class="tab-pane fade" id="resubmissions">
+                <div class="container-fluid py-4">
+            <div class="card rounded-5 shadow-sm border-0">
+            <div class="card-body p-4">
+                <!-- Header -->
+                <div class="d-flex justify-content-between align-items-center flex-wrap mb-4">
 
+                    <h3 class="fw-bold mb-3 mb-md-0">
+                        All Research Resubmissions
+                    </h3>
+            </div>
+                        <div class="table-responsive">
+                            <table class="table table-hover align-middle mb-0 small">
+                                <thead class="table-light text-uppercase text-secondary" style="font-size: 11px; letter-spacing: .04em;">
+                                    <tr>
+                                        <th class="ps-3 py-2 fw-semibold">Research</th>
+                                        <th class="py-2 fw-semibold">Student</th>
+                                        <th class="py-2 fw-semibold text-center">Resubmissions</th>
+                                        <th class="pe-3 py-2 fw-semibold text-end">Action</th>
+                                    </tr>
+                                </thead>
 
+                                <tbody>
+                                    @forelse ($limitReachedFiles as $file)
+                                <tr>
+                                    <td class="ps-3 py-2" style="max-width: 280px;">
+                                        <div class="fw-semibold text-truncate" title="{{ $file->title }}">
+                                            {{ $file->title }}
+                                        </div>
+                                    </td>
+
+                                    <td class="py-2 text-secondary">
+                                        {{ $file->user->name ?? 'Unknown' }}
+                                    </td>
+
+                                    <td class="py-2 text-center">
+                                        <span class="fw-semibold">{{ $file->resubmit_count }}</span>
+                                        / {{ $file::MAX_RESUBMITS }}
+                                    </td>
+
+                                    <td class="pe-3 py-2 text-end">
+                                        <form
+                                            action="{{ route('admin.research.reset-resubmits', $file->id) }}"
+                                            method="POST"
+                                            class="d-inline m-0"
+                                            onsubmit="return confirm('Reset the resubmit limit for this research?')"
+                                        >
+                                            @csrf
+
+                                            <button
+                                                type="submit"
+                                                class="btn btn-sm bg-danger-subtle text-danger-emphasis border-danger-subtle rounded-2 px-2 py-1"
+                                                style="font-size: 12px;"
+                                            >
+                                                <i class="bi bi-arrow-counterclockwise me-1"></i>
+                                                Reset
+                                            </button>
+                                        </form>
+                                    </td>
+                                </tr>
+                            @empty
+                                <tr>
+                                    <td colspan="4" class="text-center text-muted py-4">
+                                        <i class="bi bi-check-circle me-1"></i>
+                                        No research has reached the resubmission limit.
+                                    </td>
+                                </tr>
+                            @endforelse
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+            </div>
+            </div>
+            </div>
+            </div>
 
 
 
@@ -1471,8 +1554,15 @@
 
 
 
-
-
+<script>
+document.getElementById('logoutBtn').closest('form').addEventListener('submit', function () {
+    const btn = document.getElementById('logoutBtn');
+    document.getElementById('logoutIcon').classList.add('d-none');
+    document.getElementById('logoutSpinner').classList.remove('d-none');
+    document.getElementById('logoutText').textContent = 'Logging out...';
+    setTimeout(() => btn.disabled = true, 0);
+});
+</script>
 
 
 @endsection

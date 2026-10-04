@@ -39,7 +39,7 @@
 
                     <div class="d-flex flex-column">
                         <h5 class="fw-bold mb-0">Research Repository System</h5>
-                        <small class="text-secondary">CSU Aparri - College of Fisheries and Aquatic Science</small>
+                        <small class="text-secondary">College of Fisheries and Aquatic Science</small>
                     </div>
 
                 </div>
@@ -87,7 +87,7 @@
 
                     <div class="d-flex flex-column">
                         <h5 class="fw-bold mb-0">Research Repository System</h5>
-                        <small class="text-secondary">CSU Aparri - College of Fisheries and Aquatic Science</small>
+                        <small class="text-secondary">College of Fisheries and Aquatic Science</small>
                     </div>
 
                 </div>
@@ -179,12 +179,12 @@
                     <form action="{{ route('logout') }}" data-turbo="false" method="POST" class="mt-3">
                         @csrf
 
-                        <button class="btn btn-outline-danger w-100 text-start">
-
-                            <i class="fa-solid fa-right-from-bracket me-2"></i>
-
-                            Logout
-
+                        <button type="submit"
+                            class="btn btn-sm bg-danger-subtle text-danger-emphasis border-danger-subtle rounded-3 w-100 text-start"
+                            id="logoutBtn">
+                            <i class="fa-solid fa-right-from-bracket me-2" id="logoutIcon"></i>
+                            <span class="spinner-border spinner-border-sm me-2 d-none" id="logoutSpinner" role="status" aria-hidden="true"></span>
+                            <span id="logoutText">Logout</span>
                         </button>
 
                     </form>
@@ -215,7 +215,7 @@
 
                     <div class="d-flex flex-column">
                         <h5 class="fw-bold mb-0">Research Repository System</h5>
-                        <small class="text-secondary">CSU Aparri - College of Fisheries and Aquatic Science</small>
+                        <small class="text-secondary">College of Fisheries and Aquatic Science</small>
                     </div>
 
                 </div>
@@ -316,12 +316,12 @@
                     <form action="{{ route('logout') }}" data-turbo="false" method="POST" class="mt-3">
                         @csrf
 
-                        <button class="btn btn-outline-danger w-100 text-start">
-
-                            <i class="fa-solid fa-right-from-bracket me-2"></i>
-
-                            Logout
-
+                        <button type="submit"
+                            class="btn btn-sm bg-danger-subtle text-danger-emphasis border-danger-subtle rounded-3 w-100 text-start"
+                            id="logoutBtn">
+                            <i class="fa-solid fa-right-from-bracket me-2" id="logoutIcon"></i>
+                            <span class="spinner-border spinner-border-sm me-2 d-none" id="logoutSpinner" role="status" aria-hidden="true"></span>
+                            <span id="logoutText">Logout</span>
                         </button>
 
                     </form>

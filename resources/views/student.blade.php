@@ -816,12 +816,11 @@
                                 </div>
 
                                 <button class="view rounded px-2 py-1 mt-3 bg-white"
-                                    style="max-width:200px;width:100%; border: 1px solid #5FEFDB; color: #0E7F77;"
+                                    style="max-width:200px;width:100%; border: 1px solid #00008b; color: #00008b;"
                                     popovertarget="popover-{{ $file->id }}">
 
                                     <i class="bi bi-eye me-2"></i>
                                     View in Repository
-
                                 </button>
 
                                 @if($file->status == 'rejected')
@@ -843,6 +842,7 @@
 
                     <!--POPOVER-UPDATE-->
                     @php $upfx = 'update-'.$file->id; @endphp
+                    @php $limitReached = ! $file->canResubmit(); @endphp
                     <div id="update-sub-{{ $file->id }}" popover="manual" class="rounded-4 border-0 shadow p-4"
                         style="width: 560px; max-width: 95vw; max-height: 90vh; overflow-y: auto;">
 
@@ -853,6 +853,19 @@
                                 popovertargetaction="hide">
                             </button>
                         </div>
+
+                        @if ($limitReached)
+                            <div class="alert alert-danger py-2 px-3">
+                                <i class="bi bi-lock-fill me-1"></i>
+                                You've used all {{ $file::MAX_RESUBMITS }} resubmissions. This research can no longer be updated.
+                                Please contact your adviser or an admin to request an extension.
+                            </div>
+                        @else
+                            <div class="alert alert-info py-2 px-3 small">
+                                <i class="bi bi-info-circle me-1"></i>
+                                Resubmissions left: <strong>{{ $file->resubmitsLeft() }}</strong> of {{ $file::MAX_RESUBMITS }}
+                            </div>
+                        @endif
 
                         @if ($errors->any() && old('_popover_target') === 'update-sub-'.$file->id)
                             <div class="alert alert-danger">
@@ -975,74 +988,22 @@
 
                             <x-research.sdg-selector :prefix="$upfx" :sdgs="$sdgs" :selected="$file->sdgs->pluck('id')->all()" />
 
-                            <!--visibility-->
-                            <div class="mb-3">
-                                <label class="form-label fw-semibold">Research Visibility *</label>
-
-                                <div class="row g-3">
-                                    <div class="col-6">
-                                        <input
-                                            type="radio"
-                                            class="btn-check"
-                                            name="visibility"
-                                            id="public-{{ $file->id }}"
-                                            value="public"
-                                            {{ $file->visibility == 'public' ? 'checked' : '' }}>
-
-                                        <label
-                                            class="visibility-option border border-1 border-success rounded-3 w-100 p-2 text-dark"
-                                            for="public-{{ $file->id }}">
-
-                                            <div class="d-flex align-items-center gap-2">
-                                                <div class="text-center">
-                                                    <i class="fa-solid fa-globe fa-lg"></i>
-                                                </div>
-
-                                                <div>
-                                                    <strong>Public</strong><br>
-                                                    <small class="text-muted">Visible in repository</small>
-                                                </div>
-                                            </div>
-
-                                        </label>
-                                    </div>
-
-                                    <div class="col-6">
-                                        <input
-                                            type="radio"
-                                            class="btn-check"
-                                            name="visibility"
-                                            id="private-{{ $file->id }}"
-                                            value="private"
-                                            {{ $file->visibility == 'private' ? 'checked' : '' }}>
-
-                                        <label
-                                            class="visibility-private border border-1 border-secondary rounded-3 w-100 p-2"
-                                            for="private-{{ $file->id }}">
-
-                                            <div class="d-flex align-items-center gap-2">
-                                                <div class="text-center">
-                                                    <i class="fa-solid fa-lock fa-lg"></i>
-                                                </div>
-
-                                                <div>
-                                                    <strong>Private</strong><br>
-                                                    <small class="text-muted">Only you, adviser & admins</small>
-                                                </div>
-                                            </div>
-
-                                        </label>
-                                    </div>
-                                </div>
-                                <small class="text-muted d-block mt-1">Public visibility takes effect once an admin approves it.</small>
-                            </div>
-
                             <x-research.review-summary :prefix="$upfx" />
 
                             <!-- Buttons -->
                             <div class="d-flex gap-2 mt-4">
-                                <button type="submit" class="rounded-2 p-2 text-white border-0" style="background: #072a89;" data-submit-btn>
-                                    Update Research
+                                <button
+                                    type="submit"
+                                    class="rounded-2 p-2 text-white border-0"
+                                    data-submit-btn
+                                    @disabled($limitReached)
+                                    style="
+                                        background: {{ $limitReached ? '#6c757d' : '#072a89' }};
+                                        cursor: {{ $limitReached ? 'not-allowed' : 'pointer' }};
+                                        opacity: {{ $limitReached ? '0.75' : '1' }};
+                                    "
+                                >
+                                    Submit Research
                                 </button>
 
                                 <button
@@ -1356,7 +1317,7 @@
 
                                     {{-- Actions --}}
                 <div class="d-flex justify-content-between align-items-center mt-2">
-                
+
                     <div class="d-flex gap-2">
                         <form action="{{ route('access-requests.approve', $request->id) }}" method="POST">
                             @csrf
@@ -1555,6 +1516,16 @@
   }
 </script>
 
+
+<script>
+document.getElementById('logoutBtn').closest('form').addEventListener('submit', function () {
+    const btn = document.getElementById('logoutBtn');
+    document.getElementById('logoutIcon').classList.add('d-none');
+    document.getElementById('logoutSpinner').classList.remove('d-none');
+    document.getElementById('logoutText').textContent = 'Logging out...';
+    setTimeout(() => btn.disabled = true, 0);
+});
+</script>
 
 
 

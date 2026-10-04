@@ -38,9 +38,9 @@ class SectionDetector
     // sanitization) and when detect() itself changes (e.g. the citation-
     // header stripping added below) — so a stale bad result cached under
     // the same hash from before the fix isn't kept serving it.
-    // v5: multi-line/bulleted "Keywords:" parsing + junk-token filtering,
+    // v6: multi-line/bulleted "Keywords:" parsing + junk-token filtering,
     // and the new fallback_excerpt output.
-    private const CACHE_VERSION = 'v5';
+    private const CACHE_VERSION = 'v6';
 
     // A parsed keyword token this long is almost certainly a mis-split
     // sentence fragment (e.g. a "Keywords:" block that runs into the next
@@ -138,6 +138,7 @@ class SectionDetector
             'sections' => $sections,
             'abstract' => $abstract,
             'keywords' => $keywords,
+            'references' => $this->extractReferences($sections, $fullText),
             'fallback_excerpt' => $this->extractFallbackExcerpt($sections, $fullText),
         ];
     }
@@ -309,6 +310,143 @@ class SectionDetector
         }
 
         return [$remaining, array_values(array_unique($keywords))];
+    }
+
+    /**
+     * Extract the References/Bibliography section from the PDF text.
+     *
+     * @param array<int, array{key: string, start: int, end: int}> $sections
+     * @return string[]
+     */
+    private function extractReferences(array $sections, string $fullText): array
+    {
+        $referencesSection = null;
+
+        foreach ($sections as $section) {
+            if ($section['key'] === 'references') {
+                $referencesSection = $section;
+                break;
+            }
+        }
+
+        if ($referencesSection === null) {
+            return [];
+        }
+
+        // Skip the REFERENCES heading itself.
+        $headingLineEnd = strpos(
+            $fullText,
+            "\n",
+            $referencesSection['start']
+        );
+
+        $bodyStart = $headingLineEnd === false
+            ? $referencesSection['start']
+            : $headingLineEnd + 1;
+
+        $rawReferences = trim(
+            substr(
+                $fullText,
+                $bodyStart,
+                $referencesSection['end'] - $bodyStart
+            )
+        );
+
+        if ($rawReferences === '') {
+            return [];
+        }
+
+        // Normalize line endings.
+        $rawReferences = preg_replace(
+            "/\r\n|\r/",
+            "\n",
+            $rawReferences
+        );
+
+        // Remove excessive blank lines.
+        $rawReferences = preg_replace(
+            "/\n{2,}/",
+            "\n",
+            $rawReferences
+        );
+
+        $lines = preg_split(
+            '/\n/',
+            trim($rawReferences)
+        );
+
+        $references = [];
+        $currentReference = '';
+
+        foreach ($lines as $line) {
+            $line = trim($line);
+
+            if ($line === '') {
+                continue;
+            }
+
+            /*
+             * Detect numbered references:
+             *
+             * [1] Santos...
+             * [2] Garcia...
+             * 1. Santos...
+             * 2. Garcia...
+             * 1) Santos...
+             */
+            $isNewReference = preg_match(
+                '/^(?:\[\d+\]|\d+[\.\)])\s+/u',
+                $line
+            );
+
+            if ($isNewReference) {
+                if ($currentReference !== '') {
+                    $references[] = trim($currentReference);
+                }
+
+                $currentReference = $line;
+
+                continue;
+            }
+
+            /*
+             * If the document uses APA/author-date style without numbering,
+             * detect a likely new reference by an author surname followed
+             * by initials and a year.
+             *
+             * Example:
+             * Santos, J. P. (2023)...
+             * Garcia, M. A. (2022)...
+             */
+            $looksLikeAuthorDateReference = preg_match(
+                '/^[A-ZÀ-Ý][A-Za-zÀ-ÿ\'\-]+(?:,\s*[A-ZÀ-Ý](?:\.[A-ZÀ-Ý]?)*\.?)*.*?\(\d{4}[a-z]?\)/u',
+                $line
+            );
+
+            if ($looksLikeAuthorDateReference && $currentReference !== '') {
+                $references[] = trim($currentReference);
+                $currentReference = $line;
+
+                continue;
+            }
+
+            // Continuation of the previous reference.
+            if ($currentReference !== '') {
+                $currentReference .= ' '.$line;
+            } else {
+                $currentReference = $line;
+            }
+        }
+
+        if ($currentReference !== '') {
+            $references[] = trim($currentReference);
+        }
+
+        return array_values(
+            array_unique(
+                array_filter($references)
+            )
+        );
     }
 
     /**

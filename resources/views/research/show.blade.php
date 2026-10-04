@@ -39,60 +39,114 @@
 </a>
 
 
-    <header class="research-detail-header">
-        <div class="research-detail-heading">
-            <div class="research-detail-kicker">
-                @if ($file->research_type)
-                    <span>{{ $file->research_type }}</span>
-                @endif
-                @if ($publishedYear)
-                    <span>{{ $publishedYear }}</span>
-                @endif
-            </div>
+                    <header class="research-detail-header">
+                        <div class="research-detail-heading">
+                            <div class="research-detail-kicker">
+                                @if ($publishedYear)
+                                    <span>{{ $publishedYear }}</span>
+                                @endif
+                            </div>
 
-            <h1>{{ $file->title }}</h1>
+                            <h1>{{ $file->title }}</h1>
 
-            @if (count($researchers))
-                <p class="research-detail-authors">{{ implode(', ', $researchers) }}</p>
-            @endif
-        </div>
+                            @if (count($researchers))
+                                <p class="research-detail-authors">{{ implode(', ', $researchers) }}</p>
+                            @endif
+                        </div>
 
-        <div class="research-detail-actions">
-            @if ($canAccessPdf && !$isPublicView)
-                {{-- Repository view only --}}
-                <a data-turbo="false"
-                href="{{ route('file.view', $file->id) }}"
-                class="btn research-primary-button">
-                    <i data-lucide="eye" aria-hidden="true"></i>
-                    <span>View PDF</span>
-                </a>
+                        <div class="research-detail-actions">
 
-                <a data-turbo="false"
-                href="{{ route('file.download', $file->id) }}"
-                class="btn repository-secondary-button">
-                    <i data-lucide="download" aria-hidden="true"></i>
-                    <span>Download</span>
-                </a>
+                            <div class="research-detail-actions">
 
-                <button type="button"
-                        popovertarget="ai-chat-panel"
-                        class="btn repository-secondary-button">
-                    <i data-lucide="message-circle-question" aria-hidden="true"></i>
-                    <span>Ask about this research</span>
-                </button>
+                        @if ($isPublicView)
 
-            @elseif ($isPublicView)
-                {{-- Public view: always request access --}}
-                <button type="button"
-                        class="btn btn-sm text-white rounded-2 px-3"
-                        style="background:#072a89;"
-                        data-bs-toggle="modal"
-                        data-bs-target="#permissionModal">
-                    <i data-lucide="log-in" aria-hidden="true"></i>
-                    Request Full Access
-                </button>
-            @endif
-        </div>
+                            {{-- PUBLIC VIEWING --}}
+
+                            @if ($canAccessPdf)
+
+                                <a data-turbo="false"
+                                target="_blank"
+                                href="{{ route('file.view', $file->id) }}"
+                                class="btn research-primary-button">
+                                    <i data-lucide="eye" aria-hidden="true"></i>
+                                    <span>View PDF</span>
+                                </a>
+
+                            @elseif ($hasPendingAccessRequest)
+
+                                <button type="button"
+                                        class="btn btn-sm btn-secondary rounded-2 px-3"
+                                        disabled>
+                                    <i data-lucide="clock" aria-hidden="true"></i>
+                                    Access Request Pending
+                                </button>
+
+                            @else
+
+                                <button type="button"
+                                        class="btn btn-sm text-white rounded-2 px-3"
+                                        style="background:#072a89;"
+                                        data-bs-toggle="modal"
+                                        data-bs-target="#permissionModal">
+                                    <i data-lucide="lock-keyhole" aria-hidden="true"></i>
+                                    Request Full Access
+                                </button>
+
+                            @endif
+
+                        @else
+
+                            {{-- REPOSITORY --}}
+
+                            @if ($canAccessPdf)
+
+                                <a data-turbo="false"
+                                href="{{ route('file.view', $file->id) }}"
+                                class="btn research-primary-button">
+                                    <i data-lucide="eye" aria-hidden="true"></i>
+                                    <span>View PDF</span>
+                                </a>
+
+                                <a data-turbo="false"
+                                href="{{ route('file.download', $file->id) }}"
+                                class="btn repository-secondary-button">
+                                    <i data-lucide="download" aria-hidden="true"></i>
+                                    <span>Download</span>
+                                </a>
+
+                                <button type="button"
+                                        popovertarget="ai-chat-panel"
+                                        class="btn repository-secondary-button">
+                                    <i data-lucide="message-circle-question"
+                                    aria-hidden="true"></i>
+                                    <span>Ask about this research</span>
+                                </button>
+
+                            @elseif ($hasPendingAccessRequest)
+
+                                <button type="button"
+                                        class="btn btn-sm btn-secondary rounded-2 px-3"
+                                        disabled>
+                                    <i data-lucide="clock" aria-hidden="true"></i>
+                                    Access Request Pending
+                                </button>
+
+                            @else
+
+                                <button type="button"
+                                        class="btn btn-sm text-white rounded-2 px-3"
+                                        style="background:#072a89;"
+                                        data-bs-toggle="modal"
+                                        data-bs-target="#permissionModal">
+                                    <i data-lucide="lock-keyhole" aria-hidden="true"></i>
+                                    Request Full Access
+                                </button>
+
+                            @endif
+
+                        @endif
+
+                    </div>
     </header>
 
     <div class="research-detail-content">
@@ -124,6 +178,76 @@
                     </div>
                 </section>
             @endif
+
+
+
+
+
+           <!-- REFERENCES -->
+@if (!empty($file->extracted_references))
+    @php
+        $references   = array_values($file->extracted_references);
+        $previewCount = 5;
+        $visible      = array_slice($references, 0, $previewCount);
+        $hidden       = array_slice($references, $previewCount);
+    @endphp
+
+    <section class="mt-4" aria-labelledby="research-references-heading">
+
+        <div class="d-flex justify-content-between align-items-center mb-3 pb-2 border-bottom">
+            <h2 id="research-references-heading" class="h5 fw-bold mb-0">
+                <i class="bi bi-journal-text me-2" style="color: #072a89;"></i>
+                References
+            </h2>
+
+            <span class="badge rounded-pill bg-secondary-subtle text-secondary-emphasis border border-secondary-subtle">
+                {{ count($references) }} {{ Str::plural('source', count($references)) }}
+            </span>
+        </div>
+
+        <ol class="small text-secondary ps-4 mb-0" style="line-height: 1.7;">
+            @foreach ($visible as $reference)
+                <li class="mb-2 ps-1">{{ $reference }}</li>
+            @endforeach
+        </ol>
+
+        @if (count($hidden))
+            <div class="collapse" id="moreReferences-{{ $file->id }}">
+                <ol class="small text-secondary ps-4 mb-0 mt-2" style="line-height: 1.7;" start="{{ $previewCount + 1 }}">
+                    @foreach ($hidden as $reference)
+                        <li class="mb-2 ps-1">{{ $reference }}</li>
+                    @endforeach
+                </ol>
+            </div>
+
+            <button type="button"
+                    class="ref-toggle btn btn-sm rounded-2 px-3 py-1 mt-2 bg-white"
+                    style="font-size: 13px; border: 1px solid #072a89; color: #072a89;"
+                    data-bs-toggle="collapse"
+                    data-bs-target="#moreReferences-{{ $file->id }}"
+                    aria-expanded="false"
+                    aria-controls="moreReferences-{{ $file->id }}">
+                <span class="when-closed">Show all {{ count($references) }} references</span>
+                <span class="when-open">Show fewer</span>
+            </button>
+        @endif
+
+    </section>
+
+    <style>
+        .ref-toggle[aria-expanded="true"] .when-closed,
+        .ref-toggle[aria-expanded="false"] .when-open { display: none; }
+    </style>
+@endif
+
+
+
+
+
+
+
+
+
         </article>
 
         <aside class="research-detail-meta" aria-label="Research information">
@@ -135,12 +259,7 @@
                         <dd>{{ $file->adviser }}</dd>
                     </div>
                 @endif
-                @if ($file->research_type)
-                    <div>
-                        <dt>Research type</dt>
-                        <dd>{{ $file->research_type }}</dd>
-                    </div>
-                @endif
+
                 @if ($publishedYear)
                     <div>
                         <dt>Published</dt>
@@ -164,9 +283,12 @@
         </aside>
     </div>
 
-    @if ($canAccessPdf)
-        <x-chat.widget :stud-file-id="$file->id" :stud-file-title="$file->title" />
-    @endif
+    @if ($canAccessPdf && !$isPublicView)
+    <x-chat.widget
+        :stud-file-id="$file->id"
+        :stud-file-title="$file->title"
+    />
+@endif
 
     {{-- Permission modal --}}
     <x-research.permission :file="$file" />

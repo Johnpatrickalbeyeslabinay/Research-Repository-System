@@ -13,6 +13,7 @@ use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Mail;
+use Illuminate\Support\Facades\URL;
 use Illuminate\Support\Str;
 use Maatwebsite\Excel\Facades\Excel;
 
@@ -107,6 +108,11 @@ class AdminController extends Controller
 
         $unreadNotificationsCount = Auth::user()->unreadNotifications()->count();
 
+        $limitReachedFiles = UserFile::with('user')
+            ->where('resubmit_count', '>=', UserFile::MAX_RESUBMITS)
+            ->latest('updated_at')
+            ->get();
+
         return view('admin', array_merge(compact(
             'view',
             'users',
@@ -116,7 +122,8 @@ class AdminController extends Controller
             'studFiles',
             'statusFilter',
             'year',
-            'unreadNotificationsCount'
+            'unreadNotificationsCount',
+            'limitReachedFiles'
         ), $stats));
     }
 
@@ -190,7 +197,6 @@ class AdminController extends Controller
 
     public function store(Request $request)
     {
-
         $request->validate([
             'user_id' => 'required|unique:users,user_id',
             'email' => 'required|email|unique:users,email',
@@ -216,6 +222,13 @@ class AdminController extends Controller
                 : null,
             'password' => Hash::make($generatedPassword),
         ]);
+        $verificationUrl = URL::signedRoute(
+            'verification.verify',
+            [
+                'user' => $user->id,
+                'hash' => sha1($user->getEmailForVerification()),
+            ]
+        );
 
         Mail::to($request->email)->send(
             new repositoryMail(
@@ -223,13 +236,12 @@ class AdminController extends Controller
                 $request->user_id,
                 $request->email,
                 $generatedPassword,
-                $request->role
+                $request->role,
+                $verificationUrl
             )
         );
 
         $user->notify(new AccountCreated($user));
-
-        // return 'Email sent successfully!';
 
         return redirect()->back()->with([
             'success' => 'User created successfully!',
@@ -237,7 +249,6 @@ class AdminController extends Controller
             'generated_name' => $request->name,
             'generated_user_id' => $request->user_id,
         ]);
-
     }
 
     public function updateUser(Request $request, $id)
@@ -372,5 +383,14 @@ class AdminController extends Controller
         self::forgetResearchCaches($file);
 
         return back()->with('success', 'Research deleted successfully.');
+    }
+
+    // AdminResearchController
+    public function resetResubmits($id)
+    {
+        $file = UserFile::findOrFail($id); // use your actual model
+        $file->update(['resubmit_count' => 0]);
+
+        return back()->with('success', 'Resubmit limit has been reset.');
     }
 }
