@@ -10,8 +10,8 @@
 // JS — DOMContentLoaded fires only once per real load, so anything that
 // binds to the DOM must run on 'turbo:load' (see onPageLoad below) and be
 // safe to run again on the next page.
-import * as bootstrap from 'bootstrap';
-import '@hotwired/turbo';
+import * as bootstrap from "bootstrap";
+import "@hotwired/turbo";
 import {
     ArrowLeft,
     ArrowRight,
@@ -35,7 +35,7 @@ import {
     Square,
     SquarePen,
     X,
-} from 'lucide';
+} from "lucide";
 
 // research-submission.js and inline view scripts reach for window.bootstrap.
 window.bootstrap = bootstrap;
@@ -72,63 +72,84 @@ window.lucide = { createIcons: () => createIcons({ icons }) };
 // that actually have the markup for them — an anonymous visitor to /public
 // never downloads the submission wizard or the charting library.
 const features = [
-    { selector: '#ai-chat-widget', load: () => import('./chat.js') },
+    { selector: "#ai-chat-widget", load: () => import("./chat.js") },
     {
-        selector: '[data-dropzone], [data-keyword-input], [data-researcher-input], [data-wizard], [data-review-summary], [data-analyze-btn], [data-submit-btn]',
-        load: () => import('./research-submission.js'),
+        selector:
+            "[data-dropzone], [data-keyword-input], [data-researcher-input], [data-wizard], [data-review-summary], [data-analyze-btn], [data-submit-btn]",
+        load: () => import("./research-submission.js"),
     },
-    { selector: '[data-admin-charts]', load: () => import('./admin-charts.js') },
+    {
+        selector: "[data-admin-charts]",
+        load: () => import("./admin-charts.js"),
+    },
 ];
 
 function onPageLoad() {
     window.lucide.createIcons();
 
-    document.querySelectorAll('[data-flash-toast]').forEach((el) =>
-        bootstrap.Toast.getOrCreateInstance(el, { delay: 4000 }).show()
-    );
+    document
+        .querySelectorAll("[data-flash-toast]")
+        .forEach((el) =>
+            bootstrap.Toast.getOrCreateInstance(el, { delay: 4000 }).show(),
+        );
 
     for (const { selector, load } of features) {
         if (!document.querySelector(selector)) continue;
 
         load()
             .then((module) => module.init())
-            .catch((error) => console.error(`[app] failed to load feature for ${selector}`, error));
+            .catch((error) =>
+                console.error(
+                    `[app] failed to load feature for ${selector}`,
+                    error,
+                ),
+            );
     }
 }
 
 // Fires on the first load and after every Turbo navigation.
-document.addEventListener('turbo:load', onPageLoad);
+document.addEventListener("turbo:load", onPageLoad);
 
 // Turbo snapshots the page for its back/forward cache when you leave it. An
 // open modal, offcanvas or dropdown would be frozen into that snapshot —
 // including its backdrop, which then blocks every click on the restored
 // page — so close them first.
-document.addEventListener('turbo:before-cache', () => {
-    document.querySelectorAll('.modal.show').forEach((el) => bootstrap.Modal.getInstance(el)?.hide());
-    document.querySelectorAll('.offcanvas.show').forEach((el) => bootstrap.Offcanvas.getInstance(el)?.hide());
-    document.querySelectorAll('.modal-backdrop, .offcanvas-backdrop').forEach((el) => el.remove());
+document.addEventListener("turbo:before-cache", () => {
+    document
+        .querySelectorAll(".modal.show")
+        .forEach((el) => bootstrap.Modal.getInstance(el)?.hide());
+    document
+        .querySelectorAll(".offcanvas.show")
+        .forEach((el) => bootstrap.Offcanvas.getInstance(el)?.hide());
+    document
+        .querySelectorAll(".modal-backdrop, .offcanvas-backdrop")
+        .forEach((el) => el.remove());
     // A flash message belongs to the response that set it — don't replay it
     // when this page is restored with the back button.
-    document.querySelectorAll('[data-flash-toast]').forEach((el) => el.closest('.toast-container')?.remove());
-    document.body.classList.remove('modal-open');
-    document.body.style.removeProperty('overflow');
-    document.body.style.removeProperty('padding-right');
+    document
+        .querySelectorAll("[data-flash-toast]")
+        .forEach((el) => el.closest(".toast-container")?.remove());
+    document.body.classList.remove("modal-open");
+    document.body.style.removeProperty("overflow");
+    document.body.style.removeProperty("padding-right");
 });
 
 // Double-submit guard for every Turbo form (approve/reject/feedback/…):
 // the clicked button is disabled with a spinner until the response lands.
 // Forms that manage their own button state (the research submission
 // wizard's [data-submit-btn]) are left alone.
-document.addEventListener('turbo:submit-start', ({ detail }) => {
+document.addEventListener("turbo:submit-start", ({ detail }) => {
     const button = detail.formSubmission.submitter;
-    if (!button || button.hasAttribute('data-submit-btn')) return;
+    if (!button || button.hasAttribute("data-submit-btn")) return;
 
     button.dataset.originalHtml = button.innerHTML;
     button.disabled = true;
-    button.innerHTML = '<span class="spinner-border spinner-border-sm me-1" role="status" aria-hidden="true"></span>' + button.innerHTML;
+    button.innerHTML =
+        '<span class="spinner-border spinner-border-sm me-1" role="status" aria-hidden="true"></span>' +
+        button.innerHTML;
 });
 
-document.addEventListener('turbo:submit-end', ({ detail }) => {
+document.addEventListener("turbo:submit-end", ({ detail }) => {
     const button = detail.formSubmission.submitter;
     if (!button || button.dataset.originalHtml === undefined) return;
 
@@ -143,17 +164,20 @@ document.addEventListener('turbo:submit-end', ({ detail }) => {
 // the search box keeps focus and the cursor.
 const LIVE_SEARCH_DELAY_MS = 300;
 
-document.addEventListener('input', (event) => {
-    const form = event.target.closest?.('form[data-live-search]');
-    if (!form || event.target.type !== 'search') return;
+document.addEventListener("input", (event) => {
+    const form = event.target.closest?.("form[data-live-search]");
+    if (!form || event.target.type !== "search") return;
 
     clearTimeout(form.liveSearchTimer);
-    form.liveSearchTimer = setTimeout(() => form.requestSubmit(), LIVE_SEARCH_DELAY_MS);
+
+    form.liveSearchTimer = setTimeout(() => {
+        form.requestSubmit();
+    }, LIVE_SEARCH_DELAY_MS);
 });
 
-document.addEventListener('change', (event) => {
-    const form = event.target.closest?.('form[data-live-search]');
-    if (!form || event.target.tagName !== 'SELECT') return;
+document.addEventListener("change", (event) => {
+    const form = event.target.closest?.("form[data-live-search]");
+    if (!form || event.target.tagName !== "SELECT") return;
 
     clearTimeout(form.liveSearchTimer);
     form.requestSubmit();
@@ -161,15 +185,17 @@ document.addEventListener('change', (event) => {
 
 // The big "N Research Papers" counter sits outside the results frame;
 // sync it from the count the frame's response carries.
-document.addEventListener('turbo:frame-load', ({ target }) => {
-    const total = target.querySelector('[data-results-total]');
-    const display = document.querySelector('[data-results-total-display]');
-    const label = target.querySelector('[data-results-label]');
-    const labelDisplay = document.querySelector('[data-results-label-display]');
+document.addEventListener("turbo:frame-load", ({ target }) => {
+    const total = target.querySelector("[data-results-total]");
+    const display = document.querySelector("[data-results-total-display]");
+    const label = target.querySelector("[data-results-label]");
+    const labelDisplay = document.querySelector("[data-results-label-display]");
 
     if (total && display) {
         const count = Number(total.textContent);
-        display.textContent = Number.isFinite(count) ? new Intl.NumberFormat().format(count) : total.textContent;
+        display.textContent = Number.isFinite(count)
+            ? new Intl.NumberFormat().format(count)
+            : total.textContent;
     }
     if (label && labelDisplay) labelDisplay.textContent = label.textContent;
 });

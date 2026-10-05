@@ -3,9 +3,11 @@
 namespace App\Http\Controllers;
 
 use App\Models\Sdg;
+use App\Models\SearchLog;
 use App\Models\User;
 use App\Models\UserFile;
 use App\Support\ResearchAccess;
+use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Cache;
 
@@ -37,9 +39,48 @@ class RepositoryController extends Controller
         return $this->listing(publicOnly: false, view: 'repository');
     }
 
+    public function logSearch(Request $request)
+    {
+        $keyword = trim($request->input('keyword', ''));
+
+        if ($keyword === '') {
+            return response()->json([
+                'success' => false,
+            ]);
+        }
+
+        SearchLog::create([
+            'user_id' => Auth::id(),
+            'keyword' => $keyword,
+        ]);
+
+        return response()->json([
+            'success' => true,
+        ]);
+    }
+
     public function listing(bool $publicOnly, string $view)
     {
-        $filters = request()->only(['search', 'year', 'type', 'sdg', 'sort']);
+
+        $filters = request()->only([
+            'search',
+            'year',
+            'type',
+            'sdg',
+            'sort',
+        ]);
+
+        // Log ONLY actual manual searches.
+        // Live-search requests do not have a manual_search submit button value.
+        if (
+            request()->input('manual_search') === '1'
+            && filled($filters['search'] ?? null)
+        ) {
+            SearchLog::create([
+                'user_id' => Auth::id(),
+                'keyword' => trim($filters['search']),
+            ]);
+        }
         $viewer = $publicOnly ? null : Auth::user();
 
         $studFiles = $this->baseQuery($publicOnly, $viewer)

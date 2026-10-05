@@ -2,17 +2,23 @@
 
 namespace App\Http\Controllers;
 
+use App\Exceptions\PdfProcessingException;
 use App\Imports\StudentImport;
+use App\Jobs\ProcessResearchDocument;
 use App\Mail\repositoryMail;
+use App\Models\SearchLog;
 use App\Models\User;
 use App\Models\UserFile;
 use App\Notifications\AccountCreated;
 use App\Notifications\ResearchReviewedByAdmin;
+use App\Services\Pdf\PdfValidationService;
+use App\Services\Pdf\SectionDetector;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Mail;
+use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\URL;
 use Illuminate\Support\Str;
 use Maatwebsite\Excel\Facades\Excel;
@@ -97,14 +103,17 @@ class AdminController extends Controller
             ->pluck('total', 'role')
             ->map(fn ($n) => (int) $n);
 
-        $year = request('year', date('Y'));
+        // $year = request('year', date('Y'));
+        $year = (int) request('year', date('Y'));
+        $period = request('period', 'annually');
 
-        // Stat cards and charts live on the dashboard tab only.
         $stats = $view === 'user' ? [] : Cache::remember(
             "admin_dashboard_stats:{$year}",
             self::DASHBOARD_CACHE_TTL,
             fn () => $this->computeDashboardStats($year)
         );
+
+        $reportData = $this->getReportData($period, $year);
 
         $unreadNotificationsCount = Auth::user()->unreadNotifications()->count();
 
@@ -122,10 +131,17 @@ class AdminController extends Controller
             'studFiles',
             'statusFilter',
             'year',
+            'period',
+            'reportData',
             'unreadNotificationsCount',
             'limitReachedFiles'
         ), $stats));
     }
+
+    public function __construct(
+        private PdfValidationService $pdfValidation,
+        private SectionDetector $sectionDetector,
+    ) {}
 
     /**
      * All the dashboard's aggregate numbers, computed in ~10 queries total
@@ -193,6 +209,289 @@ class AdminController extends Controller
     {
         Cache::forget('admin_dashboard_stats:'.$file->created_at->year);
         RepositoryController::forgetFacets();
+    }
+
+    public function storeArchive(Request $request)
+    {
+        $request->validate([
+            'file' => [
+                'required',
+                'file',
+                'mimes:pdf',
+                'max:10240',
+            ],
+            'title' => [
+                'required',
+                'string',
+                'max:500',
+            ],
+            'author' => [
+                'required',
+                'string',
+                'max:1000',
+            ],
+            'year_published' => [
+                'required',
+                'integer',
+                'min:1900',
+                'max:'.now()->year,
+            ],
+            'abstract' => [
+                'required',
+                'string',
+            ],
+            'keywords' => [
+                'nullable',
+                'string',
+                'max:2000',
+            ],
+        ]);
+
+        $uploadedFile = $request->file('file');
+
+        /*
+        |--------------------------------------------------------------------------
+        | 1. Validate and process PDF
+        |--------------------------------------------------------------------------
+        */
+
+        try {
+            $processed = $this->pdfValidation->process($uploadedFile);
+        } catch (PdfProcessingException $e) {
+            return back()
+                ->withInput()
+                ->withErrors([
+                    'file' => $e->getMessage(),
+                ]);
+        } catch (\Throwable $e) {
+            report($e);
+
+            return back()
+                ->withInput()
+                ->withErrors([
+                    'file' => 'The PDF could not be processed. Please try another file.',
+                ]);
+        }
+
+        $hash = $processed['hash'] ?? hash_file(
+            'sha256',
+            $uploadedFile->getRealPath()
+        );
+
+        /*
+        |--------------------------------------------------------------------------
+        | 2. Prevent duplicate PDF
+        |--------------------------------------------------------------------------
+        */
+
+        $duplicate = UserFile::where('pdf_hash', $hash)->first();
+
+        if ($duplicate) {
+            return back()
+                ->withInput()
+                ->withErrors([
+                    'file' => 'This research PDF already exists in the repository.',
+                ]);
+        }
+
+        /*
+        |--------------------------------------------------------------------------
+        | 3. Store PDF in Supabase Storage
+        |--------------------------------------------------------------------------
+        |
+        | Use the same disk configured by your existing repository upload flow.
+        | If your project uses a specific disk helper, use that here.
+        |
+        */
+
+        $disk = config('research.storage_disk', 'supabase');
+
+        $storagePath = 'research_files/'.$hash.'.pdf';
+
+        try {
+            Storage::disk($disk)->putFileAs(
+                'research_files',
+                $uploadedFile,
+                $hash.'.pdf'
+            );
+        } catch (\Throwable $e) {
+            report($e);
+
+            return back()
+                ->withInput()
+                ->withErrors([
+                    'file' => 'The PDF could not be uploaded to storage.',
+                ]);
+        }
+
+        /*
+        |--------------------------------------------------------------------------
+        | 4. Parse researchers
+        |--------------------------------------------------------------------------
+        */
+
+        $authors = collect(explode(',', $request->author))
+            ->map(fn ($name) => trim($name))
+            ->filter()
+            ->unique(fn ($name) => mb_strtolower($name))
+            ->values();
+
+        /*
+        |--------------------------------------------------------------------------
+        | 5. Detect sections
+        |--------------------------------------------------------------------------
+        */
+
+        $detectedSections = [];
+
+        try {
+            $detected = $this->sectionDetector->detectCached(
+                $uploadedFile,
+                $hash
+            );
+
+            $detectedSections = $detected['sections'] ?? [];
+        } catch (\Throwable $e) {
+            /*
+             * Section detection should not prevent an otherwise valid
+             * archived research from being uploaded.
+             */
+            report($e);
+        }
+
+        /*
+        |--------------------------------------------------------------------------
+        | 6. Create research record
+        |--------------------------------------------------------------------------
+        */
+
+        try {
+            $fileRecord = UserFile::create([
+                'user_id' => Auth::id(),
+
+                'title' => $request->title,
+
+                // Primary researcher / first researcher
+                'name' => $authors->first(),
+
+                'desc' => $request->abstract,
+
+                'file_path' => $storagePath,
+
+                'views' => 0,
+                'downloads' => 0,
+
+                // Archive research is immediately published.
+                'status' => 'approved',
+                'visibility' => 'public',
+
+                'research_type' => 'Research',
+
+                'publication_year' => $request->year_published,
+
+                'pdf_hash' => $hash,
+
+                'pdf_page_count' => $processed['page_count'] ?? null,
+
+                'extracted_abstract' => $request->abstract,
+
+                'extracted_sections' => $detectedSections,
+
+                /*
+                 * No AI keyword suggestion is used here.
+                 * Keywords are manually entered by the administrator.
+                 */
+                'search_index_status' => 'not_started',
+            ]);
+
+            /*
+            |--------------------------------------------------------------------------
+            | 7. Save researchers
+            |--------------------------------------------------------------------------
+            */
+
+            foreach ($authors as $position => $author) {
+                $fileRecord->authors()->create([
+                    'user_id' => null,
+                    'author_name' => $author,
+                    'role_label' => null,
+                    'position' => $position + 1,
+                ]);
+            }
+
+            /*
+            |--------------------------------------------------------------------------
+            | 8. Save manually entered keywords
+            |--------------------------------------------------------------------------
+            */
+
+            $keywords = collect(explode(',', $request->keywords ?? ''))
+                ->map(fn ($keyword) => trim($keyword))
+                ->filter()
+                ->unique(fn ($keyword) => mb_strtolower($keyword))
+                ->values();
+
+            foreach ($keywords as $keyword) {
+                $keywordModel = Keyword::findOrCreateByDisplayName($keyword);
+
+                $fileRecord->keywords()->syncWithoutDetaching([
+                    $keywordModel->id => [
+                        'source' => 'manual',
+                    ],
+                ]);
+            }
+
+            /*
+            |--------------------------------------------------------------------------
+            | 9. Process document for search / Ask AQUA
+            |--------------------------------------------------------------------------
+            */
+
+            try {
+                ProcessResearchDocument::dispatch($fileRecord->id);
+            } catch (\Throwable $e) {
+                /*
+                 * Upload itself should remain successful even if the
+                 * indexing job cannot be dispatched.
+                 */
+                report($e);
+            }
+
+            /*
+            |--------------------------------------------------------------------------
+            | 10. Clear repository/admin caches
+            |--------------------------------------------------------------------------
+            */
+
+            self::forgetResearchCaches($fileRecord);
+
+        } catch (\Throwable $e) {
+
+            /*
+             * If database saving fails after storage upload, remove the
+             * uploaded PDF so we don't leave an orphaned storage file.
+             */
+            try {
+                Storage::disk($disk)->delete($storagePath);
+            } catch (\Throwable $storageException) {
+                report($storageException);
+            }
+
+            report($e);
+
+            return back()
+                ->withInput()
+                ->withErrors([
+                    'file' => 'The research could not be saved. Please try again.',
+                ]);
+        }
+
+        return redirect()
+            ->route('admin', ['view' => 'upload'])
+            ->with(
+                'success',
+                'Research uploaded and published successfully.'
+            );
     }
 
     public function store(Request $request)
@@ -392,5 +691,455 @@ class AdminController extends Controller
         $file->update(['resubmit_count' => 0]);
 
         return back()->with('success', 'Resubmit limit has been reset.');
+    }
+
+    // graph
+
+    private function getReportData(string $period, int $year): array
+    {
+        /*
+        |--------------------------------------------------------------------------
+        | ANNUALLY
+        |--------------------------------------------------------------------------
+        */
+
+        if ($period === 'annually') {
+
+            $research = UserFile::query()
+                ->selectRaw('EXTRACT(YEAR FROM created_at)::int AS period')
+                ->selectRaw('COUNT(*)::int AS total')
+                ->groupByRaw('EXTRACT(YEAR FROM created_at)')
+                ->orderBy('period')
+                ->pluck('total', 'period');
+
+            $students = User::query()
+                ->where('role', 'student')
+                ->selectRaw('EXTRACT(YEAR FROM created_at)::int AS period')
+                ->selectRaw('COUNT(*)::int AS total')
+                ->groupByRaw('EXTRACT(YEAR FROM created_at)')
+                ->orderBy('period')
+                ->pluck('total', 'period');
+
+            $instructors = User::query()
+                ->where('role', 'instructor')
+                ->selectRaw('EXTRACT(YEAR FROM created_at)::int AS period')
+                ->selectRaw('COUNT(*)::int AS total')
+                ->groupByRaw('EXTRACT(YEAR FROM created_at)')
+                ->orderBy('period')
+                ->pluck('total', 'period');
+
+            /*
+            |--------------------------------------------------------------------------
+            | Search keywords
+            |--------------------------------------------------------------------------
+            |
+            | Annual mode:
+            | each year becomes one frame in the bar race.
+            |
+            */
+
+            $searchLogs = SearchLog::query()
+                ->selectRaw('EXTRACT(YEAR FROM created_at)::int AS period')
+                ->selectRaw('LOWER(TRIM(keyword)) AS keyword')
+                ->selectRaw('COUNT(*)::int AS total')
+                ->groupByRaw('EXTRACT(YEAR FROM created_at), LOWER(TRIM(keyword))')
+                ->orderBy('period')
+                ->get();
+
+            $searchFrames = $searchLogs
+                ->groupBy('period')
+                ->map(function ($rows, $periodValue) {
+                    return [
+                        'label' => (string) $periodValue,
+                        'data' => $rows
+                            ->sortByDesc('total')
+                            ->take(10)
+                            ->values()
+                            ->map(fn ($row) => [
+                                'name' => $row->keyword,
+                                'value' => (int) $row->total,
+                            ])
+                            ->all(),
+                    ];
+                })
+                ->values()
+                ->all();
+
+            $years = collect()
+                ->merge($research->keys())
+                ->merge($students->keys())
+                ->merge($instructors->keys())
+                ->unique()
+                ->sort()
+                ->values();
+
+            return [
+                'research' => [
+                    'labels' => $years
+                        ->map(fn ($value) => (string) $value)
+                        ->all(),
+
+                    'values' => $years
+                        ->map(fn ($value) => (int) ($research[$value] ?? 0))
+                        ->all(),
+                ],
+
+                'users' => [
+                    'labels' => $years
+                        ->map(fn ($value) => (string) $value)
+                        ->all(),
+
+                    'students' => $years
+                        ->map(fn ($value) => (int) ($students[$value] ?? 0))
+                        ->all(),
+
+                    'instructors' => $years
+                        ->map(fn ($value) => (int) ($instructors[$value] ?? 0))
+                        ->all(),
+                ],
+
+                'searchRace' => $searchFrames,
+            ];
+        }
+
+        /*
+        |--------------------------------------------------------------------------
+        | QUARTERLY
+        |--------------------------------------------------------------------------
+        */
+
+        if ($period === 'quarterly') {
+
+            $research = UserFile::query()
+                ->whereYear('created_at', $year)
+                ->selectRaw('EXTRACT(QUARTER FROM created_at)::int AS period')
+                ->selectRaw('COUNT(*)::int AS total')
+                ->groupByRaw('EXTRACT(QUARTER FROM created_at)')
+                ->orderBy('period')
+                ->pluck('total', 'period');
+
+            $students = User::query()
+                ->where('role', 'student')
+                ->whereYear('created_at', $year)
+                ->selectRaw('EXTRACT(QUARTER FROM created_at)::int AS period')
+                ->selectRaw('COUNT(*)::int AS total')
+                ->groupByRaw('EXTRACT(QUARTER FROM created_at)')
+                ->orderBy('period')
+                ->pluck('total', 'period');
+
+            $instructors = User::query()
+                ->where('role', 'instructor')
+                ->whereYear('created_at', $year)
+                ->selectRaw('EXTRACT(QUARTER FROM created_at)::int AS period')
+                ->selectRaw('COUNT(*)::int AS total')
+                ->groupByRaw('EXTRACT(QUARTER FROM created_at)')
+                ->orderBy('period')
+                ->pluck('total', 'period');
+
+            /*
+            |--------------------------------------------------------------------------
+            | Search keywords
+            |--------------------------------------------------------------------------
+            */
+
+            $searchLogs = SearchLog::query()
+                ->whereYear('created_at', $year)
+                ->selectRaw('EXTRACT(QUARTER FROM created_at)::int AS period')
+                ->selectRaw('LOWER(TRIM(keyword)) AS keyword')
+                ->selectRaw('COUNT(*)::int AS total')
+                ->groupByRaw('EXTRACT(QUARTER FROM created_at), LOWER(TRIM(keyword))')
+                ->orderBy('period')
+                ->get();
+
+            $searchFrames = collect(range(1, 4))
+                ->map(function ($quarter) use ($searchLogs) {
+
+                    $rows = $searchLogs
+                        ->where('period', $quarter)
+                        ->sortByDesc('total')
+                        ->take(10);
+
+                    return [
+                        'label' => 'Q'.$quarter,
+                        'data' => $rows
+                            ->values()
+                            ->map(fn ($row) => [
+                                'name' => $row->keyword,
+                                'value' => (int) $row->total,
+                            ])
+                            ->all(),
+                    ];
+                })
+                ->all();
+
+            $labels = [
+                'Jan, Feb, Mar',
+                'Apr, May, Jun',
+                'Jul, Aug, Sep',
+                'Oct, Nov, Dec',
+            ];
+
+            $researchValues = [];
+            $studentValues = [];
+            $instructorValues = [];
+
+            for ($i = 1; $i <= 4; $i++) {
+                $researchValues[] = (int) ($research[$i] ?? 0);
+                $studentValues[] = (int) ($students[$i] ?? 0);
+                $instructorValues[] = (int) ($instructors[$i] ?? 0);
+            }
+
+            return [
+                'research' => [
+                    'labels' => $labels,
+                    'values' => $researchValues,
+                ],
+
+                'users' => [
+                    'labels' => $labels,
+                    'students' => $studentValues,
+                    'instructors' => $instructorValues,
+                ],
+
+                'searchRace' => $searchFrames,
+            ];
+        }
+
+        /*
+        |--------------------------------------------------------------------------
+        | MONTHLY
+        |--------------------------------------------------------------------------
+        */
+
+        if ($period === 'monthly') {
+
+            $research = UserFile::query()
+                ->whereYear('created_at', $year)
+                ->selectRaw('EXTRACT(MONTH FROM created_at)::int AS period')
+                ->selectRaw('COUNT(*)::int AS total')
+                ->groupByRaw('EXTRACT(MONTH FROM created_at)')
+                ->orderBy('period')
+                ->pluck('total', 'period');
+
+            $students = User::query()
+                ->where('role', 'student')
+                ->whereYear('created_at', $year)
+                ->selectRaw('EXTRACT(MONTH FROM created_at)::int AS period')
+                ->selectRaw('COUNT(*)::int AS total')
+                ->groupByRaw('EXTRACT(MONTH FROM created_at)')
+                ->orderBy('period')
+                ->pluck('total', 'period');
+
+            $instructors = User::query()
+                ->where('role', 'instructor')
+                ->whereYear('created_at', $year)
+                ->selectRaw('EXTRACT(MONTH FROM created_at)::int AS period')
+                ->selectRaw('COUNT(*)::int AS total')
+                ->groupByRaw('EXTRACT(MONTH FROM created_at)')
+                ->orderBy('period')
+                ->pluck('total', 'period');
+
+            /*
+            |--------------------------------------------------------------------------
+            | Search keywords
+            |--------------------------------------------------------------------------
+            */
+
+            $searchLogs = SearchLog::query()
+                ->whereYear('created_at', $year)
+                ->selectRaw('EXTRACT(MONTH FROM created_at)::int AS period')
+                ->selectRaw('LOWER(TRIM(keyword)) AS keyword')
+                ->selectRaw('COUNT(*)::int AS total')
+                ->groupByRaw('EXTRACT(MONTH FROM created_at), LOWER(TRIM(keyword))')
+                ->orderBy('period')
+                ->get();
+
+            $searchFrames = collect(range(1, 12))
+                ->map(function ($month) use ($searchLogs) {
+
+                    $rows = $searchLogs
+                        ->where('period', $month)
+                        ->sortByDesc('total')
+                        ->take(10);
+
+                    return [
+                        'label' => date('F', mktime(0, 0, 0, $month, 1)),
+                        'data' => $rows
+                            ->values()
+                            ->map(fn ($row) => [
+                                'name' => $row->keyword,
+                                'value' => (int) $row->total,
+                            ])
+                            ->all(),
+                    ];
+                })
+                ->all();
+
+            $labels = [
+                'Jan', 'Feb', 'Mar', 'Apr',
+                'May', 'Jun', 'Jul', 'Aug',
+                'Sep', 'Oct', 'Nov', 'Dec',
+            ];
+
+            $researchValues = [];
+            $studentValues = [];
+            $instructorValues = [];
+
+            for ($i = 1; $i <= 12; $i++) {
+                $researchValues[] = (int) ($research[$i] ?? 0);
+                $studentValues[] = (int) ($students[$i] ?? 0);
+                $instructorValues[] = (int) ($instructors[$i] ?? 0);
+            }
+
+            return [
+                'research' => [
+                    'labels' => $labels,
+                    'values' => $researchValues,
+                ],
+
+                'users' => [
+                    'labels' => $labels,
+                    'students' => $studentValues,
+                    'instructors' => $instructorValues,
+                ],
+
+                'searchRace' => $searchFrames,
+            ];
+        }
+
+        /*
+        |--------------------------------------------------------------------------
+        | WEEKLY
+        |--------------------------------------------------------------------------
+        */
+
+        if ($period === 'weekly') {
+
+            $research = UserFile::query()
+                ->whereYear('created_at', $year)
+                ->selectRaw('EXTRACT(WEEK FROM created_at)::int AS period')
+                ->selectRaw('COUNT(*)::int AS total')
+                ->groupByRaw('EXTRACT(WEEK FROM created_at)')
+                ->orderBy('period')
+                ->pluck('total', 'period');
+
+            $students = User::query()
+                ->where('role', 'student')
+                ->whereYear('created_at', $year)
+                ->selectRaw('EXTRACT(WEEK FROM created_at)::int AS period')
+                ->selectRaw('COUNT(*)::int AS total')
+                ->groupByRaw('EXTRACT(WEEK FROM created_at)')
+                ->orderBy('period')
+                ->pluck('total', 'period');
+
+            $instructors = User::query()
+                ->where('role', 'instructor')
+                ->whereYear('created_at', $year)
+                ->selectRaw('EXTRACT(WEEK FROM created_at)::int AS period')
+                ->selectRaw('COUNT(*)::int AS total')
+                ->groupByRaw('EXTRACT(WEEK FROM created_at)')
+                ->orderBy('period')
+                ->pluck('total', 'period');
+
+            /*
+            |--------------------------------------------------------------------------
+            | Search keywords
+            |--------------------------------------------------------------------------
+            */
+
+            $searchLogs = SearchLog::query()
+                ->whereYear('created_at', $year)
+                ->selectRaw('EXTRACT(WEEK FROM created_at)::int AS period')
+                ->selectRaw('LOWER(TRIM(keyword)) AS keyword')
+                ->selectRaw('COUNT(*)::int AS total')
+                ->groupByRaw('EXTRACT(WEEK FROM created_at), LOWER(TRIM(keyword))')
+                ->orderBy('period')
+                ->get();
+
+            $searchFrames = collect(range(1, 53))
+                ->map(function ($week) use ($searchLogs) {
+
+                    $rows = $searchLogs
+                        ->where('period', $week)
+                        ->sortByDesc('total')
+                        ->take(10);
+
+                    return [
+                        'label' => 'Week '.$week,
+                        'data' => $rows
+                            ->values()
+                            ->map(fn ($row) => [
+                                'name' => $row->keyword,
+                                'value' => (int) $row->total,
+                            ])
+                            ->all(),
+                    ];
+                })
+                ->all();
+
+            $labels = [];
+            $researchValues = [];
+            $studentValues = [];
+            $instructorValues = [];
+
+            for ($i = 1; $i <= 52; $i++) {
+                $labels[] = "Week {$i}";
+
+                $researchValues[] = (int) ($research[$i] ?? 0);
+                $studentValues[] = (int) ($students[$i] ?? 0);
+                $instructorValues[] = (int) ($instructors[$i] ?? 0);
+            }
+
+            return [
+                'research' => [
+                    'labels' => $labels,
+                    'values' => $researchValues,
+                ],
+
+                'users' => [
+                    'labels' => $labels,
+                    'students' => $studentValues,
+                    'instructors' => $instructorValues,
+                ],
+
+                'searchRace' => $searchFrames,
+            ];
+        }
+
+        /*
+        |--------------------------------------------------------------------------
+        | FALLBACK
+        |--------------------------------------------------------------------------
+        */
+
+        return [
+            'research' => [
+                'labels' => [],
+                'values' => [],
+            ],
+
+            'users' => [
+                'labels' => [],
+                'students' => [],
+                'instructors' => [],
+            ],
+
+            'searchRace' => [],
+        ];
+    }
+
+    // PRINT REPORT CONTROLLRRS
+    public function printReport()
+    {
+        $year = (int) request('year', now()->year);
+        $period = request('period', 'annually');
+
+        $reportData = $this->getReportData($period, $year);
+
+        return view('admin.report-print', [
+            'reportData' => $reportData,
+            'year' => $year,
+            'period' => $period,
+        ]);
     }
 }

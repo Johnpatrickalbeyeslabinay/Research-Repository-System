@@ -1,129 +1,471 @@
-// Admin dashboard charts (resources/views/admin.blade.php). Loaded by
-// resources/js/app.js only on pages that have [data-admin-charts].
-//
-// Replaces the full ~1 MB echarts CDN build and three inline <script>
-// blocks. Only the chart types and components actually drawn are
-// imported, so the bundle carries a fraction of the library. The inline
-// version also ran on every admin tab (throwing on the missing chart
-// elements outside the dashboard) and reused one `chart` variable for two
-// charts, so resizing the window resized the wrong one.
-import * as echarts from 'echarts/core';
-import { BarChart, LineChart, PieChart } from 'echarts/charts';
-import { GridComponent, LegendComponent, TitleComponent, TooltipComponent } from 'echarts/components';
-import { CanvasRenderer } from 'echarts/renderers';
+// resources/js/admin-charts.js
 
-echarts.use([BarChart, LineChart, PieChart, GridComponent, LegendComponent, TitleComponent, TooltipComponent, CanvasRenderer]);
+import * as echarts from "echarts/core";
 
-const MONTHS = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+import { BarChart } from "echarts/charts";
 
-const titleStyle = { color: '#1F2937', fontSize: 13 };
+import {
+    GridComponent,
+    TooltipComponent,
+    LegendComponent,
+} from "echarts/components";
 
-function monthlyOption(data) {
-    return {
-        title: { text: 'Monthly Upload Trends', left: 'left', textStyle: titleStyle },
-        tooltip: { trigger: 'axis' },
-        legend: { data: ['Uploads', 'Approvals'], bottom: 10, left: 'center' },
-        xAxis: { type: 'category', data: MONTHS },
-        yAxis: { type: 'value' },
-        series: [
-            { name: 'Uploads', type: 'bar', itemStyle: { color: '#1E3A8A' }, data: data.uploads },
-            { name: 'Approvals', type: 'bar', itemStyle: { color: '#10B981' }, data: data.approvals },
-        ],
-    };
-}
+import { CanvasRenderer } from "echarts/renderers";
 
-function statusOption(data) {
-    return {
-        title: { text: 'Research Status Distribution', left: 'left', textStyle: titleStyle },
-        tooltip: { trigger: 'item' },
-        legend: { bottom: '10', left: 'center' },
-        series: [
-            {
-                name: 'Research Status',
-                type: 'pie',
-                radius: ['40%', '70%'],
-                avoidLabelOverlap: false,
-                label: { show: false, position: 'center' },
-                emphasis: { label: { show: true, fontSize: 24, fontWeight: 'bold' } },
-                labelLine: { show: false },
-                data: [
-                    { value: data.status.approved, name: 'Approved', itemStyle: { color: '#198754' } },
-                    { value: data.status.pending, name: 'Pending', itemStyle: { color: '#FFC107' } },
-                    { value: data.status.rejected, name: 'Rejected', itemStyle: { color: '#DC3545' } },
-                ],
-            },
-        ],
-    };
-}
+echarts.use([
+    BarChart,
+    GridComponent,
+    TooltipComponent,
+    LegendComponent,
+    CanvasRenderer,
+]);
 
-function engagementOption(data) {
-    const line = (name, color, values) => ({
-        name,
-        type: 'line',
-        smooth: true,
-        data: values,
-        lineStyle: { color, width: 3 },
-        itemStyle: { color: '#FFFFFF', borderColor: color, borderWidth: 3 },
-        symbol: 'circle',
-        symbolSize: 8,
-    });
-
-    return {
-        title: { text: 'Downloads & Engagement Trends (Views vs Downloads)', left: 'left', textStyle: titleStyle },
-        tooltip: { trigger: 'axis' },
-        legend: { bottom: 10, left: 'center', data: ['Views', 'Downloads'] },
-        grid: { top: 70, left: '8%', right: '5%', bottom: 60, containLabel: true },
-        xAxis: { type: 'category', boundaryGap: false, data: MONTHS },
-        yAxis: { type: 'value' },
-        series: [line('Views', '#7C4DFF', data.views), line('Downloads', '#10B981', data.downloads)],
-    };
-}
-
-const charts = [
-    { id: 'monthlyChart', option: monthlyOption },
-    { id: 'pieChart', option: statusOption },
-    { id: 'lineChart', option: engagementOption },
-];
-
-let instances = [];
-
-function resizeAll() {
-    instances.forEach((chart) => chart.resize());
-}
-
-// Turbo snapshots the page when leaving it; dispose first so the cached
-// copy isn't holding live canvases and the resize listener doesn't leak
-// into every page visited afterwards.
-function disposeAll() {
-    instances.forEach((chart) => chart.dispose());
-    instances = [];
-    window.removeEventListener('resize', resizeAll);
-}
-
-document.addEventListener('turbo:before-cache', disposeAll);
+let researchChart = null;
+let registeredUsersChart = null;
+let searchKeywordsChart = null;
+let searchRaceTimer = null;
 
 export function init() {
-    const source = document.querySelector('[data-admin-charts]');
-    if (!source) return;
+    console.log("[admin-charts] INIT");
 
-    disposeAll();
+    const reportData = window.adminReportData ?? {};
 
-    let data;
-    try {
-        data = JSON.parse(source.textContent);
-    } catch (error) {
-        console.error('[admin-charts] invalid chart data', error);
-        return;
+    const researchData = reportData.research ?? {};
+
+    const usersData = reportData.users ?? {};
+
+    const searchRaceData = Array.isArray(reportData.searchRace)
+        ? reportData.searchRace
+        : [];
+
+    console.log("[admin-charts] reportData:", reportData);
+    console.log("[admin-charts] searchRace:", searchRaceData);
+
+    // =====================================================
+    // RESEARCH UPLOAD CHART
+    // =====================================================
+
+    const researchDom = document.getElementById("reportChart");
+
+    if (researchDom) {
+        const existing = echarts.getInstanceByDom(researchDom);
+
+        if (existing) {
+            existing.dispose();
+        }
+
+        researchChart = echarts.init(researchDom);
+
+        researchChart.setOption({
+            animation: true,
+
+            tooltip: {
+                trigger: "axis",
+
+                axisPointer: {
+                    type: "shadow",
+                },
+            },
+
+            grid: {
+                left: "3%",
+                right: "3%",
+                top: "8%",
+                bottom: "10%",
+                containLabel: true,
+            },
+
+            xAxis: {
+                type: "category",
+                data: researchData.labels ?? [],
+
+                axisTick: {
+                    alignWithLabel: true,
+                },
+            },
+
+            yAxis: {
+                type: "value",
+                minInterval: 1,
+            },
+
+            series: [
+                {
+                    name: "Research Uploads",
+
+                    type: "bar",
+
+                    data: researchData.values ?? [],
+
+                    barMaxWidth: 45,
+
+                    itemStyle: {
+                        borderRadius: [6, 6, 0, 0],
+                    },
+                },
+            ],
+        });
     }
 
-    for (const { id, option } of charts) {
-        const el = document.getElementById(id);
-        if (!el) continue;
+    // =====================================================
+    // REGISTERED USERS CHART
+    // =====================================================
 
-        const chart = echarts.init(el);
-        chart.setOption(option(data));
-        instances.push(chart);
+    const usersDom = document.getElementById("registeredUsersChart");
+
+    if (usersDom) {
+        const existing = echarts.getInstanceByDom(usersDom);
+
+        if (existing) {
+            existing.dispose();
+        }
+
+        registeredUsersChart = echarts.init(usersDom);
+
+        registeredUsersChart.setOption({
+            animation: true,
+
+            tooltip: {
+                trigger: "axis",
+
+                axisPointer: {
+                    type: "shadow",
+                },
+            },
+
+            legend: {
+                top: 0,
+            },
+
+            grid: {
+                left: "3%",
+                right: "3%",
+                top: "12%",
+                bottom: "10%",
+                containLabel: true,
+            },
+
+            xAxis: {
+                type: "category",
+                data: usersData.labels ?? [],
+
+                axisTick: {
+                    alignWithLabel: true,
+                },
+            },
+
+            yAxis: {
+                type: "value",
+                minInterval: 1,
+            },
+
+            series: [
+                {
+                    name: "Students",
+
+                    type: "bar",
+
+                    data: usersData.students ?? [],
+
+                    barMaxWidth: 35,
+                },
+
+                {
+                    name: "Instructors",
+
+                    type: "bar",
+
+                    data: usersData.instructors ?? [],
+
+                    barMaxWidth: 35,
+                },
+            ],
+        });
     }
 
-    window.addEventListener('resize', resizeAll);
+    // =====================================================
+    // SEARCH KEYWORDS BAR RACE
+    // =====================================================
+
+    const searchKeywordsDom = document.getElementById("searchKeywordsChart");
+
+    if (searchKeywordsDom) {
+        const existing = echarts.getInstanceByDom(searchKeywordsDom);
+
+        if (existing) {
+            existing.dispose();
+        }
+
+        searchKeywordsChart = echarts.init(searchKeywordsDom);
+
+        // Stop previous animation.
+        if (searchRaceTimer) {
+            clearInterval(searchRaceTimer);
+            searchRaceTimer = null;
+        }
+
+        if (searchRaceData.length === 0) {
+            searchKeywordsChart.setOption({
+                title: {
+                    text: "No search data available",
+                    left: "center",
+                    top: "middle",
+                },
+
+                xAxis: {
+                    show: false,
+                },
+
+                yAxis: {
+                    show: false,
+                },
+
+                series: [],
+            });
+        } else {
+            let frameIndex = 0;
+
+            const renderSearchFrame = () => {
+                const frame = searchRaceData[frameIndex] ?? {};
+
+                const rows = Array.isArray(frame.data) ? [...frame.data] : [];
+
+                rows.sort(
+                    (a, b) => Number(b.value ?? 0) - Number(a.value ?? 0),
+                );
+
+                const topRows = rows.slice(0, 10);
+
+                const names = topRows.map((item) => item.name ?? "").reverse();
+
+                const values = topRows
+                    .map((item) => Number(item.value ?? 0))
+                    .reverse();
+
+                searchKeywordsChart.setOption({
+                    animationDuration: 800,
+
+                    animationDurationUpdate: 800,
+
+                    animationEasing: "cubicOut",
+
+                    animationEasingUpdate: "cubicOut",
+
+                    title: {
+                        text: frame.label ?? "",
+                        left: "center",
+                    },
+
+                    tooltip: {
+                        trigger: "axis",
+
+                        axisPointer: {
+                            type: "shadow",
+                        },
+
+                        formatter(params) {
+                            const item = params?.[0];
+
+                            if (!item) {
+                                return "";
+                            }
+
+                            return `
+                                <strong>${item.name}</strong><br>
+                                Searches: ${item.value}
+                            `;
+                        },
+                    },
+
+                    grid: {
+                        left: "5%",
+                        right: "8%",
+                        top: "15%",
+                        bottom: "5%",
+                        containLabel: true,
+                    },
+
+                    xAxis: {
+                        type: "value",
+
+                        min: 0,
+
+                        minInterval: 1,
+                    },
+
+                    yAxis: {
+                        type: "category",
+
+                        data: names,
+                    },
+
+                    series: [
+                        {
+                            name: "Searches",
+
+                            type: "bar",
+
+                            data: values,
+
+                            barMaxWidth: 35,
+
+                            label: {
+                                show: true,
+
+                                position: "right",
+                            },
+
+                            itemStyle: {
+                                borderRadius: [0, 6, 6, 0],
+
+                                color: (params) => {
+                                    const colors = [
+                                        "#2563eb", // Blue
+                                        "#0d9488", // Teal
+                                        "#f59e0b", // Amber
+                                        "#8b5cf6", // Purple
+                                        "#ef4444", // Red
+                                        "#10b981", // Green
+                                        "#ec4899", // Pink
+                                        "#6366f1", // Indigo
+                                        "#f97316", // Orange
+                                        "#14b8a6", // Cyan
+                                    ];
+
+                                    return colors[
+                                        params.dataIndex % colors.length
+                                    ];
+                                },
+                            },
+                        },
+                    ],
+                });
+            };
+
+            renderSearchFrame();
+
+            if (searchRaceData.length > 1) {
+                searchRaceTimer = setInterval(() => {
+                    frameIndex++;
+
+                    if (frameIndex >= searchRaceData.length) {
+                        frameIndex = 0;
+                    }
+
+                    renderSearchFrame();
+                }, 1800);
+            }
+        }
+    }
+
+    // =====================================================
+    // RESIZE
+    // =====================================================
+
+    const resizeCharts = () => {
+        researchChart?.resize();
+
+        registeredUsersChart?.resize();
+
+        searchKeywordsChart?.resize();
+    };
+
+    window.addEventListener("resize", resizeCharts);
+
+    console.log("[admin-charts] FILE INITIALIZATION COMPLETE");
+
+    window.printReport = function () {
+        const report = document.getElementById("adminPrintReport");
+
+        if (!report) {
+            console.error("[admin-charts] Print report area not found.");
+            return;
+        }
+
+        const chartIds = [
+            "reportChart",
+            "registeredUsersChart",
+            "searchKeywordsChart",
+        ];
+
+        const chartImages = [];
+
+        // Convert each ECharts chart to an image
+        chartIds.forEach((id) => {
+            const dom = document.getElementById(id);
+
+            if (!dom) return;
+
+            const chart = echarts.getInstanceByDom(dom);
+
+            if (!chart) {
+                console.warn(`[admin-charts] Chart not found: ${id}`);
+                return;
+            }
+
+            chart.resize();
+
+            const image = chart.getDataURL({
+                type: "png",
+                pixelRatio: 2,
+                backgroundColor: "#ffffff",
+            });
+
+            chartImages.push({
+                id,
+                image,
+            });
+        });
+
+        // Save original chart contents
+        const originalContents = {};
+
+        chartImages.forEach(({ id, image }) => {
+            const element = document.getElementById(id);
+
+            if (!element) return;
+
+            originalContents[id] = element.innerHTML;
+
+            element.innerHTML = "";
+
+            const img = document.createElement("img");
+
+            img.src = image;
+            img.alt = "";
+
+            img.style.width = "100%";
+            img.style.height = "auto";
+            img.style.display = "block";
+
+            element.appendChild(img);
+        });
+
+        // Activate print mode
+        document.body.classList.add("printing-report");
+
+        // Give browser time to render the generated images
+        setTimeout(() => {
+            window.print();
+        }, 500);
+
+        // Restore dashboard after Print / Cancel
+        window.onafterprint = function () {
+            chartImages.forEach(({ id }) => {
+                const element = document.getElementById(id);
+
+                if (!element) return;
+
+                element.innerHTML = originalContents[id];
+
+                const chart = echarts.getInstanceByDom(element);
+
+                if (chart) {
+                    chart.resize();
+                }
+            });
+
+            document.body.classList.remove("printing-report");
+        };
+    };
 }

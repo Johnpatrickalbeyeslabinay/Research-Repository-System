@@ -5,6 +5,279 @@
     @include('partials.head', ['layoutCss' => 'resources/css/layouts/admin.css'])
 </head>
 
+<style>
+    .research-card {
+        border: 1px solid #e5e7eb;
+        border-radius: 10px;
+        background: #fff;
+        overflow: hidden;
+    }
+
+    .research-table {
+        font-size: 0.8125rem;          /* 13px body text */
+        color: #374151;
+        margin-bottom: 0;
+    }
+
+    .research-table thead th {
+        font-size: 0.6875rem;          /* 11px header */
+        font-weight: 600;
+        text-transform: uppercase;
+        letter-spacing: 0.04em;
+        color: black;
+        background: #f9fafb;
+        border-bottom: 1px solid #e5e7eb;
+        padding: 0.7rem 1rem;
+        white-space: nowrap;
+    }
+
+    .research-table tbody td {
+        padding: 0.75rem 1rem;
+        vertical-align: middle;
+        border-bottom: 1px solid #f1f3f5;
+    }
+
+    .research-table tbody tr:last-child td { border-bottom: 0; }
+    .research-table tbody tr:hover { background: #f9fafb; }
+
+    .research-table .col-title {
+        max-width: 260px;
+        font-weight: 600;
+        font-size: 0.8125rem;
+        color: #111827;
+    }
+
+    .research-table .col-researchers {
+        max-width: 200px;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+    }
+
+    .research-table .col-nowrap { white-space: nowrap; }
+
+    .research-table .stat {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.35rem;
+        color: #4b5563;
+        font-variant-numeric: tabular-nums;
+    }
+
+    .research-table .badge {
+        font-size: 0.6875rem;
+        font-weight: 500;
+        padding: 0.35em 0.75em;
+    }
+
+    .research-table .btn-action {
+        font-size: 0.75rem;
+        font-weight: 500;
+        padding: 0.25rem 0.6rem;
+        border-radius: 6px;
+        white-space: nowrap;
+    }
+
+    /* Popover text sizes */
+    .research-popover h5 { font-size: 1rem; }
+    .research-popover h6 { font-size: 0.8125rem; text-transform: uppercase; letter-spacing: 0.03em; color: #6b7280; }
+    .research-popover p,
+    .research-popover small,
+    .research-popover .alert { font-size: 0.8125rem; }
+
+
+       .archive-card {
+        border: 1px solid #e5e7eb;
+        border-radius: 12px;
+        background: #fff;
+        padding: 1.5rem;
+    }
+
+    .archive-card .form-label {
+        font-size: 0.8125rem;
+        font-weight: 600;
+        color: #111827;
+        margin-bottom: 0.35rem;
+    }
+
+    .archive-card .form-control,
+    .archive-card .form-select {
+        font-size: 0.875rem;
+        background-color: #f3f4f6;
+        border: 1px solid transparent;
+        border-radius: 8px;
+        padding: 0.6rem 0.85rem;
+    }
+
+    .archive-card .form-control:focus,
+    .archive-card .form-select:focus {
+        background-color: #fff;
+        border-color: #86b7fe;
+    }
+
+    .archive-card .form-text { font-size: 0.75rem; }
+
+    .dropzone-box {
+        border: 2px dashed #d1d5db;
+        border-radius: 12px;
+        padding: 2rem 1rem;
+        text-align: center;
+        cursor: pointer;
+        transition: border-color .15s, background-color .15s;
+    }
+
+    .dropzone-box:hover,
+    .dropzone-box.is-dragover {
+        border-color: #0d6efd;
+        background: #f5f9ff;
+    }
+
+    .dropzone-box.has-file {
+        border-style: solid;
+        border-color: #198754;
+        background: #f3faf6;
+    }
+
+    .dropzone-box .dz-icon { font-size: 2.25rem; color: #6b7280; }
+    .dropzone-box .dz-title { font-size: 0.9375rem; font-weight: 600; color: #111827; }
+    .dropzone-box .dz-hint  { font-size: 0.75rem; color: #6b7280; }
+
+    .archive-card {
+    width: 100%;
+    max-width: 850px;
+    margin-left: auto;
+    margin-right: auto;
+}
+
+.filter-bar {
+    margin: 15px auto 0;
+    width: 100%;
+    max-width: 1100px;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 1rem;
+    border-radius: 12px;
+    padding: 1rem 1.25rem;
+}
+
+    .filter-bar .filter-label {
+        display: flex;
+        align-items: center;
+        gap: 0.35rem;
+        font-size: 15px;
+        font-weight: bold;
+        letter-spacing: 0.04em;
+        color: black;
+        margin-bottom: 0.35rem;
+    }
+
+    .filter-bar .form-select {
+        font-size: 0.8125rem;
+        font-weight: 500;
+        color: #111827;
+        background-color: #f9fafb;
+        border: 1px solid #e5e7eb;
+        border-radius: 8px;
+        padding: 0.5rem 2.25rem 0.5rem 0.75rem;
+        min-width: 150px;
+        cursor: pointer;
+        transition: border-color .15s, box-shadow .15s, background-color .15s;
+    }
+
+    .filter-bar .form-select:hover {
+        background-color: #fff;
+        border-color: #cbd5e1;
+    }
+
+    .filter-bar .form-select:focus {
+        background-color: #fff;
+        border-color: #86b7fe;
+        box-shadow: 0 0 0 3px rgba(13, 110, 253, 0.12);
+    }
+
+    .filter-bar #sdgToggle {
+        display: block;
+        width: 100%;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+    }
+
+
+    .filter-bar .btn-reset {
+        font-size: 0.8125rem;
+        font-weight: 500;
+        padding: 0.5rem 0.9rem;
+        border-radius: 8px;
+        color: #374151;
+        background: #fff;
+        border: 1px solid #e5e7eb;
+        white-space: nowrap;
+    }
+
+    .filter-bar .btn-reset:hover {
+        background: #f3f4f6;
+        border-color: #cbd5e1;
+        color: #111827;
+    }
+
+    #reportFilterForm .form-select {
+    min-width: 190px;
+    min-height: 44px;
+}
+
+#reportFilterForm .btn {
+    min-height: 44px;
+}
+
+
+
+<style>
+    @media print {
+
+        /* Itago ang buong page elements */
+        body.printing-report > * {
+            display: none !important;
+        }
+
+        /* Ipakita lang ang report */
+        body.printing-report #adminPrintReport {
+            display: block !important;
+            width: 100% !important;
+            margin: 0 !important;
+            padding: 20px !important;
+        }
+
+        /* Huwag mag-break sa gitna ng cards */
+        body.printing-report .card {
+            break-inside: avoid;
+            page-break-inside: avoid;
+        }
+
+        /* Report title */
+        body.printing-report h5 {
+            color: #072a89 !important;
+        }
+
+        /* Charts */
+        body.printing-report #reportChart,
+        body.printing-report #registeredUsersChart {
+            height: 420px !important;
+        }
+
+        body.printing-report #searchKeywordsChart {
+            height: 500px !important;
+        }
+
+        /* Search Keywords sa bagong page kung kailangan */
+        body.printing-report #searchKeywordsChart {
+            break-before: page;
+            page-break-before: always;
+        }
+    }
+</style>
+</style>
+
 <body class="text-dark" style="font-family: sans-serif, arial;
   font-size: var(--font-size-sm);            /* 14px base */
   color: var(--color-text-primary);          /* #111827 default text */
@@ -119,47 +392,67 @@
 
                     <ul class="nav flex-column">
 
-                        <li class="nav-item">
+    {{-- Dashboard --}}
+    <li class="nav-item">
+        <a class="nav-link {{ $view === 'dashboard'
+            ? 'active text-white bg-primary rounded'
+            : 'text-dark bg-light rounded' }}"
+            href="{{ url('/admin?view=dashboard') }}">
 
-                            <a class="nav-link {{ $view == 'dashboard' ? 'active text-white bg-primary rounded' : 'text-dark bg-light rounded' }}"
-                            href="{{ url('/admin?view=dashboard') }}">
+            <i class="fa-solid fa-book me-2"></i>
+            Dashboard
+        </a>
+    </li>
 
-                                <i class="fa-solid fa-book me-2"></i>
+    {{-- Manage Users --}}
+    <li class="nav-item mt-2">
+        <a class="nav-link {{ request()->query('view') === 'user'
+            ? 'active text-white bg-primary rounded'
+            : 'text-dark bg-light rounded' }}"
+            href="{{ url('/admin?view=user') }}">
 
-                                Dashboard
+            <i class="fa-regular fa-user me-2"></i>
+            Manage Users
+        </a>
+    </li>
 
-                            </a>
+    {{-- Upload Research --}}
+    <li class="nav-item mt-2">
+        <a class="nav-link {{ request()->query('view') === 'upload'
+            ? 'active text-white bg-primary rounded'
+            : 'text-dark bg-light rounded' }}"
+            href="{{ url('/admin?view=upload') }}">
 
-                        </li>
+            <i class="fa-solid fa-upload me-2"></i>
+            Upload Research
+        </a>
+    </li>
 
-                        <li class="nav-item mt-2">
+     {{-- Report --}}
+    <li class="nav-item mt-2">
+        <a class="nav-link {{ request()->query('view') === 'report'
+            ? 'active text-white bg-primary rounded'
+            : 'text-dark bg-light rounded' }}"
+            href="{{ url('/admin?view=report') }}">
 
-                            <a class="nav-link {{ request()->query('view') === 'user' ? 'active text-white bg-primary rounded' : 'text-dark bg-light rounded' }}"
-                                href="{{ url('/admin?view=user') }}">
+            <i class="fa-solid fa-chart-line me-2"></i>
+            Report
+        </a>
+    </li>
 
-                                <i class="fa-regular fa-user me-2"></i>
+    {{-- Repository --}}
+    <li class="nav-item mt-2">
+        <a class="nav-link {{ request()->routeIs('repository')
+            ? 'active text-white bg-primary rounded'
+            : 'text-dark bg-light rounded' }}"
+            href="{{ route('repository') }}">
 
-                                Manage Users
+            <i class="fa-solid fa-folder me-2"></i>
+            Repository
+        </a>
+    </li>
 
-                            </a>
-
-                        </li>
-
-
-                        <li class="nav-item mt-2">
-
-                             <a class="nav-link active bg-primary rounded text-dark bg-light"
-                                href="{{ route('repository')  }}">
-
-                                <i class="fa-solid fa-folder me-2"></i>
-
-                                Repository
-
-                            </a>
-
-                        </li>
-
-                    </ul>
+</ul>
 
                 </div>
 
@@ -252,47 +545,67 @@
 
              <ul class="nav flex-column">
 
-                        <li class="nav-item">
+    {{-- Dashboard --}}
+    <li class="nav-item">
+        <a class="nav-link {{ $view === 'dashboard'
+            ? 'active text-white bg-primary rounded'
+            : 'text-dark bg-light rounded' }}"
+            href="{{ url('/admin?view=dashboard') }}">
 
-                            <a class="nav-link {{ $view == 'dashboard' ? 'active text-white bg-primary rounded' : 'text-dark bg-light rounded' }}"
-                            href="{{ url('/admin?view=dashboard') }}">
+            <i class="fa-solid fa-book me-2"></i>
+            Dashboard
+        </a>
+    </li>
 
-                                <i class="fa-solid fa-book me-2"></i>
+    {{-- Manage Users --}}
+    <li class="nav-item mt-2">
+        <a class="nav-link {{ request()->query('view') === 'user'
+            ? 'active text-white bg-primary rounded'
+            : 'text-dark bg-light rounded' }}"
+            href="{{ url('/admin?view=user') }}">
 
-                                Dashboard
+            <i class="fa-regular fa-user me-2"></i>
+            Manage Users
+        </a>
+    </li>
 
-                            </a>
+    {{-- Upload Research --}}
+    <li class="nav-item mt-2">
+        <a class="nav-link {{ request()->query('view') === 'upload'
+            ? 'active text-white bg-primary rounded'
+            : 'text-dark bg-light rounded' }}"
+            href="{{ url('/admin?view=upload') }}">
 
-                        </li>
+            <i class="fa-solid fa-upload me-2"></i>
+            Upload Research
+        </a>
+    </li>
 
-                        <li class="nav-item mt-2">
+    {{-- Report --}}
+    <li class="nav-item mt-2">
+        <a class="nav-link {{ request()->query('view') === 'report'
+            ? 'active text-white bg-primary rounded'
+            : 'text-dark bg-light rounded' }}"
+            href="{{ url('/admin?view=report') }}">
 
-                            <a class="nav-link {{ request()->query('view') === 'user' ? 'text-white bg-primary rounded' : 'text-dark bg-light rounded' }}"
-                                href="{{ url('/admin?view=user') }}">
+            <i class="fa-solid fa-chart-line me-2"></i>
+            Report
+        </a>
+    </li>
 
-                                <i class="fa-regular fa-user me-2"></i>
+    {{-- Repository --}}
+    <li class="nav-item mt-2">
+        <a class="nav-link {{ request()->routeIs('repository')
+            ? 'active text-white bg-primary rounded'
+            : 'text-dark bg-light rounded' }}"
+            href="{{ route('repository') }}">
 
-                                Manage Users
+            <i class="fa-solid fa-folder me-2"></i>
+            Repository
+        </a>
+    </li>
 
-                            </a>
-
-                        </li>
-
-                        <li class="nav-item mt-2">
-
-                              <a class="nav-link active bg-primary rounded text-dark bg-light"
-                                href="{{ route('repository')  }}">
-
-                                <i class="fa-solid fa-folder me-2"></i>
-
-                                Repository
-
-                            </a>
-
-                        </li>
-
-
-                    </ul>
+</ul>
 
             <hr>
 

@@ -164,6 +164,19 @@ Route::middleware(['auth', 'role:admin'])->group(function () {
     Route::get('/admin', [AdminController::class, 'index'])
         ->name('admin');
 
+    // Reports page
+    Route::get('/admin/reports', [AdminController::class, 'reportsPage'])
+        ->name('admin.reports');
+
+    // Reports chart data
+    Route::get('/admin/reports/data', [AdminController::class, 'reportData'])
+        ->name('admin.reports.data');
+
+    Route::get('/admin/reports/data', [AdminController::class, 'reports'])
+        ->name('admin.reports.data');
+
+    // ==============================================
+
     Route::post('/admin/store', [AdminController::class, 'store'])
         ->name('admin.store');
 
@@ -175,6 +188,9 @@ Route::middleware(['auth', 'role:admin'])->group(function () {
 
     Route::patch('/admin/users/{id}', [AdminController::class, 'updateUser'])
         ->name('admin.users.update');
+
+    Route::post('/admin/archive/store', [AdminController::class, 'storeArchive'])
+        ->name('admin.archive.store');
 
     // ADMIN ACTION
     Route::post('/research/{id}/approve', [AdminController::class, 'approve'])
@@ -258,6 +274,8 @@ Route::get('/download/{id}', [StudentController::class, 'download'])
 Route::get('/repository', [RepositoryController::class, 'index'])
     ->middleware('auth')
     ->name('repository');
+Route::post('/search-logs', [RepositoryController::class, 'logSearch'])
+    ->name('search.log');
 
 // Research detail page — deliberately NOT behind 'auth': /public is
 // anonymous, and its old "View" button pointed at the auth-only

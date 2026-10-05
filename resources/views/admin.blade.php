@@ -302,60 +302,11 @@
 
         <div class="row g-4">
 
-            <!-- Bar Graph -->
-            <div class="col-12 col-lg-6">
-                <div class="card h-100 shadow-sm">
-
-                    <form method="GET">
-                        <input type="hidden" name="view" value="dashboard">
-
-                        <select name="year" class="form-select" onchange="this.form.submit()">
-                            @for($y = date('Y'); $y >= 2024; $y--)
-                                <option value="{{ $y }}" {{ $year == $y ? 'selected' : '' }}>
-                                    {{ $y }}
-                                </option>
-                            @endfor
-                        </select>
-                    </form>
-                    <div class="card-body">
-                        <div id="monthlyChart" style="width:100%; height:350px;"></div>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Pie Chart -->
-            <div class="col-12 col-lg-6">
-                <div class="card h-100 shadow-sm">
-                    <div class="card-body">
-                        <div id="pieChart" style="width:100%; height:350px;"></div>
-                    </div>
-                </div>
-            </div>
+            <h1>Graph</h1>
 
         </div>
 
-        <div class="col-12 mt-3">
-            <div class="card shadow-sm h-100">
-                <div class="card-body">
-                    <div id="lineChart" style="width:100%; height:350px;"></div>
-                    {{-- Read by resources/js/admin-charts.js. --}}
-                    @php
-                        $chartData = [
-                            'uploads' => $uploadData,
-                            'approvals' => $approvalData,
-                            'views' => $viewData,
-                            'downloads' => $downloadData,
-                            'status' => [
-                                'approved' => $approvedCount,
-                                'pending' => $pendingCount,
-                                'rejected' => $rejectedCount,
-                            ],
-                        ];
-                    @endphp
-                    <script type="application/json" data-admin-charts>@json($chartData)</script>
-                </div>
-            </div>
-        </div>
+
 
     </div>
 
@@ -422,7 +373,7 @@
 
             <option value="admin_pending"
                 {{ $statusFilter === 'admin_pending' ? 'selected' : '' }}>
-                Awaiting admin review
+               For Admin Review
             </option>
 
             <option value="approved"
@@ -497,12 +448,12 @@
     <!-- Table -->
 <div class="table-responsive">
 
-        <table class="table align-middle">
+        <div class="research-card">
+    <div class="table-responsive">
+        <table class="table align-middle research-table">
 
             <thead>
-
                 <tr>
-
                     <th>Title</th>
                     <th>Researchers</th>
                     <th>Adviser</th>
@@ -512,9 +463,7 @@
                     <th>Status</th>
                     <th>Visibility</th>
                     <th class="text-end">Actions</th>
-
                 </tr>
-
             </thead>
 
             <tbody>
@@ -522,65 +471,88 @@
 
                 <tr>
 
-
-                    <!--File Title-->
-                    <td style="max-width: 250px;">
-                        <h6 class="fw-semibold mb-0 text-truncate">
-                            {{ $file->title }}
-                        </h6>
+                    <!-- FILE TITLE -->
+                    <td class="col-title text-truncate" title="{{ $file->title }}">
+                        {{ $file->title }}
                     </td>
 
-
-                    <!--RESEARCHERS-->
+                    <!-- RESEARCHERS -->
                     {{-- Was $file->name — the submitter only. Every co-author
                          and guest researcher added through the researcher
                          picker was invisible to the admin. --}}
-                    <td>{{ implode(', ', $file->researcherNames()) }}</td>
+                    <td class="col-researchers" title="{{ implode(', ', $file->researcherNames()) }}">
+                        {{ implode(', ', $file->researcherNames()) }}
+                    </td>
 
+                    <!-- ADVISER -->
+                    @php
+                        // Works whether $file->adviser is an array or a string like "Dr. Ramos; Engr. Lopez"
+                        $advisers = collect(
+                            is_array($file->adviser)
+                                ? $file->adviser
+                                : preg_split('/\s*(?:;|,|\/|&|\band\b|\n)\s*/i', (string) $file->adviser)
+                        )->map(fn ($name) => trim($name))->filter()->values();
+                    @endphp
 
-                    <!--ADVISER-->
-                    <td class="text-muted">{{ $file->adviser }}</td>
+                    <td class="text-muted col-nowrap" title="{{ $advisers->implode(', ') }}">
+                        @if($advisers->isEmpty())
+                            —
+                        @else
+                            {{ $advisers->first() }}
+                            @if($advisers->count() > 1)
+                                <span class="badge bg-light text-secondary border rounded-pill ms-1"
+                                    style="font-size: 0.6875rem;">
+                                    +{{ $advisers->count() - 1 }}
+                                </span>
+                            @endif
+                        @endif
+                    </td>
 
+                    <!-- DATE SUBMITTED -->
+                    <td class="col-nowrap">{{ $file->created_at->format('M d, Y') }}</td>
 
-                    <!--DATE SYBMMITED-->
-                    <td> {{ $file->created_at->format('M d, Y') }}</td>
-
-
-                    <!--VIEWS-->
+                    <!-- VIEWS -->
                     <td>
-                        <span class="text-primary">
+                        <span class="stat">
                             <i class="bi bi-eye"></i>
                             {{ $file->views ?? 0 }}
                         </span>
                     </td>
 
-
-                    <!--DOWNLOADS-->
+                    <!-- DOWNLOADS -->
                     <td>
-                        <span class="text-primary">
+                        <span class="stat">
                             <i class="bi bi-download"></i>
                             {{ $file->downloads ?? 0 }}
                         </span>
                     </td>
 
-
-                    <!--STATUS-->
+                    <!-- STATUS -->
                     <td>
-                        <span class="rounded text-bg-success-subtle text-success px-3 py-2">
-                            @if(empty($file->status) || $file->status == 'admin_pending')
-                                <span class="badge bg-warning text-dark rounded-pill">
-                                    Pending
-                                </span>
-                            @elseif($file->status == 'approved')
-                                <span class="badge bg-success rounded-pill">
-                                    Approved
-                                </span>
-                            @elseif($file->status == 'rejected')
-                                <span class="badge bg-danger rounded-pill">
-                                    Rejected
-                                </span>
-                            @endif
-                        </span>
+                        @if($file->status === 'pending')
+                            <span class="badge bg-info-subtle text-info-emphasis rounded-pill">
+                                <i class="fa-solid fa-user-tie fa-2xs me-1"></i>
+                                Under Review
+                            </span>
+
+                        @elseif($file->status === 'admin_pending')
+                            <span class="badge bg-warning-subtle text-warning-emphasis rounded-pill">
+                                <i class="fa-solid fa-user-shield fa-2xs me-1"></i>
+                                For Final Approval
+                            </span>
+
+                        @elseif($file->status === 'approved')
+                            <span class="badge bg-success-subtle text-success-emphasis rounded-pill">
+                                <i class="fa-solid fa-circle-check fa-2xs me-1"></i>
+                                Approved
+                            </span>
+
+                        @elseif($file->status === 'rejected')
+                            <span class="badge bg-danger-subtle text-danger-emphasis rounded-pill">
+                                <i class="fa-solid fa-circle-xmark fa-2xs me-1"></i>
+                                Rejected
+                            </span>
+                        @endif
                     </td>
 
                     {{-- Was never shown at all — approve() silently publishes
@@ -589,41 +561,36 @@
                          was even asked for. --}}
                     <td>
                         @if($file->visibility === 'public')
-                            <span class="badge bg-success-subtle text-success rounded-pill"><i class="fa-solid fa-globe fa-2xs"></i> Public</span>
+                            <span class="badge bg-success-subtle text-success-emphasis rounded-pill"><i class="fa-solid fa-globe fa-2xs me-1"></i>Public</span>
                         @elseif($file->requested_visibility === 'public')
-                            <span class="badge bg-warning-subtle text-dark rounded-pill">Public requested</span>
+                            <span class="badge bg-warning-subtle text-warning-emphasis rounded-pill">Public requested</span>
                         @else
-                            <span class="badge bg-light text-dark rounded-pill"><i class="fa-solid fa-lock fa-2xs"></i> Private</span>
+                            <span class="badge bg-light text-secondary border rounded-pill"><i class="fa-solid fa-lock fa-2xs me-1"></i>Private</span>
                         @endif
                     </td>
 
+                    <!-- ACTIONS -->
                     <td class="text-end">
 
-                        <div class="d-flex flex-column flex-md-row gap-1">
+                        <div class="d-flex justify-content-end gap-1">
 
                             <button type="button"
-                                    class="btn btn-outline-primary btn-sm rounded py-1 px-2"
+                                    class="btn btn-outline-primary btn-action"
                                     popovertarget="popover-{{ $file->id }}">
-
-                                <i class="bi bi-folder me-1"></i>
-                                View
-
+                                <i class="bi bi-folder me-1"></i>View
                             </button>
 
                             <form action="{{ route('admin.files.destroy', $file->id) }}"
-                                method="POST"
-                                class="m-0">
+                                  method="POST"
+                                  class="m-0">
 
                                 @csrf
                                 @method('DELETE')
 
                                 <button type="submit"
-                                        class="btn btn-outline-danger btn-sm rounded py-1 px-2"
+                                        class="btn btn-outline-danger btn-action"
                                         onclick="return confirm('Are you sure you want to delete this research?')">
-
-                                    <i class="bi bi-trash me-1"></i>
-                                    Delete
-
+                                    <i class="bi bi-trash me-1"></i>Delete
                                 </button>
 
                             </form>
@@ -631,210 +598,153 @@
                         </div>
 
 
+                        <!-- POPOVER: FILE CONTENT -->
+                        <div id="popover-{{ $file->id }}" popover
+                             class="research-popover rounded-3"
+                             style="border: 1px solid #dee2e6; max-width: 900px; width: 90%; overflow-y: auto; max-height: 90vh;">
+                            <div class="container">
+                                <div class="p-3 text-start">
 
+                                    <h5 class="fw-bold mb-3">{{ $file->title }}</h5>
 
-
-
-
-
-
-
-<!-- POPOVER -->
- <!--FILE CONTENT-->
-<div id="popover-{{ $file->id }}" popover
-    style="border: 1px solid #dee2e6;  max-width: 1000px; width: 90%; overflow-y: auto; max-height: 90vh;">
-    <div class="container">
-        <div class="border-0">
-            <div class=" p-2 p-md-2">
-                <h5 class="fw-bold text-start mb-2"> {{ $file->title }} </h5>
-
-                {{-- Was: Author = $file->name only, Year Published = the
-                     upload date, Keywords = a count of auto-generated
-                     title words. The admin makes the final publish
-                     decision on this data. --}}
-                @if($file->requested_visibility === 'public' && $file->visibility !== 'public')
-                    <div class="alert alert-warning py-2 px-3 text-start small mb-3">
-                        <i class="fa-solid fa-globe me-1"></i>
-                        This student requested <strong>Public</strong> visibility. Approving will publish it to the repository immediately.
-                    </div>
-                @endif
-
-                <div class="text-start">
-                    <x-research.meta :file="$file" />
-                </div>
-
-                <div class="text-start mb-4">
-                    <span class="text-muted">Submitted:</span> {{ $file->created_at->format('M j, Y') }}
-                </div>
-
-                <h6 class="fw-bold text-start">Abstract</h6>
-                <p class="text-muted" style="text-align: justify;">
-                    {{ $file->desc ?? 'No abstract available.' }}
-                </p>
-
-                @if($file->instructor_feedback)
-                    {{-- Was shown to the instructor only — the admin made the
-                         final call with no visibility into what the adviser
-                         actually said about the paper. --}}
-                    <h6 class="fw-bold mt-4 text-start">Adviser Feedback</h6>
-                    <p class="text-muted text-start">{{ $file->instructor_feedback }}</p>
-                @endif
-
-                <div
-                    class="alert alert-primary d-flex justify-content-between align-items-center mt-5 flex-wrap">
-
-                    <div>
-                        <div>
-                            <div class="fw-bold text-start">Full Research Document</div>
-                            <small>{{ basename($file->file_path) }}</small>
-                        </div>
-                    </div>
-
-                    <div class="d-flex gap-2 mt-3 mt-md-0">
-
-                        <!--<a data-turbo="false" href="{{ route('file.view', $file->id) }}" target="_blank"
-                            class="btn btn-outline-primary">
-                            <i class="bi bi-eye me-2"></i>
-                            View
-                        </a>-->
-                        <a data-turbo="false" href="{{ route('file.view', ['id' => $file->id, 'v' => time()]) }}" target="_blank"
-                            class="btn btn-outline-primary mt-2">
-                            <i class="bi bi-eye me-2"></i>
-                            View
-                        </a>
-
-
-                    </div>
-                </div>
-
-                <!-- ACTION -->
-                    <div class="d-flex gap-3">
-
-                        @if($file->status == 'admin_pending')
-
-                            <!-- APPROVE -->
-                            <form action="{{ route('research.approve', $file->id) }}"
-                                method="POST"
-                                class="m-0">
-
-                                @csrf
-
-                                <button type="submit"
-                                        class="btn btn-outline-success px-2 py-1">
-
-                                    <i class="fa-regular fa-circle-check me-1"></i>
-                                    Approve
-
-                                </button>
-
-                            </form>
-
-
-                            <!-- REJECT -->
-                            <form action="{{ route('research.reject', $file->id) }}"
-                                method="POST"
-                                class="m-0">
-
-                                @csrf
-
-                                <button type="button"
-                                        class="btn btn-outline-danger px-2 py-1"
-                                        data-bs-toggle="modal"
-                                        data-bs-target="#rejectModal{{ $file->id }}">
-
-                                    <i class="fa-regular fa-circle-xmark me-1"></i>
-                                    Reject
-
-                                </button>
-
-
-                                <!-- Reject Modal -->
-                                <div class="modal fade"
-                                    id="rejectModal{{ $file->id }}"
-                                    tabindex="-1"
-                                    aria-labelledby="rejectModalLabel{{ $file->id }}"
-                                    aria-hidden="true">
-
-                                    <div class="modal-dialog modal-dialog-centered">
-
-                                        <div class="modal-content">
-
-                                            <div class="modal-header">
-
-                                                <h5 class="modal-title"
-                                                    id="rejectModalLabel{{ $file->id }}">
-                                                    Reject Research Paper
-                                                </h5>
-
-                                                <button type="button"
-                                                        class="btn-close"
-                                                        data-bs-dismiss="modal">
-                                                </button>
-
-                                            </div>
-
-                                            <div class="modal-body">
-
-                                                <p class="mb-3">
-                                                    Please provide a reason for rejecting this research paper.
-                                                </p>
-
-                                                <label class="form-label fw-semibold">
-                                                    Rejection Reason / Comment
-                                                </label>
-
-                                                <textarea name="admin_reject"
-                                                        class="form-control"
-                                                        rows="5"
-                                                        placeholder="Please specify the reason for rejection..."
-                                                        required></textarea>
-
-                                            </div>
-
-                                            <div class="modal-footer">
-
-                                                <button type="button"
-                                                        class="btn btn-secondary"
-                                                        data-bs-dismiss="modal">
-                                                    Cancel
-                                                </button>
-
-                                                <button type="submit"
-                                                        class="btn btn-danger">
-
-                                                    <i class="fa-regular fa-circle-xmark me-1"></i>
-                                                    Confirm Reject
-
-                                                </button>
-
-                                            </div>
-
+                                    @if($file->requested_visibility === 'public' && $file->visibility !== 'public')
+                                        <div class="alert alert-warning py-2 px-3 mb-3">
+                                            <i class="fa-solid fa-globe me-1"></i>
+                                            This student requested <strong>Public</strong> visibility. Approving will publish it to the repository immediately.
                                         </div>
+                                    @endif
+
+                                    <div>
+                                        <x-research.meta :file="$file" />
+                                    </div>
+
+                                    <div class="mb-4 small">
+                                        <span class="text-muted">Submitted:</span> {{ $file->created_at->format('M j, Y') }}
+                                    </div>
+
+                                    <h6 class="fw-semibold">Abstract</h6>
+                                    <p class="text-muted" style="text-align: justify;">
+                                        {{ $file->desc ?? 'No abstract available.' }}
+                                    </p>
+
+                                    @if($file->instructor_feedback)
+                                        {{-- Was shown to the instructor only — the admin made the
+                                             final call with no visibility into what the adviser
+                                             actually said about the paper. --}}
+                                        <h6 class="fw-semibold mt-4">Adviser Feedback</h6>
+                                        <p class="text-muted">{{ $file->instructor_feedback }}</p>
+                                    @endif
+
+                                    <div class="alert alert-primary d-flex justify-content-between align-items-center mt-4 flex-wrap">
+                                        <div>
+                                            <div class="fw-semibold">Full Research Document</div>
+                                            <small>{{ basename($file->file_path) }}</small>
+                                        </div>
+
+                                        <div class="d-flex gap-2 mt-3 mt-md-0">
+                                            <a data-turbo="false"
+                                               href="{{ route('file.view', ['id' => $file->id, 'v' => time()]) }}"
+                                               target="_blank"
+                                               class="btn btn-outline-primary btn-action">
+                                                <i class="bi bi-eye me-1"></i>View
+                                            </a>
+                                        </div>
+                                    </div>
+
+                                    <!-- ACTION -->
+                                    <div class="d-flex gap-2">
+
+                                        @if($file->status == 'admin_pending')
+
+                                            <!-- APPROVE -->
+                                            <form action="{{ route('research.approve', $file->id) }}"
+                                                  method="POST"
+                                                  class="m-0">
+                                                @csrf
+                                                <button type="submit" class="btn btn-outline-success btn-action">
+                                                    <i class="fa-regular fa-circle-check me-1"></i>Approve
+                                                </button>
+                                            </form>
+
+                                            <!-- REJECT -->
+                                            <form action="{{ route('research.reject', $file->id) }}"
+                                                  method="POST"
+                                                  class="m-0">
+                                                @csrf
+
+                                                <button type="button"
+                                                        class="btn btn-outline-danger btn-action"
+                                                        data-bs-toggle="modal"
+                                                        data-bs-target="#rejectModal{{ $file->id }}">
+                                                    <i class="fa-regular fa-circle-xmark me-1"></i>Reject
+                                                </button>
+
+                                                <!-- Reject Modal -->
+                                                <div class="modal fade"
+                                                     id="rejectModal{{ $file->id }}"
+                                                     tabindex="-1"
+                                                     aria-labelledby="rejectModalLabel{{ $file->id }}"
+                                                     aria-hidden="true">
+
+                                                    <div class="modal-dialog modal-dialog-centered">
+                                                        <div class="modal-content">
+
+                                                            <div class="modal-header">
+                                                                <h5 class="modal-title fs-6"
+                                                                    id="rejectModalLabel{{ $file->id }}">
+                                                                    Reject Research Paper
+                                                                </h5>
+                                                                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                                                            </div>
+
+                                                            <div class="modal-body">
+                                                                <p class="mb-3 small">
+                                                                    Please provide a reason for rejecting this research paper.
+                                                                </p>
+
+                                                                <label class="form-label fw-semibold small">
+                                                                    Rejection Reason / Comment
+                                                                </label>
+
+                                                                <textarea name="admin_reject"
+                                                                          class="form-control form-control-sm"
+                                                                          rows="5"
+                                                                          placeholder="Please specify the reason for rejection..."
+                                                                          required></textarea>
+                                                            </div>
+
+                                                            <div class="modal-footer">
+                                                                <button type="button" class="btn btn-secondary btn-sm" data-bs-dismiss="modal">
+                                                                    Cancel
+                                                                </button>
+
+                                                                <button type="submit" class="btn btn-danger btn-sm">
+                                                                    <i class="fa-regular fa-circle-xmark me-1"></i>Confirm Reject
+                                                                </button>
+                                                            </div>
+
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            </form>
+
+                                        @endif
 
                                     </div>
 
                                 </div>
-
-                            </form>
-
-                        @endif
-
-
-                    </div>
-
-
-            </div>
-        </div>
-    </div>
-</div>
+                            </div>
+                        </div>
 
                     </td>
+                </tr>
 
-            </tr>
-            @endforeach
+                @endforeach
             </tbody>
 
-            </table>
+        </table>
+    </div>
+</div>
 
             <div class="d-flex justify-content-center mt-3">
                 {{ $studFiles->links() }}
@@ -850,13 +760,10 @@
 
 
 </div>
-@endif
 
 
 
-
-
-            <!--MY SUBMISSIONS BUTTONS-->
+            <!--MY RESUBMISSIONS BUTTONS-->
             <div class="tab-pane fade" id="resubmissions">
                 <div class="container-fluid py-4">
             <div class="card rounded-5 shadow-sm border-0">
@@ -934,7 +841,7 @@
             </div>
             </div>
 
-
+@endif
 
 
 
@@ -1165,23 +1072,6 @@
         </div>
     </div>
 
-    <script>
-        document.getElementById('editUserModal')?.addEventListener('show.bs.modal', function (event) {
-            const btn = event.relatedTarget;
-            const form = document.getElementById('editUserForm');
-
-            form.action = '/admin/users/' + btn.dataset.id;
-            document.getElementById('editUserRole').value = btn.dataset.role;
-            document.getElementById('editUserEmail').value = btn.dataset.email;
-            document.getElementById('editUserUserId').value = btn.dataset.userId;
-            document.getElementById('editUserName').value = btn.dataset.name;
-            document.getElementById('editUserYearLevel').value = btn.dataset.yearLevel === 'null' ? '' : btn.dataset.yearLevel;
-        });
-    </script>
-
-
-
-
 
 
 
@@ -1254,13 +1144,13 @@
                                     <div class="d-flex justify-content-end gap-2">
 
                                         <button type="button"
-                                                class="btn btn-light border rounded-3"
+                                                class="btn btn-light border rounded-3 px-1 py-1"
                                                 data-bs-dismiss="modal">
                                             Cancel
                                         </button>
 
                                         <button type="submit"
-                                                class="btn btn-success rounded-3">
+                                                class="btn btn-success rounded-3 px-1 py-1">
                                             <i class="bi bi-upload me-2"></i>
                                             Import Students
                                         </button>
@@ -1554,6 +1444,481 @@
 
 
 
+
+
+
+<!--==================UPLOAD EXISTING RESEARCH OF STUDENTS=================-->
+@if($view == 'upload')
+
+<div class="d-flex justify-content-between align-items-center flex-wrap mb-4">
+
+        <div>
+            <h3 class="fw-bold mb-1">
+                <i class="bi bi-cloud-arrow-up fa-2xl text-primary"></i>
+                Upload Existing Research
+            </h3>
+
+            <p class="text-secondary mb-0">
+                Add previous Fisheries Department research to the repository.
+            </p>
+        </div>
+
+
+
+        <div class="archive-card mx-auto" style="max-width: 850px;">
+
+    <div class="d-flex align-items-center gap-2 mb-1">
+        {{-- HEADER --}}
+    </div>
+
+    <form id="archiveUploadForm"
+          action="{{ route('admin.archive.store') }}"
+          method="POST"
+          enctype="multipart/form-data">
+        @csrf
+
+        {{-- DROPZONE --}}
+        <label for="archiveFile" id="dropzone" class="dropzone-box d-block mb-4">
+            <i class="bi bi-file-earmark-text dz-icon d-block mb-2" id="dzIcon"></i>
+
+            <div class="dz-title" id="dzTitle">
+                Choose a research paper
+            </div>
+
+            <div class="dz-hint mt-1" id="dzHint">
+                Click to browse or drag and drop &middot; PDF only
+            </div>
+
+            <input type="file"
+                   id="archiveFile"
+                   name="file"
+                   accept="application/pdf,.pdf"
+                   class="d-none"
+                   required>
+        </label>
+
+        @error('file')
+            <div class="text-danger small mb-3 mt-n3">{{ $message }}</div>
+        @enderror
+
+        {{-- TITLE --}}
+        <div class="mb-3">
+            <label for="title" class="form-label">Research title</label>
+            <input type="text"
+                   id="title"
+                   name="title"
+                   value="{{ old('title') }}"
+                   class="form-control @error('title') is-invalid @enderror"
+                   placeholder="Enter the full title as it appears on the paper"
+                   required>
+
+            @error('title')
+                <div class="invalid-feedback">{{ $message }}</div>
+            @enderror
+        </div>
+
+        {{-- AUTHOR + YEAR --}}
+        <div class="row g-3 mb-3">
+            <div class="col-md-8">
+                <label for="author" class="form-label">Researchers</label>
+                <input type="text"
+                       id="author"
+                       name="author"
+                       value="{{ old('author') }}"
+                       class="form-control @error('author') is-invalid @enderror"
+                       placeholder="e.g. Juan Dela Cruz, Maria Santos"
+                       required>
+
+                @error('author')
+                    <div class="invalid-feedback">{{ $message }}</div>
+                @enderror
+            </div>
+
+            <div class="col-md-4">
+                <label for="year_published" class="form-label">Year published</label>
+                <select id="year_published"
+                        name="year_published"
+                        class="form-select @error('year_published') is-invalid @enderror"
+                        required>
+                    <option value="" disabled {{ old('year_published') ? '' : 'selected' }}>
+                        Select year
+                    </option>
+
+                    @for($year = now()->year; $year >= 2020; $year--)
+                        <option value="{{ $year }}"
+                            {{ old('year_published') == $year ? 'selected' : '' }}>
+                            {{ $year }}
+                        </option>
+                    @endfor
+                </select>
+
+                @error('year_published')
+                    <div class="invalid-feedback">{{ $message }}</div>
+                @enderror
+            </div>
+        </div>
+
+        {{-- ABSTRACT --}}
+        <div class="mb-3">
+            <label for="abstract" class="form-label">Abstract</label>
+            <textarea id="abstract"
+                      name="abstract"
+                      rows="4"
+                      class="form-control @error('abstract') is-invalid @enderror"
+                      placeholder="Paste or type the abstract from the archived paper"
+                      required>{{ old('abstract') }}</textarea>
+
+            @error('abstract')
+                <div class="invalid-feedback">{{ $message }}</div>
+            @enderror
+        </div>
+
+        {{-- KEYWORDS --}}
+        <div class="mb-4">
+            <label for="keywords" class="form-label">Keywords</label>
+
+            <input type="text"
+                   id="keywords"
+                   name="keywords"
+                   value="{{ old('keywords') }}"
+                   class="form-control @error('keywords') is-invalid @enderror"
+                   placeholder="e.g. aquaculture, coastal management">
+
+            <div class="form-text">
+                Separate keywords with commas.
+            </div>
+
+            @error('keywords')
+                <div class="invalid-feedback">{{ $message }}</div>
+            @enderror
+        </div>
+
+        {{-- WARNING --}}
+        <div class="alert alert-warning py-3 px-3 mb-4 small" role="alert">
+            <span>
+                <i class="fa-solid fa-triangle-exclamation"></i>
+            </span>
+
+            <strong>Please review your information carefully.</strong>
+            Once uploaded, this research will be published directly to the
+            <strong>public repository</strong>.
+        </div>
+
+        {{-- ACTIONS --}}
+        <div class="d-flex justify-content-end gap-2">
+            <button type="button"
+                    id="clearBtn"
+                    class="btn btn-outline-secondary btn-sm px-3">
+                <i class="bi bi-x-circle me-1"></i>Clear
+            </button>
+
+            <button type="submit"
+                    class="btn btn-primary btn-sm px-3">
+                <i class="bi bi-upload me-1"></i>Upload
+            </button>
+        </div>
+
+    </form>
+</div>
+@endif
+
+
+
+
+
+
+<!--==================REPORT=================-->
+@if($view == 'report')
+
+<div class="d-flex justify-content-between align-items-center flex-wrap mb-4">
+
+        <div>
+            <h3 class="fw-bold mb-1">
+                Report</h3>
+            <p class="text-secondary mb-0">
+                View and generate research repository activity reports.</p>
+        </div>
+
+        <div class="mt-3 mt-md-0">
+                    <button type="button" class="btn btn-success rounded-3 px-1 py-1" data-bs-toggle="modal"data-bs-target="#importStudentsModal">
+                        <i class="bi bi-download"></i>
+                        Export to Excel
+                    </button>
+
+
+                   <button
+                        type="button"
+                        class="btn btn-outline-secondary px-2 py-1"
+                        onclick="printReport()"
+                    >
+                        <i class="fa-solid fa-print"></i>
+                        Print Report
+                    </button>
+
+
+        </div>
+</div>
+
+
+                    <!-- Counts -->
+                <div class="row g-4 stats-scroll">
+
+    <!-- Total Users -->
+    <div class="col-12 col-sm-6 col-xl-3">
+        <div class="card border-0 shadow-sm rounded-4 h-100">
+            <div class="card-body d-flex justify-content-between align-items-center">
+
+                <div>
+                    <p class="text-secondary mb-2">Total Research Paper</p>
+                    <h3 class="fw-normal mb-0">
+                        {{ $totalResearch }}
+                    </h3>
+                </div>
+
+                <div class="bg-primary bg-opacity-10 rounded-2 p-3">
+                    <i class="fa-regular fa-file-word text-primary fs-4"></i>
+                </div>
+
+            </div>
+        </div>
+    </div>
+
+
+    <!-- Students -->
+    <div class="col-12 col-sm-6 col-xl-3">
+        <div class="card border-0 shadow-sm rounded-4 h-100">
+            <div class="card-body d-flex justify-content-between align-items-center">
+
+                <div>
+                    <p class="text-secondary mb-2">Total Registered User</p>
+                    <h3 class="fw-normal mb-0">
+                        {{ $userCounts->sum() }}
+                    </h3>
+                </div>
+
+                <div class="bg-primary bg-opacity-10 rounded-2 p-3">
+                    <i class="fa-solid fa-users text-primary fs-4"></i>
+                </div>
+
+            </div>
+        </div>
+    </div>
+
+
+    <!-- Instructor -->
+    <div class="col-12 col-sm-6 col-xl-3">
+        <div class="card border-0 shadow-sm rounded-4 h-100">
+            <div class="card-body d-flex justify-content-between align-items-center">
+
+                <div>
+                    <p class="text-secondary mb-2">Total Instructor</p>
+                    <h3 class="fw-normal mb-0">
+                        {{ $userCounts->get('instructor', 0) }}
+                    </h3>
+                </div>
+
+                <div class="bg-primary bg-opacity-10 rounded-2 p-3">
+                    <i class="fa-solid fa-chalkboard-user text-primary fs-4 "></i>
+                </div>
+
+            </div>
+        </div>
+    </div>
+
+
+    <!-- Admin -->
+    <div class="col-12 col-sm-6 col-xl-3">
+        <div class="card border-0 shadow-sm rounded-4 h-100">
+            <div class="card-body d-flex justify-content-between align-items-center">
+
+                <div>
+                    <p class="text-secondary mb-2">Students</p>
+                    <h3 class="fw-normal mb-0">
+                        {{ $userCounts->get('student', 0) }}
+                    </h3>
+                </div>
+
+                <div class="bg-primary bg-opacity-10 rounded-2 p-3">
+                    <i class="fa-solid fa-user-graduate text-primary fs-4"></i>
+                </div>
+
+            </div>
+        </div>
+    </div>
+
+</div>
+
+
+<!--=========================================GRAPH==========================================-->
+<!--BAR CHART-->
+<form class="filter-bar" id="reportFilterForm" method="GET" action="{{ route('admin') }}">
+    <input type="hidden" name="view" value="report">
+
+    <div>
+        <label for="period" class="filter-label">
+            Report Period
+        </label>
+
+        <select id="period" name="period" class="form-select">
+            <option value="annually"
+                @selected(($period ?? 'annually') === 'annually')>
+                Annually
+            </option>
+
+            <option value="quarterly"
+                @selected(($period ?? '') === 'quarterly')>
+                Quarterly
+            </option>
+
+            <option value="monthly"
+                @selected(($period ?? '') === 'monthly')>
+                Monthly
+            </option>
+
+            <option value="weekly"
+                @selected(($period ?? '') === 'weekly')>
+                Weekly
+            </option>
+        </select>
+    </div>
+
+
+    <div>
+        <label for="year" class="filter-label" >
+            Year
+        </label>
+
+        <select id="year" name="year" class="form-select">
+            @for ($y = now()->year; $y >= 2024; $y--)
+                <option
+                    value="{{ $y }}"
+                    @selected((int) ($year ?? now()->year) === $y)
+                >
+                    {{ $y }}
+                </option>
+            @endfor
+        </select>
+    </div>
+
+
+    <div>
+        <label class="filter-label d-block">
+            &nbsp;
+        </label>
+
+        <button
+            type="submit"
+            class="btn btn-primary d-inline-flex align-items-center justify-content-center px-3 py-2"
+            title="Search report"
+            aria-label="Search report">
+            <i class="bi bi-search fs-5"></i>
+        </button>
+    </div>
+
+
+    <div>
+        <label class="filter-label d-block">
+            &nbsp;
+        </label>
+
+        <a href="{{ route('admin', ['view' => 'report']) }}"
+            class="btn btn-reset d-inline-flex align-items-center gap-2 px-3 py-2">
+            <i class="bi bi-arrow-counterclockwise"></i>
+            Reset
+        </a>
+    </div>
+</form>
+
+
+
+
+<!-- graph -->
+<script>
+    window.adminReportData = @json($reportData);
+</script>
+<!-- REPORT AREA -->
+<div id="adminPrintReport">
+
+    <!-- RESEARCH + REGISTERED USERS -->
+    <div class="row g-4">
+
+        <!-- RESEARCH UPLOAD -->
+        <div class="col-12 col-md-6">
+            <div class="card border-0 shadow-sm rounded-4 h-100">
+                <div class="card-body p-4">
+
+                    <h5 style="font-weight: bold; color: #072a89;">
+                        Research Upload Activity
+                    </h5>
+
+                    <div
+                        id="reportChart"
+                        style="width: 100%; height: 420px;">
+                    </div>
+
+                </div>
+            </div>
+        </div>
+
+        <!-- REGISTERED USERS -->
+        <div class="col-12 col-md-6">
+            <div class="card border-0 shadow-sm rounded-4 h-100">
+                <div class="card-body p-4">
+
+                    <h5 style="font-weight: bold; color: #072a89;">
+                        Registered User
+                    </h5>
+
+                    <div
+                        id="registeredUsersChart"
+                        style="width: 100%; height: 420px;">
+                    </div>
+
+                </div>
+            </div>
+        </div>
+
+    </div>
+
+
+    <!-- SEARCH KEYWORDS -->
+    <div
+        data-admin-charts
+        class="card border-0 shadow-sm rounded-4 mt-5"
+    >
+        <div class="card-body p-4">
+
+            <h5 style="font-weight: bold; color: #072a89;">
+                Search Keywords
+            </h5>
+
+            <div
+                id="searchKeywordsChart"
+                style="width: 100%; height: 500px;"
+            ></div>
+
+        </div>
+    </div>
+
+</div>
+
+
+
+
+@endif
+
+
+
+
+
+
+
+
+
+
+
+
+
 <script>
 document.getElementById('logoutBtn').closest('form').addEventListener('submit', function () {
     const btn = document.getElementById('logoutBtn');
@@ -1564,5 +1929,137 @@ document.getElementById('logoutBtn').closest('form').addEventListener('submit', 
 });
 </script>
 
+<script>
+        document.getElementById('editUserModal')?.addEventListener('show.bs.modal', function (event) {
+            const btn = event.relatedTarget;
+            const form = document.getElementById('editUserForm');
 
+            form.action = '/admin/users/' + btn.dataset.id;
+            document.getElementById('editUserRole').value = btn.dataset.role;
+            document.getElementById('editUserEmail').value = btn.dataset.email;
+            document.getElementById('editUserUserId').value = btn.dataset.userId;
+            document.getElementById('editUserName').value = btn.dataset.name;
+            document.getElementById('editUserYearLevel').value = btn.dataset.yearLevel === 'null' ? '' : btn.dataset.yearLevel;
+        });
+    </script>
+
+    <script>
+    (function () {
+        const form      = document.getElementById('archiveUploadForm');
+        const input     = document.getElementById('archiveFile');
+        const dropzone  = document.getElementById('dropzone');
+        const dzIcon    = document.getElementById('dzIcon');
+        const dzTitle   = document.getElementById('dzTitle');
+        const dzHint    = document.getElementById('dzHint');
+        const clearBtn  = document.getElementById('clearBtn');
+
+        const defaults = {
+            title: dzTitle.textContent,
+            hint: dzHint.innerHTML
+        };
+
+        function showFile(file) {
+            if (!file) return resetDropzone();
+
+            if (file.type !== 'application/pdf' && !file.name.toLowerCase().endsWith('.pdf')) {
+                alert('Only PDF files are accepted.');
+                input.value = '';
+                return resetDropzone();
+            }
+
+            dropzone.classList.add('has-file');
+            dzIcon.className = 'bi bi-file-circle-check dz-icon d-block mb-2 text-success';
+            dzTitle.textContent = file.name;
+            dzHint.textContent = (file.size / 1024 / 1024).toFixed(2) + ' MB · Click to replace';
+        }
+
+        function resetDropzone() {
+            dropzone.classList.remove('has-file', 'is-dragover');
+            dzIcon.className = 'bi bi-file-earmark-text dz-icon d-block mb-2';
+            dzTitle.textContent = defaults.title;
+            dzHint.innerHTML = defaults.hint;
+        }
+
+        input.addEventListener('change', () => showFile(input.files[0]));
+
+        ['dragenter', 'dragover'].forEach(evt =>
+            dropzone.addEventListener(evt, e => {
+                e.preventDefault();
+                dropzone.classList.add('is-dragover');
+            })
+        );
+
+        ['dragleave', 'drop'].forEach(evt =>
+            dropzone.addEventListener(evt, e => {
+                e.preventDefault();
+                dropzone.classList.remove('is-dragover');
+            })
+        );
+
+        dropzone.addEventListener('drop', e => {
+            if (e.dataTransfer.files.length) {
+                input.files = e.dataTransfer.files;
+                showFile(input.files[0]);
+            }
+        });
+
+        clearBtn.addEventListener('click', () => {
+            form.reset();
+            form.querySelectorAll('input[type="text"], textarea').forEach(el => el.value = '');
+            form.querySelector('select').selectedIndex = 0;
+            resetDropzone();
+        });
+    })();
+</script>
+
+
+<script>
+    (function () {
+        const form   = document.getElementById('reportFilterForm');
+        const label  = document.getElementById('sdgLabel');
+        const boxes  = form.querySelectorAll('input[name="sdg[]"]');
+
+        function updateLabel() {
+            const checked = Array.from(boxes).filter(b => b.checked);
+
+            if (checked.length === 0) {
+                label.textContent = 'All SDGs';
+            } else if (checked.length <= 2) {
+                label.textContent = checked.map(b => b.dataset.label).join(', ');
+            } else {
+                label.textContent = checked.length + ' SDGs selected';
+            }
+        }
+
+        boxes.forEach(b => b.addEventListener('change', updateLabel));
+
+        // Reset button: wait for the form to clear, then refresh the label
+        form.addEventListener('reset', () => setTimeout(updateLabel, 0));
+
+        updateLabel();
+    })();
+</script>
+
+
+<script>
+    function printReport() {
+        window.print();
+    }
+</script>
+
+
+<script>
+    function printReport() {
+        document.body.classList.add('printing-report');
+
+        // Bigyan ang ECharts ng oras para mag-render/resize
+        setTimeout(() => {
+            window.print();
+        }, 300);
+    }
+
+    window.addEventListener('afterprint', function () {
+        document.body.classList.remove('printing-report');
+    });
+</script>
 @endsection

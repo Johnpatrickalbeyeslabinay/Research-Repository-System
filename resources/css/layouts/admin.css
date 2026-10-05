@@ -4,7 +4,7 @@
 .nav-pills .nav-link {
     color: black;
     background: #fff;
-    transition: .2s;
+    transition: 0.2s;
 }
 
 .nav-pills .nav-link:hover {

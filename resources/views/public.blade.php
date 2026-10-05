@@ -109,9 +109,14 @@
 
 
             {{-- Filter --}}
-        <button type="submit" class="btn btn-primary btn-sm">
-            <i class="fa-solid fa-magnifying-glass"></i>
-        </button>
+                <button
+    type="submit"
+    name="manual_search"
+    value="1"
+    class="btn btn-primary btn-sm"
+>
+    <i class="fa-solid fa-magnifying-glass"></i>
+</button>
 
             @if ($search || $year || $type || $sdg || $sort !== 'recent')
                 <a href="{{ route('public') }}" class="text-secondary small">Clear filters</a>
