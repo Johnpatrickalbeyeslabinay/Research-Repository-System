@@ -1640,10 +1640,14 @@
         </div>
 
         <div class="mt-3 mt-md-0">
-                    <button type="button" class="btn btn-success rounded-3 px-1 py-1" data-bs-toggle="modal"data-bs-target="#importStudentsModal">
-                        <i class="bi bi-download"></i>
+                    <a href="{{ route('admin.reports.export', [
+                        'year' => $year,
+                        'period' => $period,
+                    ]) }}"
+                    class="btn btn-success">
+                        <i class="fa-solid fa-file-excel me-1"></i>
                         Export to Excel
-                    </button>
+                    </a>
 
 
                    <button

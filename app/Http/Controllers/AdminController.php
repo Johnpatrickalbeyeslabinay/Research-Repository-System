@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Exceptions\PdfProcessingException;
+use App\Exports\AdminReportExport;
 use App\Imports\StudentImport;
 use App\Jobs\ProcessResearchDocument;
 use App\Mail\repositoryMail;
@@ -1128,7 +1129,7 @@ class AdminController extends Controller
         ];
     }
 
-    // PRINT REPORT CONTROLLRRS
+    // PRINT REPORT CONTROLLRR
     public function printReport()
     {
         $year = (int) request('year', now()->year);
@@ -1141,5 +1142,22 @@ class AdminController extends Controller
             'year' => $year,
             'period' => $period,
         ]);
+    }
+
+    public function exportReport(Request $request)
+    {
+        $year = (int) $request->input('year', now()->year);
+        $period = $request->input('period', 'annually');
+
+        $reportData = $this->getReportData($period, $year);
+
+        return Excel::download(
+            new AdminReportExport(
+                $reportData,
+                $period,
+                $year
+            ),
+            "admin-report-{$year}-{$period}.xlsx"
+        );
     }
 }

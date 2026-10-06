@@ -175,6 +175,8 @@ Route::middleware(['auth', 'role:admin'])->group(function () {
     Route::get('/admin/reports/data', [AdminController::class, 'reports'])
         ->name('admin.reports.data');
 
+    Route::get('/admin/reports/export', [AdminController::class, 'exportReport'])
+        ->name('admin.reports.export');
     // ==============================================
 
     Route::post('/admin/store', [AdminController::class, 'store'])
