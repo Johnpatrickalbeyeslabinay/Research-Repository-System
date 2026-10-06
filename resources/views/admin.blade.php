@@ -280,6 +280,15 @@
             Resubmissions
 
         </button>
+
+        <!-- BACK-UP & Restore -->
+        <button class="nav-link rounded-5 px-2 py-1" id="backup-tab"
+            data-bs-toggle="pill" data-bs-target="#backup" type="button" role="tab">
+
+            Bacup & Restore
+
+        </button>
+
     </div>
 
 
@@ -599,20 +608,27 @@
 
 
                         <!-- POPOVER: FILE CONTENT -->
-                        <div id="popover-{{ $file->id }}" popover
-                             class="research-popover rounded-3"
-                             style="border: 1px solid #dee2e6; max-width: 900px; width: 90%; overflow-y: auto; max-height: 90vh;">
+                        <div id="popover-{{ $file->id }}" popover style="
+                            border: 1px solid #dee2e6;
+                            width: 100vw;
+                            max-width: 100vw;
+                            height: 100vh;
+                            max-height: 100vh;
+                            margin: 0;
+                            padding: 0;
+                            overflow-y: auto;
+                            inset: 0;
+                            font-size: 1rem;
+                        ">
+
+
+                        <button type="button" popovertarget="popover-{{ $file->id }}" popovertargetaction="hide" class="btn-close position-absolute top-0 end-0 m-3"
+                        aria-label="Close">
+                    </button>
                             <div class="container">
-                                <div class="p-3 text-start">
+                                <div class="p-3 text-start mt-3">
 
-                                    <h5 class="fw-bold mb-3">{{ $file->title }}</h5>
-
-                                    @if($file->requested_visibility === 'public' && $file->visibility !== 'public')
-                                        <div class="alert alert-warning py-2 px-3 mb-3">
-                                            <i class="fa-solid fa-globe me-1"></i>
-                                            This student requested <strong>Public</strong> visibility. Approving will publish it to the repository immediately.
-                                        </div>
-                                    @endif
+                                    <h3 class="fw-bold mb-3">{{ $file->title }}</h3>
 
                                     <div>
                                         <x-research.meta :file="$file" />
@@ -839,6 +855,457 @@
             </div>
             </div>
             </div>
+
+
+
+
+ <!-- Backup & Restore -->
+<div class="tab-pane fade" id="backup">
+
+    <div class="mt-3">
+
+        <div class="d-flex justify-content-between align-items-center mb-4">
+            <h3>Backup & Restore</h3>
+        </div>
+
+        {{-- FLASH MESSAGES --}}
+    @if (session('success'))
+        <div class="alert alert-success alert-dismissible fade show rounded-4" role="alert">
+            <i class="bi bi-check-circle me-2"></i>
+            {{ session('success') }}
+
+            <button type="button"
+                    class="btn-close"
+                    data-bs-dismiss="alert"
+                    aria-label="Close"></button>
+        </div>
+    @endif
+
+    @if (session('error'))
+        <div class="alert alert-danger alert-dismissible fade show rounded-4" role="alert">
+            <i class="bi bi-exclamation-circle me-2"></i>
+            {{ session('error') }}
+
+            <button type="button"
+                    class="btn-close"
+                    data-bs-dismiss="alert"
+                    aria-label="Close"></button>
+        </div>
+    @endif
+
+
+    {{-- PAGE HEADER --}}
+    <div class="d-flex flex-wrap justify-content-between align-items-center mb-4">
+        <div>
+            <h3 class="fw-bold mb-1">Backup Management</h3>
+            <p class="text-secondary mb-0">
+                Manage database backups and restore system data.
+            </p>
+        </div>
+    </div>
+
+
+    {{-- SUMMARY CARDS --}}
+    <div class="row g-3 mb-4">
+
+        {{-- LAST BACKUP --}}
+        <div class="col-md-4">
+            <div class="d-flex align-items-center gap-3 p-3 rounded-4 bg-primary-subtle h-100">
+
+                <div class="bg-primary text-white rounded-3 px-3 py-2 fs-3">
+                    <i class="bi bi-clock"></i>
+                </div>
+
+                <div>
+                    <div class="text-primary text-uppercase small">
+                        Last Backup
+                    </div>
+
+                    <div class="fw-semibold text-primary-emphasis">
+                        @if ($lastBackup)
+                            {{ $lastBackup->created_at->format('Y-m-d H:i:s') }}
+                        @else
+                            No backup yet
+                        @endif
+                    </div>
+                </div>
+
+            </div>
+        </div>
+
+
+        {{-- TOTAL BACKUPS --}}
+        <div class="col-md-4">
+            <div class="d-flex align-items-center gap-3 p-3 rounded-4 bg-success-subtle h-100">
+
+                <div class="bg-success text-white rounded-3 px-3 py-2 fs-3">
+                    <i class="bi bi-hdd"></i>
+                </div>
+
+                <div>
+                    <div class="text-success text-uppercase small">
+                        Total Backups
+                    </div>
+
+                    <div class="fw-semibold text-success-emphasis">
+                        {{ $totalBackups }}
+                        {{ $totalBackups == 1 ? 'snapshot' : 'snapshots' }}
+                        stored
+                    </div>
+                </div>
+
+            </div>
+        </div>
+
+
+        {{-- NEXT SCHEDULED --}}
+        <div class="col-md-4">
+            <div class="d-flex align-items-center gap-3 p-3 rounded-4 bg-info-subtle h-100">
+
+                <div class="bg-info text-white rounded-3 px-3 py-2 fs-3">
+                    <i class="bi bi-shield-check"></i>
+                </div>
+
+                <div>
+                    <div class="text-info text-uppercase small">
+                        Next Scheduled
+                    </div>
+
+                    <div class="fw-semibold text-info-emphasis">
+                        Today at 11:00 PM
+                    </div>
+                </div>
+
+            </div>
+        </div>
+
+    </div>
+
+
+    {{-- MANUAL BACKUP --}}
+    <div class="card border-0 shadow-sm rounded-4 mb-4">
+
+        <div class="card-body p-4 d-flex flex-wrap gap-3 justify-content-between align-items-center">
+
+            <div>
+                <h5 class="fw-semibold mb-1">
+                    Manual Backup
+                </h5>
+
+                <div class="text-secondary">
+                    Create an on-demand snapshot of all system data and records.
+                </div>
+            </div>
+
+
+            <div class="d-flex gap-2">
+
+                {{-- DOWNLOAD LATEST BACKUP --}}
+                @if ($lastBackup)
+
+                    <a href="{{ route('admin.backups.download', $lastBackup) }}"
+                       class="btn btn-light border">
+
+                        <i class="bi bi-download me-2"></i>
+                        Download DB
+
+                    </a>
+
+                @else
+
+                    <button type="button"
+                            class="btn btn-light border"
+                            disabled>
+
+                        <i class="bi bi-download me-2"></i>
+                        Download DB
+
+                    </button>
+
+                @endif
+
+
+                {{-- CREATE BACKUP --}}
+                <button type="button"
+                        class="btn btn-primary"
+                        data-bs-toggle="modal"
+                        data-bs-target="#createModal">
+
+                    <i class="bi bi-database-add me-2"></i>
+                    Create Backup Now
+
+                </button>
+
+            </div>
+
+        </div>
+
+    </div>
+
+
+    {{-- BACKUP HISTORY --}}
+    <div class="card border-0 shadow-sm rounded-4 mb-4">
+
+        <div class="card-body p-4">
+
+            <h5 class="fw-semibold mb-1">
+                Backup History
+            </h5>
+
+            <div class="text-secondary mb-4">
+                View and download database snapshots created by the system.
+            </div>
+
+
+            <div class="table-responsive">
+
+                <table class="table table-hover align-middle mb-0">
+
+                    <thead>
+                        <tr>
+                            <th>Snapshot</th>
+                            <th>Type</th>
+                            <th>Timestamp</th>
+                            <th>Size</th>
+                            <th>Records</th>
+                            <th class="text-end">Action</th>
+                        </tr>
+                    </thead>
+
+
+                    <tbody>
+
+                        @forelse ($backups as $backup)
+
+                            <tr>
+
+                                {{-- NAME --}}
+                                <td class="fw-semibold">
+                                    {{ $backup->name }}
+                                </td>
+
+
+                                {{-- TYPE --}}
+                                <td>
+
+                                    @if ($backup->type === 'automatic')
+
+                                        <span class="badge rounded-pill text-bg-light">
+                                            <i class="bi bi-stopwatch me-1"></i>
+                                            Auto
+                                        </span>
+
+                                    @else
+
+                                        <span class="badge rounded-pill text-bg-primary">
+                                            <i class="bi bi-dot"></i>
+                                            Manual
+                                        </span>
+
+                                    @endif
+
+                                </td>
+
+
+                                {{-- TIMESTAMP --}}
+                                <td class="text-secondary">
+
+                                    {{ $backup->created_at->format('Y-m-d H:i:s') }}
+
+                                </td>
+
+
+                                {{-- SIZE --}}
+                                <td class="text-secondary">
+
+                                    @if ($backup->file_size)
+
+                                        {{ number_format($backup->file_size / 1024 / 1024, 2) }} MB
+
+                                    @else
+
+                                        N/A
+
+                                    @endif
+
+                                </td>
+
+
+                                {{-- RECORDS --}}
+                                <td class="text-secondary">
+
+                                    {{ $backup->records_count ?? 0 }}
+
+                                </td>
+
+
+                                {{-- ACTION --}}
+                                <td class="text-end">
+
+                                    <a href="{{ route('admin.backups.download', $backup) }}"
+                                       class="btn btn-sm btn-outline-primary">
+
+                                        <i class="bi bi-download me-1"></i>
+                                        Download
+
+                                    </a>
+
+                                </td>
+
+                            </tr>
+
+                        @empty
+
+                            <tr>
+
+                                <td colspan="6"
+                                    class="text-center text-secondary py-5">
+
+                                    <i class="bi bi-database-x fs-1 d-block mb-2"></i>
+
+                                    No backups have been created yet.
+
+                                </td>
+
+                            </tr>
+
+                        @endforelse
+
+                    </tbody>
+
+                </table>
+
+            </div>
+
+        </div>
+
+    </div>
+
+
+    {{-- WARNING --}}
+    <div class="alert alert-warning rounded-4 d-flex gap-3 align-items-start"
+         role="alert">
+
+        <i class="bi bi-exclamation-triangle fs-5"></i>
+
+        <div>
+
+            <strong>Before you restore:</strong>
+
+            restoring a snapshot replaces current database data
+            with the data contained in that backup.
+
+            Create a manual backup first if you want to keep your
+            latest changes.
+
+        </div>
+
+    </div>
+
+</main>
+
+
+{{-- ========================================================= --}}
+{{-- CREATE BACKUP MODAL --}}
+{{-- ========================================================= --}}
+
+<div class="modal fade"
+     id="createModal"
+     tabindex="-1"
+     aria-hidden="true">
+
+    <div class="modal-dialog modal-dialog-centered">
+
+        <div class="modal-content rounded-4 border-0 shadow">
+
+            <form method="POST"
+                  action="{{ route('admin.backups.store') }}">
+
+                @csrf
+
+                <div class="modal-header border-0">
+
+                    <h5 class="modal-title fw-semibold">
+                        Create Database Backup
+                    </h5>
+
+                    <button type="button"
+                            class="btn-close"
+                            data-bs-dismiss="modal"
+                            aria-label="Close"></button>
+
+                </div>
+
+
+                <div class="modal-body">
+
+                    <div class="text-center py-2">
+
+                        <div class="bg-primary-subtle
+                                    text-primary
+                                    rounded-circle
+                                    d-inline-flex
+                                    align-items-center
+                                    justify-content-center
+                                    mb-3"
+                             style="width: 70px; height: 70px;">
+
+                            <i class="bi bi-database-add fs-2"></i>
+
+                        </div>
+
+
+                        <h5 class="fw-semibold">
+                            Create a new backup?
+                        </h5>
+
+
+                        <p class="text-secondary mb-0">
+
+                            The system will create a complete PostgreSQL
+                            database snapshot.
+
+                        </p>
+
+                    </div>
+
+                </div>
+
+
+                <div class="modal-footer border-0">
+
+                    <button type="button"
+                            class="btn btn-light"
+                            data-bs-dismiss="modal">
+
+                        Cancel
+
+                    </button>
+
+
+                    <button type="submit"
+                            class="btn btn-primary">
+
+                        <i class="bi bi-database-add me-2"></i>
+
+                        Create Backup
+
+                    </button>
+
+                </div>
+
+            </form>
+
+        </div>
+
+    </div>
+
+</div>
+
+
+    </div>
+
+</div>
             </div>
 
 @endif

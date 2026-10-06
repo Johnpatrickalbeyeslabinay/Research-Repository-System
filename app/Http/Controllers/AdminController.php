@@ -123,6 +123,10 @@ class AdminController extends Controller
             ->latest('updated_at')
             ->get();
 
+        $backups = \App\Models\Backup::latest()->get();
+        $lastBackup = \App\Models\Backup::latest('created_at')->first();
+        $totalBackups = \App\Models\Backup::count();
+
         return view('admin', array_merge(compact(
             'view',
             'users',
@@ -135,7 +139,10 @@ class AdminController extends Controller
             'period',
             'reportData',
             'unreadNotificationsCount',
-            'limitReachedFiles'
+            'limitReachedFiles',
+            'backups',
+            'lastBackup',
+            'totalBackups'
         ), $stats));
     }
 

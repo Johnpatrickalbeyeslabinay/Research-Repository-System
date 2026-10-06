@@ -4,6 +4,7 @@ use App\Http\Controllers\AccessRequestController;
 use App\Http\Controllers\AccountController;
 use App\Http\Controllers\AdminController;
 use App\Http\Controllers\AuthController;
+use App\Http\Controllers\BackupController;
 use App\Http\Controllers\ChatController;
 use App\Http\Controllers\HomeController;
 use App\Http\Controllers\InstructorController;
@@ -178,6 +179,13 @@ Route::middleware(['auth', 'role:admin'])->group(function () {
     Route::get('/admin/reports/export', [AdminController::class, 'exportReport'])
         ->name('admin.reports.export');
     // ==============================================
+
+    // back feature route
+    Route::get('/admin/backups', [BackupController::class, 'index'])
+        ->name('admin.backups');
+
+    Route::post('/admin/backups', [BackupController::class, 'store'])
+        ->name('admin.backups.store');
 
     Route::post('/admin/store', [AdminController::class, 'store'])
         ->name('admin.store');

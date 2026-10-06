@@ -208,7 +208,7 @@
 
             <div id="popover" popover="manual" class="research-wizard rounded-4 border-0 shadow"
                 data-wizard data-wizard-error-step="{{ $createErrorStep }}"
-                style="width: 720px; max-width: 95vw; max-height: 90vh;">
+                style="width: 100%; max-width: 100%; max-height: 100vh;">
 
                 <div class="rw-header d-flex justify-content-between align-items-center">
                     <h3 class="fw-bold mb-0">Submit New Research</h3>
@@ -590,13 +590,18 @@
         </button>
 
         <!-- Notifications -->
-        <button class="nav-link rounded-5 px-2 py-1  d-flex align-items-center gap-2" id="notification-tab"
-            data-bs-toggle="pill" data-bs-target="#notification" type="button" role="tab">
-            Notifications
-            <!--<span class="badge d-flex align-items-center justify-content-center text-danger">
-                <i class="fa-solid fa-comment-dots"></i>
-            </span>-->
-        </button>
+            <a href="{{ route('notifications.index') }}"
+            class="nav-link rounded-5 px-2 py-1 d-flex align-items-center gap-2 text-decoration-none">
+
+                Notifications
+
+                @if(($unreadNotificationsCount ?? 0) > 0)
+                    <span class="badge rounded-pill bg-danger">
+                        {{ $unreadNotificationsCount }}
+                    </span>
+                @endif
+
+            </a>
 
         <!-- Bookmarks -->
         <!--<button class="nav-link rounded-5 px-2 py-1" id="bookmark-tab" data-bs-toggle="pill" data-bs-target="#bookmark"
@@ -1025,11 +1030,16 @@
 
                      <!-- POPOVER FILE -->
                     <div id="popover-{{ $file->id }}" popover
-                        style="border: 1px solid #dee2e6;  max-width: 1200px; width: 90%; overflow-y: auto; max-height: 90vh;">
+                        style="border: 1px solid #dee2e6;  max-width: 100%; width: 100%; overflow-y: auto; max-height: 100vh;">
+
+
+                        <button type="button" popovertarget="popover-{{ $file->id }}" popovertargetaction="hide" class="btn-close position-absolute top-0 end-0 m-3"
+                        aria-label="Close">
+                    </button>
+
                         <div class="container py-5">
-                            <div class="card shadow-sm border-0">
                                 <div class="card-body p-4 p-md-5">
-                                    <h5 class="fw-bold mb-2"> {{ $file->title }} </h5>
+                                    <h2 class="mb-3"> {{ $file->title }} </h2>
 
                                     {{-- Was: an unclosed <span> (views never actually shown, only
                                          downloads), "Author" = $file->name only (hid every co-author),
@@ -1240,7 +1250,6 @@
                                     </div>
                                 </div>
                             </div>
-                        </div>
                     </div>
                @endforeach
             </div>

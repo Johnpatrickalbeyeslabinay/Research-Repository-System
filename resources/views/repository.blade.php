@@ -4,8 +4,8 @@
 
 @section('repository')
 
-<br><br><br><br><br>
-    <div class="container text-center mt-5">
+<br><br><br>
+    <div class="container text-center">
         <h1>Fisheries Research Repository</h1>
         <p>Explore academic research from students and faculty of the Fisheries Program</p>
     </div>

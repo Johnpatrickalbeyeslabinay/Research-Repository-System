@@ -167,7 +167,7 @@
                         @csrf
 
                         <button type="submit"
-                            class="btn btn-sm bg-danger-subtle text-danger-emphasis border-danger-subtle rounded-3 w-100 text-start"
+                            class="btn btn-md bg-danger-subtle text-danger-emphasis border-danger-subtle rounded-3 w-100 text-start"
                             id="logoutBtn">
                             <i class="fa-solid fa-right-from-bracket me-2" id="logoutIcon"></i>
                             <span class="spinner-border spinner-border-sm me-2 d-none" id="logoutSpinner" role="status" aria-hidden="true"></span>
@@ -289,7 +289,7 @@
             @csrf
 
            <button type="submit"
-                class="btn btn-sm bg-danger-subtle text-danger-emphasis border-danger-subtle rounded-3 w-100 text-start"
+                class="btn btn-md bg-danger-subtle text-danger-emphasis border-danger-subtle rounded-3 w-100 text-start"
                 id="logoutBtn">
                 <i class="fa-solid fa-right-from-bracket me-2" id="logoutIcon"></i>
                 <span class="spinner-border spinner-border-sm me-2 d-none" id="logoutSpinner" role="status" aria-hidden="true"></span>

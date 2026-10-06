@@ -167,12 +167,13 @@
           <form action="{{ route('logout') }}" data-turbo="false" method="POST" class="mt-3">
             @csrf
 
-            <button type="submit" class="btn btn-danger w-100 text-start" id="logoutBtn">
+            <button type="submit"
+                class="btn btn-md bg-danger-subtle text-danger-emphasis border-danger-subtle rounded-3 w-100 text-start"
+                id="logoutBtn">
                 <i class="fa-solid fa-right-from-bracket me-2" id="logoutIcon"></i>
                 <span class="spinner-border spinner-border-sm me-2 d-none" id="logoutSpinner" role="status" aria-hidden="true"></span>
                 <span id="logoutText">Logout</span>
             </button>
-
           </form>
 
         </div>
@@ -281,7 +282,7 @@
             @csrf
 
             <button type="submit"
-                class="btn btn-sm bg-danger-subtle text-danger-emphasis border-danger-subtle rounded-3 w-100 text-start"
+                class="btn btn-md bg-danger-subtle text-danger-emphasis border-danger-subtle rounded-3 w-100 text-start"
                 id="logoutBtn">
                 <i class="fa-solid fa-right-from-bracket me-2" id="logoutIcon"></i>
                 <span class="spinner-border spinner-border-sm me-2 d-none" id="logoutSpinner" role="status" aria-hidden="true"></span>
