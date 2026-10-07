@@ -178,6 +178,9 @@ Route::middleware(['auth', 'role:admin'])->group(function () {
 
     Route::get('/admin/reports/export', [AdminController::class, 'exportReport'])
         ->name('admin.reports.export');
+
+    Route::get('/admin/reports/print', [AdminController::class, 'printReport'])
+        ->name('admin.reports.print');
     // ==============================================
 
     // back feature route
@@ -186,6 +189,12 @@ Route::middleware(['auth', 'role:admin'])->group(function () {
 
     Route::post('/admin/backups', [BackupController::class, 'store'])
         ->name('admin.backups.store');
+
+    Route::post('/admin/backups/{backup}/restore', [BackupController::class, 'restore'])
+        ->name('admin.backups.restore');
+
+    Route::get('/admin/backups/{backup}/download', [BackupController::class, 'download'])
+        ->name('admin.backups.download');
 
     Route::post('/admin/store', [AdminController::class, 'store'])
         ->name('admin.store');

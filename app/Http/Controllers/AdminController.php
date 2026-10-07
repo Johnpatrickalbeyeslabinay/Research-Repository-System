@@ -7,6 +7,7 @@ use App\Exports\AdminReportExport;
 use App\Imports\StudentImport;
 use App\Jobs\ProcessResearchDocument;
 use App\Mail\repositoryMail;
+use App\Models\Keyword;
 use App\Models\SearchLog;
 use App\Models\User;
 use App\Models\UserFile;
@@ -94,7 +95,6 @@ class AdminController extends Controller
                 ->paginate(10)
                 ->withQueryString();
 
-            $studFiles = $studFilesQuery->paginate(10)->withQueryString();
         }
 
         // System-wide totals for the stat cards — one GROUP BY instead of

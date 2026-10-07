@@ -52,4 +52,7 @@ return [
         'secret_key' => env('TURNSTILE_SECRET_KEY'),
     ],
 
+    'pg_dump_path' => env('PG_DUMP_PATH', 'pg_dump'),
+    'psql_path' => env('PSQL_PATH', 'psql'),
+
 ];

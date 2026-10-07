@@ -864,11 +864,7 @@
 
     <div class="mt-3">
 
-        <div class="d-flex justify-content-between align-items-center mb-4">
-            <h3>Backup & Restore</h3>
-        </div>
-
-        {{-- FLASH MESSAGES --}}
+        {{-- FLASH MESSAGES
     @if (session('success'))
         <div class="alert alert-success alert-dismissible fade show rounded-4" role="alert">
             <i class="bi bi-check-circle me-2"></i>
@@ -891,7 +887,7 @@
                     data-bs-dismiss="alert"
                     aria-label="Close"></button>
         </div>
-    @endif
+    @endif--}}
 
 
     {{-- PAGE HEADER --}}
@@ -958,26 +954,41 @@
         </div>
 
 
+        @php
+            $now = now();
+
+            $nextScheduled = $now->copy()->setTime(23, 0, 0);
+
+            if ($now->greaterThanOrEqualTo($nextScheduled)) {
+                $nextScheduled->addDay();
+            }
+        @endphp
         {{-- NEXT SCHEDULED --}}
-        <div class="col-md-4">
-            <div class="d-flex align-items-center gap-3 p-3 rounded-4 bg-info-subtle h-100">
+        {{-- NEXT SCHEDULED --}}
+<div class="col-md-4">
+    <div class="d-flex align-items-center gap-3 p-3 rounded-4 bg-info-subtle h-100">
 
-                <div class="bg-info text-white rounded-3 px-3 py-2 fs-3">
-                    <i class="bi bi-shield-check"></i>
-                </div>
+        <div class="bg-info text-white rounded-3 px-3 py-2 fs-3">
+            <i class="bi bi-shield-check"></i>
+        </div>
 
-                <div>
-                    <div class="text-info text-uppercase small">
-                        Next Scheduled
-                    </div>
+        <div>
+            <div class="text-info text-uppercase small">
+                Next Scheduled
+            </div>
 
-                    <div class="fw-semibold text-info-emphasis">
-                        Today at 11:00 PM
-                    </div>
-                </div>
-
+            <div class="fw-semibold text-info-emphasis">
+                {{ $nextScheduled->isToday()
+                    ? 'Today at '.$nextScheduled->format('g:i A')
+                    : ($nextScheduled->isTomorrow()
+                        ? 'Tomorrow at '.$nextScheduled->format('g:i A')
+                        : $nextScheduled->format('M d, Y').' at '.$nextScheduled->format('g:i A'))
+                }}
             </div>
         </div>
+
+    </div>
+</div>
 
     </div>
 
@@ -999,7 +1010,6 @@
 
 
             <div class="d-flex gap-2">
-
                 {{-- DOWNLOAD LATEST BACKUP --}}
                 @if ($lastBackup)
 
@@ -1008,20 +1018,14 @@
 
                         <i class="bi bi-download me-2"></i>
                         Download DB
-
                     </a>
-
                 @else
-
                     <button type="button"
                             class="btn btn-light border"
                             disabled>
-
                         <i class="bi bi-download me-2"></i>
                         Download DB
-
                     </button>
-
                 @endif
 
 
@@ -1030,37 +1034,25 @@
                         class="btn btn-primary"
                         data-bs-toggle="modal"
                         data-bs-target="#createModal">
-
                     <i class="bi bi-database-add me-2"></i>
                     Create Backup Now
-
                 </button>
-
             </div>
-
         </div>
-
     </div>
 
 
     {{-- BACKUP HISTORY --}}
     <div class="card border-0 shadow-sm rounded-4 mb-4">
-
         <div class="card-body p-4">
-
             <h5 class="fw-semibold mb-1">
                 Backup History
             </h5>
-
             <div class="text-secondary mb-4">
                 View and download database snapshots created by the system.
             </div>
-
-
             <div class="table-responsive">
-
                 <table class="table table-hover align-middle mb-0">
-
                     <thead>
                         <tr>
                             <th>Snapshot</th>
@@ -1071,89 +1063,62 @@
                             <th class="text-end">Action</th>
                         </tr>
                     </thead>
-
-
                     <tbody>
-
                         @forelse ($backups as $backup)
-
                             <tr>
-
                                 {{-- NAME --}}
                                 <td class="fw-semibold">
                                     {{ $backup->name }}
                                 </td>
-
-
                                 {{-- TYPE --}}
                                 <td>
-
                                     @if ($backup->type === 'automatic')
-
                                         <span class="badge rounded-pill text-bg-light">
                                             <i class="bi bi-stopwatch me-1"></i>
                                             Auto
                                         </span>
-
                                     @else
-
                                         <span class="badge rounded-pill text-bg-primary">
                                             <i class="bi bi-dot"></i>
                                             Manual
                                         </span>
-
                                     @endif
-
                                 </td>
-
 
                                 {{-- TIMESTAMP --}}
                                 <td class="text-secondary">
-
                                     {{ $backup->created_at->format('Y-m-d H:i:s') }}
-
                                 </td>
-
 
                                 {{-- SIZE --}}
                                 <td class="text-secondary">
-
                                     @if ($backup->file_size)
-
                                         {{ number_format($backup->file_size / 1024 / 1024, 2) }} MB
-
                                     @else
-
                                         N/A
-
                                     @endif
-
                                 </td>
-
 
                                 {{-- RECORDS --}}
                                 <td class="text-secondary">
-
                                     {{ $backup->records_count ?? 0 }}
-
                                 </td>
-
 
                                 {{-- ACTION --}}
                                 <td class="text-end">
+                                    <form method="POST"
+                                            action="{{ route('admin.backups.restore', $backup) }}"
+                                            class="d-inline">
+                                            @csrf
 
-                                    <a href="{{ route('admin.backups.download', $backup) }}"
-                                       class="btn btn-sm btn-outline-primary">
-
-                                        <i class="bi bi-download me-1"></i>
-                                        Download
-
-                                    </a>
-
+                                            <button type="submit"
+                                                    class="btn btn-sm btn-outline-warning">
+                                                <i class="bi bi-arrow-counterclockwise me-1"></i>
+                                                Restore
+                                            </button>
+                                        </form>
                                 </td>
-
                             </tr>
-
                         @empty
 
                             <tr>
