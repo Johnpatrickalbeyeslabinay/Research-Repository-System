@@ -40,10 +40,20 @@
         </div>
 
         <a href="{{ route('public') }}"
-           class="btn btn-outline-light btn-lg px-2 py-1 fw-normal">
-            Browse Public Repository
-            <i class="fa-solid fa-arrow-right ms-2"></i>
-        </a>
+   class="btn btn-outline-light btn-lg px-2 py-1 fw-normal"
+   onclick="showLoading(this)">
+
+    <span class="spinner-border spinner-border-sm d-none me-2"
+          role="status"
+          aria-hidden="true"></span>
+
+    <span class="browse-text">
+        Browse Public Repository
+    </span>
+
+    <i class="fa-solid fa-arrow-right ms-2"></i>
+
+</a>
 
     </div>
 
@@ -249,5 +259,12 @@ function refreshCaptcha() {
 }
 </script>
 
+<script>
+function showLoading(button) {
+    const spinner = button.querySelector('.spinner-border');
+
+    spinner.classList.remove('d-none');
+}
+</script>
 
 @endsection

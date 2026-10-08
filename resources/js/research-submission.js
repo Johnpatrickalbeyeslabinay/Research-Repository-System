@@ -1326,8 +1326,6 @@ function initReviewSummary(form) {
     function update() {
         summary.querySelector('[data-review="title"]').textContent =
             text("title") || "—";
-        summary.querySelector('[data-review="research_type"]').textContent =
-            selectedLabel("research_type");
         summary.querySelector('[data-review="publication_year"]').textContent =
             text("publication_year") || "—";
         summary.querySelector('[data-review="adviser"]').textContent =
@@ -1378,8 +1376,6 @@ function initReviewSummary(form) {
         const visibilityChecked = form.querySelector(
             'input[name="visibility"]:checked',
         );
-        summary.querySelector('[data-review="visibility"]').textContent =
-            visibilityChecked ? visibilityChecked.value : "—";
     }
 
     form.addEventListener("input", update);

@@ -320,7 +320,7 @@
 
 
 
-
+@include('components.research.welcome-modal')
 
 <x-chat.widget />
 

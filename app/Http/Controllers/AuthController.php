@@ -91,6 +91,9 @@ class AuthController extends Controller
             |--------------------------------------------------------------------------
             */
 
+            // Show welcome modal once after successful login
+            $request->session()->flash('show_welcome_modal', true);
+
             if ($user->role == 'student') {
                 return redirect()->route('student');
             }

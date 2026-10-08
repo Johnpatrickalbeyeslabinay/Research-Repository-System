@@ -208,7 +208,7 @@
 
             <div id="popover" popover="manual" class="research-wizard rounded-4 border-0 shadow"
                 data-wizard data-wizard-error-step="{{ $createErrorStep }}"
-                style="width: 100%; max-width: 100%; max-height: 100vh;">
+                style="width: 700px; max-width: 100%; max-height: 90vh;">
 
                 <div class="rw-header d-flex justify-content-between align-items-center">
                     <h3 class="fw-bold mb-0">Submit New Research</h3>
@@ -1331,9 +1331,11 @@
                         <form action="{{ route('access-requests.approve', $request->id) }}" method="POST">
                             @csrf
                             @method('PATCH')
+
                             <button type="submit"
                                     class="btn btn-sm bg-success-subtle text-success-emphasis border-success-subtle rounded-3 px-3"
-                                    @disabled($status !== 'pending')>
+                                    @disabled($status !== 'pending')
+                                    onclick="return confirm('Are you sure you want to approve this access request?')">
                                 Approve
                             </button>
                         </form>
@@ -1341,9 +1343,11 @@
                         <form action="{{ route('access-requests.reject', $request->id) }}" method="POST">
                             @csrf
                             @method('PATCH')
+
                             <button type="submit"
                                     class="btn btn-sm bg-danger-subtle text-danger-emphasis border-danger-subtle rounded-3 px-3"
-                                    @disabled($status !== 'pending')>
+                                    @disabled($status !== 'pending')
+                                    onclick="return confirm('Are you sure you want to reject this access request?')">
                                 Reject
                             </button>
                         </form>

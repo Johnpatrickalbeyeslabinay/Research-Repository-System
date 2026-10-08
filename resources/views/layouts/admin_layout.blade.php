@@ -232,48 +232,47 @@
 
 
 
-    @media print {
+   @media print {
 
-        /* Itago ang buong page elements */
-        body.printing-report > * {
-            display: none !important;
-        }
-
-        /* Ipakita lang ang report */
-        body.printing-report #adminPrintReport {
-            display: block !important;
-            width: 100% !important;
-            margin: 0 !important;
-            padding: 20px !important;
-        }
-
-        /* Huwag mag-break sa gitna ng cards */
-        body.printing-report .card {
-            break-inside: avoid;
-            page-break-inside: avoid;
-        }
-
-        /* Report title */
-        body.printing-report h5 {
-            color: #072a89 !important;
-        }
-
-        /* Charts */
-        body.printing-report #reportChart,
-        body.printing-report #registeredUsersChart {
-            height: 420px !important;
-        }
-
-        body.printing-report #searchKeywordsChart {
-            height: 500px !important;
-        }
-
-        /* Search Keywords sa bagong page kung kailangan */
-        body.printing-report #searchKeywordsChart {
-            break-before: page;
-            page-break-before: always;
-        }
+    body.printing-report * {
+        visibility: hidden !important;
     }
+
+    body.printing-report #adminPrintReport,
+    body.printing-report #adminPrintReport * {
+        visibility: visible !important;
+    }
+
+    body.printing-report #adminPrintReport {
+        position: absolute !important;
+        top: 0 !important;
+        left: 0 !important;
+        width: 100% !important;
+        margin: 0 !important;
+        padding: 20px !important;
+        display: block !important;
+    }
+
+    body.printing-report .card {
+        break-inside: avoid;
+        page-break-inside: avoid;
+    }
+
+    body.printing-report h5 {
+        color: #072a89 !important;
+    }
+
+    body.printing-report #reportChart,
+    body.printing-report #registeredUsersChart {
+        height: 420px !important;
+    }
+
+    body.printing-report #searchKeywordsChart {
+        height: 500px !important;
+        break-before: page;
+        page-break-before: always;
+    }
+}
 </style>
 
 <body class="text-dark" style="font-family: sans-serif, arial;
@@ -667,6 +666,8 @@
 
 
 @include('partials.flash')
+
+@include('components.research.welcome-modal')
 
 <x-chat.widget />
 

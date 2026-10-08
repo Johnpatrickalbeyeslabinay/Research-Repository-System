@@ -315,6 +315,7 @@
 
 
 @include('partials.flash')
+@include('components.research.welcome-modal')
 
 <x-chat.widget />
 
