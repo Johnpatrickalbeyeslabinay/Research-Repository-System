@@ -108,7 +108,12 @@ class AdminController extends Controller
         $year = (int) request('year', date('Y'));
         $period = request('period', 'annually');
 
-        $stats = $view === 'user' ? [] : Cache::remember(
+        // $stats = $view === 'user' ? [] : Cache::remember(
+        // "admin_dashboard_stats:{$year}",
+        // self::DASHBOARD_CACHE_TTL,
+        // fn () => $this->computeDashboardStats($year));
+
+        $stats = Cache::remember(
             "admin_dashboard_stats:{$year}",
             self::DASHBOARD_CACHE_TTL,
             fn () => $this->computeDashboardStats($year)

@@ -1311,75 +1311,167 @@ function initReviewSummary(form) {
 
     const prefix = summary.dataset.prefix;
 
-    function text(name) {
-        const el = form.querySelector(`[name="${name}"]`);
-        return el ? el.value : "";
+    function getField(...names) {
+        for (const name of names) {
+            const el = form.querySelector(`[name="${name}"]`);
+            if (el) return el;
+        }
+
+        return null;
     }
 
-    function selectedLabel(name) {
-        const el = form.querySelector(`[name="${name}"]`);
-        if (!el || el.selectedIndex < 0) return "—";
-        const opt = el.options[el.selectedIndex];
-        return opt ? opt.textContent.trim() : "—";
+    function getValue(...names) {
+        const el = getField(...names);
+        return el ? String(el.value || "").trim() : "";
+    }
+
+    function setReview(name, value) {
+        const el = summary.querySelector(`[data-review="${name}"]`);
+
+        if (el) {
+            el.textContent = value || "—";
+        }
     }
 
     function update() {
-        summary.querySelector('[data-review="title"]').textContent =
-            text("title") || "—";
-        summary.querySelector('[data-review="publication_year"]').textContent =
-            text("publication_year") || "—";
-        summary.querySelector('[data-review="adviser"]').textContent =
-            selectedLabel("adviser_id");
-        summary.querySelector('[data-review="desc"]').textContent =
-            text("desc") || "—";
+        // =========================
+        // TITLE
+        // =========================
+        setReview("title", getValue("title"));
 
-        const researchersEl = summary.querySelector(
-            '[data-review="researchers"]',
-        );
-        if (researchersEl) {
-            const researcherRoot = form.querySelector(
-                "[data-researcher-input]",
-            );
-            const names = researcherRoot
-                ? Array.from(
-                      researcherRoot.querySelectorAll(
-                          "[data-researcher-row] .fw-semibold",
-                      ),
-                  ).map((el) => el.textContent)
-                : [];
-            researchersEl.textContent = names.length
-                ? names.join(", ")
-                : "None (you are the sole researcher)";
+        // =========================
+        // PUBLICATION YEAR
+        // =========================
+        setReview("publication_year", getValue("publication_year"));
+
+        // =========================
+        // ADVISER
+        // =========================
+        const adviserSelect = getField("adviser_id");
+
+        let adviser = "";
+
+        if (adviserSelect && adviserSelect.selectedIndex >= 0) {
+            const option = adviserSelect.options[adviserSelect.selectedIndex];
+
+            if (option && option.value) {
+                adviser = option.textContent.trim();
+            }
         }
 
-        const keywordInputEl = form.querySelector(`#keywords-${prefix}`);
-        const keywords = keywordInputEl
-            ? Array.from(
-                  keywordInputEl.querySelectorAll("[data-keyword-value]"),
-              ).map((el) => el.dataset.keywordValue)
-            : [];
-        summary.querySelector('[data-review="keywords"]').textContent =
-            keywords.length ? keywords.join(", ") : "—";
+        // fallback kung text field ang adviser
+        if (!adviser) {
+            adviser = getValue("adviser");
+        }
 
-        const sdgChecked = form.querySelectorAll(
-            `#sdgSection-${prefix} .sdg-checkbox:checked`,
+        setReview("adviser", adviser);
+
+        // =========================
+        // RESEARCHERS
+        // =========================
+        const researcherRoot = form.querySelector("[data-researcher-input]");
+
+        let researchers = [];
+
+        if (researcherRoot) {
+            researchers = Array.from(
+                researcherRoot.querySelectorAll(
+                    "[data-researcher-row] .fw-semibold",
+                ),
+            )
+                .map((el) => el.textContent.trim())
+                .filter(Boolean);
+        }
+
+        setReview(
+            "researchers",
+            researchers.length
+                ? researchers.join(", ")
+                : "None (you are the sole researcher)",
         );
-        summary.querySelector('[data-review="sdgs"]').textContent =
-            sdgChecked.length ? `${sdgChecked.length} selected` : "—";
 
+        // =========================
+        // ABSTRACT
+        // =========================
+        const abstractField = form.querySelector("[data-abstract-field]");
+
+        const abstract = abstractField
+            ? abstractField.value.trim()
+            : getValue("desc", "abstract");
+
+        setReview("desc", abstract);
+
+        // =========================
+        // KEYWORDS
+        // =========================
+        const keywordInput = form.querySelector(`#keywords-${prefix}`);
+
+        let keywords = [];
+
+        if (keywordInput) {
+            keywords = Array.from(
+                keywordInput.querySelectorAll("[data-keyword-value]"),
+            )
+                .map((el) => el.dataset.keywordValue)
+                .filter(Boolean);
+        }
+
+        setReview("keywords", keywords.length ? keywords.join(", ") : "—");
+
+        // =========================
+        // SDGs
+        // =========================
+        const sdgSection = form.querySelector(`#sdgSection-${prefix}`);
+
+        let sdgs = [];
+
+        if (sdgSection) {
+            let byId = {};
+
+            try {
+                byId = JSON.parse(sdgSection.dataset.sdgById || "{}");
+            } catch {
+                byId = {};
+            }
+
+            const checked = sdgSection.querySelectorAll(
+                ".sdg-checkbox:checked",
+            );
+
+            sdgs = Array.from(checked).map((cb) => {
+                const info = byId[cb.value];
+
+                if (info) {
+                    return `SDG ${info.number} – ${info.name}`;
+                }
+
+                return `SDG ${cb.value}`;
+            });
+        }
+
+        setReview("sdgs", sdgs.length ? sdgs.join(", ") : "—");
+
+        // =========================
+        // DOCUMENT
+        // =========================
         const fileInput = form.querySelector(
             `#dropzone-${prefix} [data-dropzone-input]`,
         );
-        summary.querySelector('[data-review="file"]').textContent =
-            fileInput && fileInput.files[0] ? fileInput.files[0].name : "—";
 
-        const visibilityChecked = form.querySelector(
-            'input[name="visibility"]:checked',
-        );
+        let filename = "";
+
+        if (fileInput && fileInput.files && fileInput.files.length) {
+            filename = fileInput.files[0].name;
+        }
+
+        setReview("file", filename);
     }
 
+    // Normal form inputs
     form.addEventListener("input", update);
     form.addEventListener("change", update);
+
+    // Initial display
     update();
 }
 

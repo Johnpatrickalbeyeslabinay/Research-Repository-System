@@ -2300,7 +2300,7 @@
 <!-- graph -->
 <script>
     window.adminReportData = @json($reportData);
-</>
+</script>
 <!-- REPORT AREA -->
 <div id="adminPrintReport">
 
