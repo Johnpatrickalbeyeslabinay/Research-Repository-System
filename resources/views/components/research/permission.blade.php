@@ -67,12 +67,13 @@
                 <form action="{{ route('research.access-request.store', $file->id) }}" method="POST">
                 @csrf
 
-                    {{-- Full Name --}}
+                    {{-- Full Name
                     <div class="col-md-6">
                         <label for="requesterName"
                             class="form-label small fw-semibold mb-1">
                             Full Name
                         </label>
+                        </div>
 
                         <input type="text"
                             class="form-control rounded-3"
@@ -82,7 +83,7 @@
                             placeholder="Your full name"
                             {{ auth()->check() ? 'readonly' : '' }}
                             required>
-                    </div>
+                            --}}
 
                     {{-- Email --}}
                     <div class="col-md-6">

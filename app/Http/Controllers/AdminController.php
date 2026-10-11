@@ -1167,4 +1167,45 @@ class AdminController extends Controller
             "admin-report-{$year}-{$period}.xlsx"
         );
     }
+
+    private function getMonthlyStatusData(int $year): array
+    {
+        $rows = UserFile::query()
+            ->whereYear('created_at', $year)
+            ->whereIn('status', ['approved', 'admin_pending', 'rejected'])
+            ->selectRaw('EXTRACT(MONTH FROM created_at)::int AS month, status, COUNT(*)::int AS total')
+            ->groupByRaw('EXTRACT(MONTH FROM created_at), status')
+            ->get();
+
+        $approved = $pending = $rejected = [];
+
+        for ($m = 1; $m <= 12; $m++) {
+            $forMonth = $rows->where('month', $m);
+
+            $approved[] = (int) $forMonth->where('status', 'approved')->sum('total');
+            $pending[] = (int) $forMonth->where('status', 'admin_pending')->sum('total');
+            $rejected[] = (int) $forMonth->where('status', 'rejected')->sum('total');
+        }
+
+        $years = UserFile::query()
+            ->selectRaw('DISTINCT EXTRACT(YEAR FROM created_at)::int AS y')
+            ->orderByDesc('y')
+            ->pluck('y')
+            ->all();
+
+        return [
+            'year' => $year,
+            'years' => $years ?: [now()->year],
+            'approved' => $approved,
+            'pending' => $pending,
+            'rejected' => $rejected,
+        ];
+    }
+
+    public function monthlyStatus(Request $request)
+    {
+        return response()->json(
+            $this->getMonthlyStatusData((int) $request->input('year', now()->year))
+        );
+    }
 }

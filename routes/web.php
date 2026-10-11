@@ -181,6 +181,9 @@ Route::middleware(['auth', 'role:admin'])->group(function () {
 
     Route::get('/admin/reports/print', [AdminController::class, 'printReport'])
         ->name('admin.reports.print');
+
+    Route::get('/admin/report/monthly-status', [AdminController::class, 'monthlyStatus'])
+        ->name('admin.report.monthly-status');
     // ==============================================
 
     // back feature route

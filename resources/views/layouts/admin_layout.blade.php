@@ -413,7 +413,7 @@
         </a>
     </li>
 
-    {{-- Upload Research --}}
+    {{-- Upload Research
     <li class="nav-item mt-2">
         <a class="nav-link {{ request()->query('view') === 'upload'
             ? 'active text-white bg-primary rounded'
@@ -423,7 +423,7 @@
             <i class="fa-solid fa-upload me-2"></i>
             Upload Research
         </a>
-    </li>
+    </li>--}}
 
      {{-- Report --}}
     <li class="nav-item mt-2">
@@ -566,7 +566,7 @@
         </a>
     </li>
 
-    {{-- Upload Research --}}
+    {{-- Upload Research
     <li class="nav-item mt-2">
         <a class="nav-link {{ request()->query('view') === 'upload'
             ? 'active text-white bg-primary rounded'
@@ -576,7 +576,7 @@
             <i class="fa-solid fa-upload me-2"></i>
             Upload Research
         </a>
-    </li>
+    </li>--}}
 
     {{-- Report --}}
     <li class="nav-item mt-2">

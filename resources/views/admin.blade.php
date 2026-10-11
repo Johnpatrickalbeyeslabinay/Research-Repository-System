@@ -310,10 +310,39 @@
         </div>
 
         <div class="row g-4">
-
-            <h1>Graph</h1>
+        <!-- Pie Chart -->
+            <div class="col-12">
+                <div class="card h-100 shadow-sm">
+                    <div class="card-body">
+                        <div id="pieChart" style="width:100%; height:350px;"></div>
+                    </div>
+                </div>
+            </div>
 
         </div>
+
+        <div class="card border-0 shadow-sm mt-3 rounded-4 h-100">
+    <div class="card-body p-3 p-md-4">
+        <div class="d-flex flex-wrap justify-content-between align-items-start gap-2 mb-3">
+            <div>
+                <h5 class="fw-bold mb-1">
+                    <i class="bi bi-bar-chart me-2"></i>Monthly Status Breakdown
+                </h5>
+                <p class="text-muted small mb-0">Approved · Pending · Rejected per month</p>
+            </div>
+
+            <select id="monthlyStatusYear" class="form-select form-select-sm w-auto"></select>
+        </div>
+
+        <div id="monthlyStatusChart" class="monthly-status-chart"></div>
+    </div>
+</div>
+
+<style>
+    .monthly-status-chart { width: 100%; height: 350px; }
+    @media (max-width: 767.98px) { .monthly-status-chart { height: 300px; } }
+    @media (max-width: 575.98px) { .monthly-status-chart { height: 280px; } }
+</style>
 
 
 
@@ -2271,7 +2300,7 @@
 <!-- graph -->
 <script>
     window.adminReportData = @json($reportData);
-</script>
+</>
 <!-- REPORT AREA -->
 <div id="adminPrintReport">
 
@@ -2497,5 +2526,178 @@ document.getElementById('logoutBtn').closest('form').addEventListener('submit', 
     window.addEventListener('afterprint', function () {
         document.body.classList.remove('printing-report');
     });
+</script>
+
+<script src="https://cdn.jsdelivr.net/npm/echarts@5.5.0/dist/echarts.min.js"></script>
+
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+    var pieChart = echarts.init(document.getElementById('pieChart'));
+
+    var option = {
+        title: {
+            text: 'Research Status Distribution',
+            left: 'left',
+            textStyle: { color: '#1F2937', fontSize: 13 }
+        },
+        tooltip: { trigger: 'item' },
+        legend: { bottom: 10, left: 'center' },
+        series: [{
+            name: 'Research Status',
+            type: 'pie',
+            radius: ['40%', '70%'],
+            avoidLabelOverlap: false,
+            label: { show: false, position: 'center' },
+            emphasis: {
+                label: { show: true, fontSize: 24, fontWeight: 'bold' }
+            },
+            labelLine: { show: false },
+            data: [
+    { value: {{ $approvedCount }}, name: 'Approved', itemStyle: { color: '#0F9D8A' } },
+    { value: {{ $pendingCount }},  name: 'Pending',  itemStyle: { color: '#E8A93B' } },
+    { value: {{ $rejectedCount }}, name: 'Rejected', itemStyle: { color: '#D9534F' } }
+],
+        }]
+    };
+
+    pieChart.setOption(option);
+
+    window.addEventListener('resize', function () {
+        pieChart.resize();
+    });
+});
+</script>
+
+
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+    const dom = document.getElementById('monthlyStatusChart');
+    const yearSelect = document.getElementById('monthlyStatusYear');
+    if (!dom) return;
+
+    const old = echarts.getInstanceByDom(dom);
+    if (old) old.dispose();
+
+    const chart = echarts.init(dom);
+    const url = "{{ route('admin.report.monthly-status') }}";
+
+    const fullMonths  = ['January','February','March','April','May','June','July','August','September','October','November','December'];
+    const shortMonths = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+
+    // Start with data already on the page, then refresh via fetch
+    let state = (window.adminReportData && window.adminReportData.monthlyStatus) || {};
+
+    const series = (name, data, color, barWidth, top = false) => ({
+        name,
+        type: 'bar',
+        stack: 'status',
+        data: data || new Array(12).fill(0),
+        barMaxWidth: barWidth,
+        itemStyle: { color, borderRadius: top ? [4, 4, 0, 0] : 0 },
+        emphasis: { focus: 'series' }
+    });
+
+    function total(s) {
+        return [].concat(s.approved || [], s.pending || [], s.rejected || [])
+                 .reduce((a, b) => a + Number(b || 0), 0);
+    }
+
+    function buildOption() {
+        const w = dom.clientWidth;
+        const isSmall = w < 576;
+        const isMedium = w >= 576 && w < 992;
+        const empty = total(state) === 0;
+
+        return {
+            title: empty ? {
+                text: 'No research records for ' + (state.year ?? ''),
+                left: 'center',
+                top: 'middle',
+                textStyle: { fontSize: 14, fontWeight: 'normal', color: '#9ca3af' }
+            } : { show: false },
+
+            tooltip: { trigger: 'axis', axisPointer: { type: 'shadow' }, confine: true },
+
+            legend: {
+                bottom: 0, icon: 'roundRect',
+                itemWidth: isSmall ? 10 : 14, itemHeight: isSmall ? 10 : 14,
+                textStyle: { fontSize: isSmall ? 11 : 13 }
+            },
+
+            grid: {
+                left: isSmall ? '2%' : '3%', right: isSmall ? '2%' : '3%',
+                top: '6%', bottom: isSmall ? '16%' : '14%', containLabel: true
+            },
+
+            xAxis: {
+                type: 'category',
+                data: (isSmall || isMedium) ? shortMonths : fullMonths,
+                axisTick: { show: false },
+                axisLabel: { interval: 0, rotate: isSmall ? 45 : 0, fontSize: isSmall ? 10 : 12 }
+            },
+
+            yAxis: {
+                type: 'value',
+                min: 0,
+                max: (v) => Math.max(v.max, 5),   // keeps the axis visible even when empty
+                minInterval: 1,
+                axisLabel: { fontSize: isSmall ? 10 : 12 },
+                splitLine: { lineStyle: { type: 'dashed', color: '#e5e7eb' } }
+            },
+
+            series: [
+                series('Approved', state.approved, '#0F9D8A', isSmall ? 14 : 28),
+                series('Pending',  state.pending,  '#E8A93B', isSmall ? 14 : 28),
+                series('Rejected', state.rejected, '#D9534F', isSmall ? 14 : 28, true)
+            ]
+        };
+    }
+
+    function fillYears() {
+        const years = (state.years && state.years.length) ? state.years : [new Date().getFullYear()];
+        yearSelect.innerHTML = years
+            .map(y => `<option value="${y}" ${Number(y) === Number(state.year) ? 'selected' : ''}>${y}</option>`)
+            .join('');
+    }
+
+    async function load(year) {
+        try {
+            const res = await fetch(`${url}?year=${year}`, {
+                headers: { 'Accept': 'application/json', 'X-Requested-With': 'XMLHttpRequest' }
+            });
+            if (!res.ok) throw new Error('HTTP ' + res.status);
+            state = await res.json();
+            chart.setOption(buildOption(), true);
+        } catch (e) {
+            console.error('[monthly-status] failed to load', e);
+        }
+    }
+
+    // Initial render
+    fillYears();
+    chart.setOption(buildOption(), true);
+
+    // If the page-load data was empty or missing, try fetching the latest year with data
+    if (!state.year || total(state) === 0) {
+        const y = (state.years && state.years[0]) || new Date().getFullYear();
+        load(y).then(fillYears);
+    }
+
+    yearSelect.addEventListener('change', () => load(yearSelect.value));
+
+    // Responsive
+    let t = null;
+    const refit = () => {
+        clearTimeout(t);
+        t = setTimeout(() => { chart.resize(); chart.setOption(buildOption(), true); }, 100);
+    };
+
+    if ('ResizeObserver' in window) new ResizeObserver(refit).observe(dom);
+    else window.addEventListener('resize', refit);
+
+    document.querySelectorAll('[data-bs-toggle="tab"]').forEach(tab =>
+        tab.addEventListener('shown.bs.tab', refit)
+    );
+});
 </script>
 @endsection

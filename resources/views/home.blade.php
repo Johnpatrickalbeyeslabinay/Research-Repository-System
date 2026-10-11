@@ -21,41 +21,19 @@
 
 <section class="hero">
   <span class="bubble"></span><span class="bubble"></span><span class="bubble"></span><span class="bubble"></span><span class="bubble"></span>
-  <div class="wrap grid">
-    <div>
-      <span class="pill"><svg class="i"><use href="#book"/></svg> College of Fisheries and Aquatic Science</span>
-      <h1>Your fisheries research, <span>published and shared.</span></h1>
-      <p class="lead">Submit, track, and share your research with the academic community. Contribute to the growing body of knowledge in fisheries and aquatic sciences.</p>
-      <div class="cta-row">
-         @if (Route::has('public'))
-                    <a href="{{ route('public') }}" class="btn gold">Browse Repository</a>
-                @else
-                    <a href="#" class="btn">Browse Repository</a>
-                @endif
+  <div class="wrap">
 
-                @if (Route::has('login'))
-                    <a href="{{ route('login') }}" class="btn outline">Student Login</a>
-                @else
-                    <a href="#" class="btn btn-outline-light text-white fw-bold px-2 py-1">Student Login</a>
-                @endif
-
-      </div>
-      <ul class="chips">
-        <li><svg class="i"><use href="#check"/></svg>Two-stage review</li>
-        <li><svg class="i"><use href="#check"/></svg>SDG tagging</li>
-        <li><svg class="i"><use href="#check"/></svg>Request-based downloads</li>
-      </ul>
+    <div style="text-align: center; justify-items: center; margin-top: 10px;">
+        <div class="mb-4">
+            <img src="{{ asset('images/cfas.png') }}"
+                 alt="Cagayan State University - Aparri"
+                 class="img-fluid"
+                 style="max-width: 180px; height: auto;">
+        </div>
+        <h1>Research Repository System</h1><br>
+        <h5>Discover, Access,<br>Preserve fisheries in one centralized repository</h5>
     </div>
-    <aside class="paper" aria-label="Example of submission tracking">
-      <p class="tag">Sample submission</p>
-      <h3>Growth Performance of Tilapia in Brackish Water Ponds</h3>
-      <ul class="track">
-        <li class="done">Submitted to instructor</li>
-        <li class="done">Instructor approved</li>
-        <li class="now">Admin review in progress</li>
-        <li>Published in repository</li>
-      </ul>
-    </aside>
+
   </div>
   <svg class="wave" viewBox="0 0 1440 90" preserveAspectRatio="none" aria-hidden="true"><path fill="#f4f8fb" d="M0 50C180 100 360 0 600 40s420 60 600 10c90-25 180-20 240-5V90H0Z"/></svg>
 </section>

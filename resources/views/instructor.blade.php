@@ -657,8 +657,8 @@
                                <div class="d-flex align-items-center gap-3 mt-3 flex-wrap">
 
                                     <!-- REVIEW & COMMENT -->
-                                    <button class="rounded px-2 py-1 text-white border-0"
-                                        style="max-width:200px; width:100%; background: #072a89;"
+                                    <button class="rounded px-2 py-1 text-dark"
+                                        style="max-width:200px; width:100%; background: #fff; border: 1px solid #072a89;"
                                         popovertarget="popover-{{ $file->id }}">
 
                                         <i class="bi bi-eye me-2"></i>

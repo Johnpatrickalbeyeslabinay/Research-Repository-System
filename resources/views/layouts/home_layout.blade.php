@@ -26,17 +26,17 @@ a{text-decoration:none;color:inherit}
 :focus-visible{outline:3px solid #2b8be0;outline-offset:3px}
 h1,h2{font-family:"Playfair Display",Georgia,serif}
 svg.i{width:1em;height:1em;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
-.wrap{max-width:1200px;margin:0 auto;padding:0 24px}
+.wrap{max-width:1200px; height: 75vh; margin:0 auto;padding:50px}
 
 /* Header (matches index) */
-.header{position:sticky;top:0;z-index:20;background:#fff;border-top:4px solid var(--accent);border-bottom:1px solid var(--line);box-shadow:0 4px 16px rgba(10,92,158,.1)}
+.header{position:sticky;top:0;z-index:20;background:#fff;border-bottom:1px solid var(--line);box-shadow:0 4px 16px rgba(10,92,158,.1)}
 .header .bar{display:flex;align-items:center;justify-content:space-between;gap:16px;height:78px}
 .brand{display:flex;align-items:center;gap:12px;color:#fff}
 .logo{width:70px;height:70px;border-radius:50%;object-fit:contain;flex:none;}
 footer .logo{width:70px;height:70px;box-shadow:0 0 0 3px var(--accent)}
 .brand b{display:block;font-size:19px;font-weight:600;line-height:1.2}
 .brand small{font-size:13px;color:var(--accent)}
-.header .brand b{font-family:"Playfair Display",Georgia,serif;font-weight:700;color:var(--deep)}
+.header .brand b{font-weight:700;color:black;}
 .header .brand small{color:var(--gray)}
 .actions{display:flex;gap:10px}
 .btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;font:600 15px "Inter",sans-serif;height:46px;padding:0 22px;border-radius:999px;border:2px solid transparent;cursor:pointer;transition:transform .15s,background .15s,color .15s}
@@ -87,22 +87,16 @@ footer .logo{width:70px;height:70px;box-shadow:0 0 0 3px var(--accent)}
 @keyframes rise{to{transform:translateY(-560px);opacity:0}}
 .wave{position:absolute;left:0;bottom:-1px;width:100%;height:90px;display:block;z-index:2}
 
-/* Features */
-.features{display:grid;grid-template-columns:repeat(4,1fr);gap:24px;margin-top:-30px;position:relative;z-index:3}
-.card{background:#fff;border-radius:16px;padding:28px 24px;border:1px solid var(--line);border-top:5px solid var(--accent);box-shadow:0 6px 18px rgba(10,92,158,.08);transition:transform .2s,box-shadow .2s}
-.card:hover{transform:translateY(-6px);box-shadow:0 16px 30px rgba(10,92,158,.16)}
-.card .icon{width:54px;height:54px;border-radius:14px;background:linear-gradient(135deg,var(--blue),var(--aqua));color:#fff;display:grid;place-items:center;font-size:26px;margin-bottom:22px}
-.card h3{font-size:19px;margin-bottom:8px;color:var(--deep)}
-.card p{font-size:16px;line-height:1.6;color:var(--gray)}
+
 
 /* How it works */
-.how{margin-top:90px;text-align:center}
-.how h2{font-size:clamp(30px,4vw,40px);color:var(--blue);margin-bottom:10px}
+.how{margin-top:300pxpx;text-align:center}
+.how h2{font-size:clamp(30px,4vw,40px);color:#1D3C9D;margin-bottom:10px}
 .how .sub{font-size:18px;color:var(--gray);margin-bottom:56px}
 .steps{display:grid;grid-template-columns:repeat(3,1fr);gap:24px;text-align:left}
-.step{position:relative;background:#fff;border:1px solid var(--line);border-top:5px solid var(--accent);border-radius:16px;padding:26px 24px 28px;box-shadow:0 6px 18px rgba(10,92,158,.08);transition:transform .2s,box-shadow .2s}
+.step{position:relative;background:#fff;border:1px solid var(--line);border-top:5px solid #1D3C9D;border-radius:16px;padding:26px 24px 28px;box-shadow:0 6px 18px rgba(10,92,158,.08);transition:transform .2s,box-shadow .2s}
 .step:hover{transform:translateY(-6px);box-shadow:0 16px 30px rgba(10,92,158,.16)}
-.step .num{display:inline-flex;align-items:center;justify-content:center;min-width:52px;height:52px;border-radius:14px;background:linear-gradient(135deg,var(--blue),var(--aqua));color:#fff;font:700 22px "Playfair Display",serif;margin-bottom:18px}
+.step .num{display:inline-flex;align-items:center;justify-content:center;min-width:52px;height:52px;border-radius:14px;background: linear-gradient(135deg, var(--aqua), #1D3C9D);color:#fff;font:700 22px "Playfair Display",serif;margin-bottom:18px}
 .step h3{font-size:14px;letter-spacing:.14em;margin-bottom:10px;color:var(--blue)}
 .step p{font-size:16px;line-height:1.65;color:var(--gray)}
 
@@ -113,7 +107,7 @@ footer .logo{width:70px;height:70px;box-shadow:0 0 0 3px var(--accent)}
 .cta .btn{position:relative;height:56px;padding:0 38px;font-size:18px}
 
 /* Footer */
-footer{margin-top:auto;background:var(--deep);border-top:4px solid var(--accent);color:#cfe3f4;padding:48px 0 28px}
+footer{margin-top:500px;background:var(--deep);border-top:4px solid var(--accent);color:#cfe3f4;padding:28px 0 18px}
 .foot{display:flex;justify-content:center;align-items:center;gap:28px;flex-wrap:wrap}
 .foot .brand b{font-size:20px}
 .copy{margin-top:28px;padding-top:20px;border-top:1px solid rgba(107,188,255,.3);text-align:center;font-size:14px;color:#9fbfd9}

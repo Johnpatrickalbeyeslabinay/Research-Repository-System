@@ -9,7 +9,7 @@
                 break;
 
             case 'instructor':
-                $welcomeMessage = 'Your research supervision, submissions, and notifications are ready for you.';
+                $welcomeMessage = 'Your research supervision, student submissions, and notifications are ready for you.';
                 break;
 
             case 'admin':
