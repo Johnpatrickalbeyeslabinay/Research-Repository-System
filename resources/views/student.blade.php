@@ -376,8 +376,10 @@
 
                                     <small class="d-none" data-abstract-badge></small>
 
+                                    <x-research.abstract-ai-draft />
+
                                     <div class="rw-abstract-preview d-none" data-abstract-preview>
-                                        <p class="small text-muted mb-1">We found this text in your PDF — is this your abstract?</p>
+                                        <p class="small text-muted mb-1" data-abstract-preview-label>We found this text in your PDF — is this your abstract?</p>
                                         <p class="small fw-semibold mb-2" data-abstract-preview-text></p>
                                         <button type="button" class="btn btn-sm btn-outline-primary" data-abstract-preview-use>Use this</button>
                                         <button type="button" class="btn btn-sm btn-outline-secondary" data-abstract-preview-dismiss>Write my own</button>
@@ -968,6 +970,15 @@
                                     data-abstract-field>{{ old('desc', $file->desc) }}</textarea>
 
                                 <small class="d-none" data-abstract-badge></small>
+
+                                <x-research.abstract-ai-draft />
+
+                                <div class="rw-abstract-preview d-none mt-2" data-abstract-preview>
+                                    <p class="small text-muted mb-1" data-abstract-preview-label>We found this text in your PDF — is this your abstract?</p>
+                                    <p class="small fw-semibold mb-2" data-abstract-preview-text></p>
+                                    <button type="button" class="btn btn-sm btn-outline-primary" data-abstract-preview-use>Use this</button>
+                                    <button type="button" class="btn btn-sm btn-outline-secondary" data-abstract-preview-dismiss>Write my own</button>
+                                </div>
                             </div>
 
                             <div class="mb-3">

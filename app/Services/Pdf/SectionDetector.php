@@ -52,6 +52,20 @@ class SectionDetector
     // (see MetadataAnalysisService's $fallbackExcerpt parameter).
     private const FALLBACK_EXCERPT_WORDS = 300;
 
+    // Sections (in reading order) that abstractSourceExcerpt() samples
+    // for AI abstract generation, and how much of each.
+    private const ABSTRACT_SOURCE_SECTIONS = [
+        'introduction' => 'Introduction',
+        'methodology' => 'Methodology',
+        'results' => 'Results',
+        'discussion' => 'Discussion',
+        'conclusion' => 'Conclusion',
+    ];
+
+    private const ABSTRACT_SOURCE_WORDS_PER_SECTION = 250;
+
+    private const ABSTRACT_SOURCE_FALLBACK_WORDS = 900;
+
     /**
      * Same as detect(), but cached by the source PDF's content hash — see
      * PdfTextExtractor::extractCached() for why this matters (the same
@@ -450,6 +464,84 @@ class SectionDetector
     }
 
     /**
+     * Source text for AI abstract generation (App\Services\Ai\
+     * AbstractGenerationService) when the paper has no detectable
+     * abstract: the opening words of its introduction, methodology,
+     * results and conclusion — enough to summarize purpose, method,
+     * findings and conclusion without sending the whole thesis. Falls
+     * back to the start of the document body when none of those headings
+     * were found. Deterministic; nothing here calls an AI.
+     *
+     * @param  array<int, array{key: string, heading: string, start: int, end: int, page_number: ?int}>  $sections  detect()'s 'sections'
+     */
+    public function abstractSourceExcerpt(array $sections, string $fullText): ?string
+    {
+        $parts = [];
+
+        foreach (self::ABSTRACT_SOURCE_SECTIONS as $key => $label) {
+            $body = $this->sectionBody($sections, $key, $fullText);
+
+            if ($body !== null) {
+                $parts[] = "[{$label}]\n".$this->firstWords($body, self::ABSTRACT_SOURCE_WORDS_PER_SECTION);
+            }
+        }
+
+        if ($parts === []) {
+            $body = trim($fullText);
+
+            return $body === '' ? null : $this->firstWords($body, self::ABSTRACT_SOURCE_FALLBACK_WORDS);
+        }
+
+        return implode("\n\n", $parts);
+    }
+
+    /**
+     * The text under every heading of one section key, from the first such
+     * heading to the end of the last. 'introduction' covers both the bare
+     * "INTRODUCTION" heading and its subheadings (e.g. "1.1 Background of
+     * the Study" normalizes to "BACKGROUND OF THE STUDY", also an alias —
+     * see ALIASES above). A document commonly has a bare "INTRODUCTION"
+     * heading with nothing under it before the next (sub)heading
+     * immediately follows — using only the first match's span would then
+     * extract an empty body. Spanning from the first to the last section
+     * with the key instead captures the actual prose, wherever among
+     * those subheadings it starts.
+     */
+    private function sectionBody(array $sections, string $key, string $fullText): ?string
+    {
+        $firstIndex = null;
+        $lastIndex = null;
+
+        foreach ($sections as $i => $section) {
+            if ($section['key'] !== $key) {
+                continue;
+            }
+
+            $firstIndex ??= $i;
+            $lastIndex = $i;
+        }
+
+        if ($firstIndex === null) {
+            return null;
+        }
+
+        $section = $sections[$firstIndex];
+        $spanEnd = $sections[$lastIndex]['end'];
+
+        $headingLineEnd = strpos($fullText, "\n", $section['start']);
+        $bodyStart = $headingLineEnd === false ? $section['start'] : $headingLineEnd + 1;
+
+        $body = trim(substr($fullText, $bodyStart, $spanEnd - $bodyStart));
+
+        return $body === '' ? null : $body;
+    }
+
+    private function firstWords(string $text, int $count): string
+    {
+        return implode(' ', array_slice(preg_split('/\s+/', trim($text)), 0, $count));
+    }
+
+    /**
      * A short excerpt from the introduction, used only as a fallback for
      * the AI metadata call when the abstract is missing or too short to
      * classify reliably on its own (MetadataAnalysisService's
@@ -459,40 +551,9 @@ class SectionDetector
      */
     private function extractFallbackExcerpt(array $sections, string $fullText): ?string
     {
-        $firstIntroIndex = null;
-        $lastIntroIndex = null;
+        $body = $this->sectionBody($sections, 'introduction', $fullText);
 
-        // 'introduction' covers both the bare "INTRODUCTION" heading and
-        // its subheadings (e.g. "1.1 Background of the Study" normalizes
-        // to "BACKGROUND OF THE STUDY", also an alias — see ALIASES
-        // above). A document commonly has a bare "INTRODUCTION" heading
-        // with nothing under it before the next (sub)heading immediately
-        // follows — using only the first match's span would then extract
-        // an empty body. Spanning from the first to the last contiguous
-        // 'introduction'-keyed section instead captures the actual prose,
-        // wherever among those subheadings it starts.
-        foreach ($sections as $i => $section) {
-            if ($section['key'] !== 'introduction') {
-                continue;
-            }
-
-            $firstIntroIndex ??= $i;
-            $lastIntroIndex = $i;
-        }
-
-        if ($firstIntroIndex === null) {
-            return null;
-        }
-
-        $introSection = $sections[$firstIntroIndex];
-        $spanEnd = $sections[$lastIntroIndex]['end'];
-
-        $headingLineEnd = strpos($fullText, "\n", $introSection['start']);
-        $bodyStart = $headingLineEnd === false ? $introSection['start'] : $headingLineEnd + 1;
-
-        $body = trim(substr($fullText, $bodyStart, $spanEnd - $bodyStart));
-
-        if ($body === '') {
+        if ($body === null) {
             return null;
         }
 
