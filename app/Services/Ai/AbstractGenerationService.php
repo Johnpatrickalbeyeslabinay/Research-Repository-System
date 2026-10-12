@@ -127,7 +127,7 @@ class AbstractGenerationService
         $requestId = (string) Str::uuid();
         $start = microtime(true);
         $model = config('services.openai.abstract_model');
-        $maxInputTokens = (int) config('services.openai.abstract_max_input_tokens', 3000);
+        $maxInputTokens = (int) config('services.openai.abstract_max_input_tokens', 2000);
         $maxOutputTokens = (int) config('services.openai.abstract_max_output_tokens', 450);
 
         $userContent = "Title: {$title}\n\nExcerpts from the paper:\n{$source}";

@@ -480,7 +480,7 @@ class StudentController extends Controller
         $canGenerateAbstract = ($detected['abstract']['confidence'] ?? null) !== 'high';
 
         if ($canGenerateAbstract) {
-            $excerpt = $this->sectionDetector->abstractSourceExcerpt($detected['sections'], $processed['full_text']);
+            $excerpt = $this->sectionDetector->abstractSourceExcerpt($detected['sections'], $processed['full_text'], $processed['pages']);
 
             if ($excerpt !== null) {
                 $this->abstractGeneration->storeSource($processed['hash'], $excerpt);

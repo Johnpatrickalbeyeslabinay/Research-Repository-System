@@ -40,7 +40,9 @@ class SectionDetector
     // the same hash from before the fix isn't kept serving it.
     // v6: multi-line/bulleted "Keywords:" parsing + junk-token filtering,
     // and the new fallback_excerpt output.
-    private const CACHE_VERSION = 'v6';
+    // v7: table-of-contents headings dropped (dropTableOfContents()), and
+    // fallback_excerpt cleaned of headers/footers/citations (cleanForPrompt()).
+    private const CACHE_VERSION = 'v7';
 
     // A parsed keyword token this long is almost certainly a mis-split
     // sentence fragment (e.g. a "Keywords:" block that runs into the next
@@ -52,19 +54,34 @@ class SectionDetector
     // (see MetadataAnalysisService's $fallbackExcerpt parameter).
     private const FALLBACK_EXCERPT_WORDS = 300;
 
-    // Sections (in reading order) that abstractSourceExcerpt() samples
-    // for AI abstract generation, and how much of each.
+    // Sections (in reading order) that abstractSourceExcerpt() samples for
+    // AI abstract generation, and how many words of each — weighted toward
+    // what an abstract actually summarizes (purpose, findings, conclusion).
+    // About 750 words (~1,000 tokens) in total, so a draft costs a fraction
+    // of a cent and never carries the bulk of the thesis.
     private const ABSTRACT_SOURCE_SECTIONS = [
-        'introduction' => 'Introduction',
-        'methodology' => 'Methodology',
-        'results' => 'Results',
-        'discussion' => 'Discussion',
-        'conclusion' => 'Conclusion',
+        'introduction' => ['Introduction', 200],
+        'methodology' => ['Methodology', 150],
+        'results' => ['Results', 200],
+        'discussion' => ['Discussion', 150],
+        'conclusion' => ['Conclusion', 200],
     ];
 
-    private const ABSTRACT_SOURCE_WORDS_PER_SECTION = 250;
+    // Used only when no section heading was found at all.
+    private const ABSTRACT_SOURCE_FALLBACK_WORDS = 600;
 
-    private const ABSTRACT_SOURCE_FALLBACK_WORDS = 900;
+    // A heading followed by fewer real words than this before the next
+    // heading is a candidate table-of-contents entry (see
+    // dropTableOfContents()).
+    private const TOC_ENTRY_MAX_WORDS = 15;
+
+    // Front-matter headings the no-heading fallback skips past, so the AI
+    // isn't sent the approval sheet, dedication or acknowledgments.
+    private const FRONT_MATTER_HEADINGS = [
+        'ACKNOWLEDGMENT', 'ACKNOWLEDGMENTS', 'ACKNOWLEDGEMENT', 'ACKNOWLEDGEMENTS',
+        'DEDICATION', 'TABLE OF CONTENTS', 'CONTENTS', 'LIST OF TABLES',
+        'LIST OF FIGURES', 'LIST OF APPENDICES', 'APPROVAL SHEET',
+    ];
 
     /**
      * Same as detect(), but cached by the source PDF's content hash — see
@@ -131,6 +148,8 @@ class SectionDetector
             ];
         }
 
+        $headings = $this->dropTableOfContents($headings, $fullText);
+
         $sections = [];
         foreach ($headings as $i => $heading) {
             $end = $headings[$i + 1]['start'] ?? strlen($fullText);
@@ -153,8 +172,177 @@ class SectionDetector
             'abstract' => $abstract,
             'keywords' => $keywords,
             'references' => $this->extractReferences($sections, $fullText),
-            'fallback_excerpt' => $this->extractFallbackExcerpt($sections, $fullText),
+            'fallback_excerpt' => $this->extractFallbackExcerpt($sections, $fullText, $pages),
         ];
+    }
+
+    /**
+     * A thesis's table of contents lists the same headings this class
+     * looks for ("INTRODUCTION", "METHODOLOGY", ...), and smalot/pdfparser
+     * often splits the dot leaders off so each entry sits on its own line
+     * and matches exactly. Left in, every section would start at its TOC
+     * entry: the introduction excerpt sent to the AI would be the rest of
+     * the TOC, and extractReferences() would read the TOC's "REFERENCES"
+     * entry instead of the real list.
+     *
+     * A TOC shows up as a run of headings with almost nothing between
+     * them (a few words, or lines that end in page numbers) covering
+     * several different section kinds. A run spanning at least three
+     * different keys is dropped — including its last entry, whose "body"
+     * runs on into whatever follows the TOC. A real "CHAPTER I /
+     * INTRODUCTION" directly followed by "Background of the Study" is one
+     * key, and even a terse "CONCLUSIONS / RECOMMENDATIONS / REFERENCES"
+     * ending is only two, so neither is mistaken for a TOC.
+     *
+     * @param  array<int, array{key: string, heading: string, start: int, page_number: ?int}>  $headings
+     * @return array<int, array{key: string, heading: string, start: int, page_number: ?int}>
+     */
+    private function dropTableOfContents(array $headings, string $fullText): array
+    {
+        $count = count($headings);
+        $drop = [];
+        $i = 0;
+
+        while ($i < $count - 1) {
+            $j = $i;
+
+            while ($j < $count - 1 && $this->looksLikeTocGap($fullText, $headings[$j]['start'], $headings[$j + 1]['start'])) {
+                $j++;
+            }
+
+            // $i..$j is a run where each heading is followed almost
+            // immediately by the next one. When the TOC's last entry sits
+            // just before the real first chapter, the run continues into
+            // the document itself — a key showing up again after other
+            // keys ("INTRODUCTION" after "REFERENCES") marks where the
+            // listing ended and the real section begins.
+            $tocEnd = $j;
+            $seen = [$headings[$i]['key'] => true];
+
+            for ($k = $i + 1; $k <= $j; $k++) {
+                $key = $headings[$k]['key'];
+
+                if ($key !== $headings[$k - 1]['key'] && isset($seen[$key])) {
+                    $tocEnd = $k - 1;
+                    break;
+                }
+
+                $seen[$key] = true;
+            }
+
+            $run = array_slice($headings, $i, $tocEnd - $i + 1);
+
+            if (count($run) >= 3 && count(array_unique(array_column($run, 'key'))) >= 3) {
+                foreach (range($i, $tocEnd) as $index) {
+                    $drop[$index] = true;
+                }
+
+                $i = $tocEnd + 1;
+            } else {
+                $i++;
+            }
+        }
+
+        return array_values(array_diff_key($headings, $drop));
+    }
+
+    private function looksLikeTocGap(string $fullText, int $headingStart, int $nextStart): bool
+    {
+        $lineEnd = strpos($fullText, "\n", $headingStart);
+        $bodyStart = $lineEnd === false || $lineEnd > $nextStart ? $nextStart : $lineEnd + 1;
+        $body = substr($fullText, $bodyStart, $nextStart - $bodyStart);
+
+        preg_match_all('/\p{L}{2,}/u', $body, $words);
+
+        if (count($words[0]) < self::TOC_ENTRY_MAX_WORDS) {
+            return true;
+        }
+
+        // Longer TOC stretches list sub-entries ("Statement of the Problem
+        // 3") — mostly short lines ending in a page number.
+        $lines = array_values(array_filter(array_map('trim', explode("\n", $body)), fn ($l) => $l !== ''));
+
+        if (count($lines) < 2) {
+            return false;
+        }
+
+        $numbered = count(array_filter($lines, fn ($l) => preg_match('/(\d{1,3}|\b[ivxlc]{1,6})$/iu', $l) === 1 && str_word_count($l) <= 10));
+
+        return $numbered / count($lines) >= 0.6;
+    }
+
+    /**
+     * Strips what costs prompt tokens without telling the AI anything
+     * about the research: running headers/footers (lines repeated on at
+     * least half the pages), page-number and dot-leader lines, TOC-style
+     * "Title ... 12" lines, figure/table captions, URLs/DOIs and
+     * parenthetical citations like "(Santos et al., 2019)". Pure text
+     * processing — nothing here calls an AI.
+     *
+     * @param  string[]  $pages
+     */
+    private function cleanForPrompt(string $text, array $pages): string
+    {
+        $repeated = $this->repeatedPageLines($pages);
+        $kept = [];
+
+        foreach (preg_split('/\R/u', $text) as $line) {
+            $trimmed = trim($line);
+
+            if ($trimmed === ''
+                || isset($repeated[mb_strtolower($trimmed)])
+                || preg_match('/^(page\s*)?(\d+|[ivxlc]+)(\s*(of|\/)\s*\d+)?$/iu', $trimmed)
+                || preg_match('/\.{4,}|(\.\s){4,}/u', $trimmed)
+                || preg_match('/^(figure|fig\.|table|plate|chart)\s*\d+/iu', $trimmed)
+                || (str_word_count($trimmed) <= 8 && preg_match('/^\p{L}[\p{L}\s,:\'’&-]{2,80}\s+(\d{1,3}|[ivxlc]{1,6})$/iu', $trimmed))) {
+                continue;
+            }
+
+            $kept[] = $trimmed;
+        }
+
+        $text = implode(' ', $kept);
+        $text = preg_replace('~\b(https?://|www\.)\S+~iu', '', $text);
+        $text = preg_replace('~\b(doi:\s*|10\.\d{4,9}/)\S+~iu', '', $text);
+        $text = preg_replace('/\s*\([^()]{0,120}\b(19|20)\d{2}[a-z]?\)/u', '', $text);
+
+        return trim(preg_replace('/\s+/u', ' ', $text));
+    }
+
+    /**
+     * Lines that appear on at least half of the pages (min. 4 pages) — a
+     * running header or footer such as the school name or thesis title.
+     *
+     * @param  string[]  $pages
+     * @return array<string, true>
+     */
+    private function repeatedPageLines(array $pages): array
+    {
+        if (count($pages) < 4) {
+            return [];
+        }
+
+        $seenOnPages = [];
+
+        foreach ($pages as $page) {
+            $linesOnPage = [];
+
+            foreach (preg_split('/\R/u', (string) $page) as $line) {
+                $line = mb_strtolower(trim($line));
+
+                if (mb_strlen($line) >= 3 && mb_strlen($line) <= 100) {
+                    $linesOnPage[$line] = true;
+                }
+            }
+
+            foreach (array_keys($linesOnPage) as $line) {
+                $seenOnPages[$line] = ($seenOnPages[$line] ?? 0) + 1;
+            }
+        }
+
+        $threshold = count($pages) / 2;
+
+        return array_fill_keys(array_keys(array_filter($seenOnPages, fn ($n) => $n >= $threshold)), true);
     }
 
     /**
@@ -468,31 +656,85 @@ class SectionDetector
      * AbstractGenerationService) when the paper has no detectable
      * abstract: the opening words of its introduction, methodology,
      * results and conclusion — enough to summarize purpose, method,
-     * findings and conclusion without sending the whole thesis. Falls
-     * back to the start of the document body when none of those headings
-     * were found. Deterministic; nothing here calls an AI.
+     * findings and conclusion without sending the whole thesis, cleaned
+     * of headers, page numbers and citations (cleanForPrompt()). When none
+     * of those headings were found, falls back to the body text after any
+     * front matter (approval sheet, acknowledgments, table of contents).
+     * Deterministic; nothing here calls an AI.
      *
      * @param  array<int, array{key: string, heading: string, start: int, end: int, page_number: ?int}>  $sections  detect()'s 'sections'
+     * @param  string[]  $pages  per-page text, for header/footer detection
      */
-    public function abstractSourceExcerpt(array $sections, string $fullText): ?string
+    public function abstractSourceExcerpt(array $sections, string $fullText, array $pages = []): ?string
     {
         $parts = [];
 
-        foreach (self::ABSTRACT_SOURCE_SECTIONS as $key => $label) {
-            $body = $this->sectionBody($sections, $key, $fullText);
+        // A combined "RESULTS AND DISCUSSION" heading already covers the
+        // discussion — don't spend a second budget on the same text.
+        $resultsCoverDiscussion = (bool) array_filter(
+            $sections,
+            fn ($s) => $s['key'] === 'results' && str_contains(mb_strtoupper($s['heading']), 'DISCUSSION')
+        );
 
-            if ($body !== null) {
-                $parts[] = "[{$label}]\n".$this->firstWords($body, self::ABSTRACT_SOURCE_WORDS_PER_SECTION);
+        foreach (self::ABSTRACT_SOURCE_SECTIONS as $key => [$label, $words]) {
+            if ($key === 'discussion' && $resultsCoverDiscussion) {
+                continue;
+            }
+
+            $body = $this->sectionBody($sections, $key, $fullText);
+            $body = $body === null ? '' : $this->cleanForPrompt($body, $pages);
+
+            if ($body !== '') {
+                $parts[] = "[{$label}]\n".$this->firstWords($body, $words);
             }
         }
 
-        if ($parts === []) {
-            $body = trim($fullText);
-
-            return $body === '' ? null : $this->firstWords($body, self::ABSTRACT_SOURCE_FALLBACK_WORDS);
+        if ($parts !== []) {
+            return implode("\n\n", $parts);
         }
 
-        return implode("\n\n", $parts);
+        $body = $this->cleanForPrompt($this->skipFrontMatter($fullText, $pages), $pages);
+
+        return $body === '' ? null : $this->firstWords($body, self::ABSTRACT_SOURCE_FALLBACK_WORDS);
+    }
+
+    /**
+     * The text after the last front-matter heading (approval sheet,
+     * dedication, acknowledgments, table of contents, lists of
+     * tables/figures) found in the first half of the document — or the
+     * whole text if there is none. Front matter is a page of its own in a
+     * thesis, so with page texts available the cut moves on to the next
+     * page, skipping that heading's body too (the acknowledgment itself,
+     * not only its title).
+     *
+     * @param  string[]  $pages
+     */
+    private function skipFrontMatter(string $fullText, array $pages = []): string
+    {
+        $limit = (int) (strlen($fullText) / 2);
+        $cut = 0;
+
+        foreach (preg_split('/\n/', $fullText, -1, PREG_SPLIT_OFFSET_CAPTURE) as [$line, $offset]) {
+            if ($offset > $limit) {
+                break;
+            }
+
+            if (in_array($this->normalizeHeadingCandidate($line), self::FRONT_MATTER_HEADINGS, true)) {
+                $cut = $offset + strlen($line) + 1;
+            }
+        }
+
+        if ($cut > 0 && $pages !== []) {
+            $pageStarts = $this->pageStartOffsets($pages);
+            $page = $this->pageNumberForOffset($cut - 1, $pageStarts); // 1-based
+            $nextPageStart = $pageStarts[$page] ?? null;
+
+            if ($nextPageStart !== null) {
+                $cut = $nextPageStart;
+            }
+        }
+
+        return substr($fullText, $cut);
     }
 
     /**
@@ -549,13 +791,15 @@ class SectionDetector
      * sent anywhere unless the abstract already failed its own confidence
      * check.
      */
-    private function extractFallbackExcerpt(array $sections, string $fullText): ?string
+    private function extractFallbackExcerpt(array $sections, string $fullText, array $pages): ?string
     {
         $body = $this->sectionBody($sections, 'introduction', $fullText);
 
         if ($body === null) {
             return null;
         }
+
+        $body = $this->cleanForPrompt($body, $pages);
 
         $words = preg_split('/\s+/', $body);
         $excerpt = implode(' ', array_slice($words, 0, self::FALLBACK_EXCERPT_WORDS));

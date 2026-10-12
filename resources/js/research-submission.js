@@ -985,11 +985,20 @@ function initAnalyzeButton(form, prefix) {
 
         const payload = { title, abstract };
 
-        // Always send the intro excerpt when the PDF had one, so keyword
-        // suggestions are grounded in the paper itself and not only in
-        // its abstract (the server caps the total prompt size).
+        // Send the intro excerpt when the PDF had one, so keyword
+        // suggestions are grounded in the paper itself and not only in its
+        // abstract. A full abstract (50+ words, SectionDetector's
+        // ABSTRACT_MIN_WORDS) already says most of it, so only a short
+        // 120-word slice goes along then; a thin abstract gets the whole
+        // 300-word excerpt. Keeps the common case ~250 tokens cheaper.
         if (fallbackExcerptField && fallbackExcerptField.value) {
-            payload.fallback_excerpt = fallbackExcerptField.value;
+            const wordCount = abstract.split(/\s+/).filter(Boolean).length;
+            const excerptWords = fallbackExcerptField.value
+                .split(/\s+/)
+                .filter(Boolean);
+            payload.fallback_excerpt = excerptWords
+                .slice(0, wordCount >= 50 ? 120 : 300)
+                .join(" ");
         }
 
         // Keywords the author already listed in the PDF — the AI is asked

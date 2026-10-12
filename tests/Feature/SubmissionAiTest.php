@@ -6,6 +6,7 @@ use App\Models\User;
 use App\Services\Ai\AbstractGenerationService;
 use App\Services\Pdf\SectionDetector;
 use App\Support\SubmissionAiQuota;
+use App\Support\TokenEstimator;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\Http;
@@ -167,7 +168,10 @@ class SubmissionAiTest extends TestCase
 
     public function test_abstract_source_excerpt_samples_the_papers_sections(): void
     {
-        $text = "INTRODUCTION\nFarmers face low rice yield.\nMETHODOLOGY\nA field experiment was run.\nCONCLUSION\nFertilizer helped.\nREFERENCES\nDoe (2020).";
+        // Real sections are paragraphs, not a few words — a run of 4-word
+        // "sections" is exactly what a table of contents looks like.
+        $pad = ' '.str_repeat('The researchers observed this across several barangays in the province. ', 3);
+        $text = "INTRODUCTION\nFarmers face low rice yield.{$pad}\nMETHODOLOGY\nA field experiment was run.{$pad}\nCONCLUSION\nFertilizer helped.{$pad}\nREFERENCES\nDoe (2020).";
         $detector = app(SectionDetector::class);
         $detected = $detector->detect([$text], $text);
 
@@ -177,6 +181,51 @@ class SubmissionAiTest extends TestCase
         $this->assertStringContainsString("[Methodology]\nA field experiment was run.", $excerpt);
         $this->assertStringContainsString("[Conclusion]\nFertilizer helped.", $excerpt);
         $this->assertStringNotContainsString('Doe (2020)', $excerpt);
+    }
+
+    public function test_a_long_thesis_sends_a_small_clean_prompt(): void
+    {
+        $student = User::factory()->student()->create();
+        $header = 'Isabela State University';
+        $prose = fn (string $topic) => str_repeat("The study examined {$topic} among rice farmers in the province. ", 40);
+
+        $pages = [
+            MinimalPdf::textPage("{$header}\nAPPROVAL SHEET\nThis thesis is approved by the panel of examiners."),
+            MinimalPdf::textPage("{$header}\nACKNOWLEDGMENT\nThe researchers thank their beloved parents for endless support."),
+            MinimalPdf::textPage("{$header}\nTABLE OF CONTENTS\nINTRODUCTION\n1\nMETHODOLOGY\n12\nRESULTS AND DISCUSSION\n20\nCONCLUSION\n30\nREFERENCES\n35"),
+            MinimalPdf::textPage("{$header}\nINTRODUCTION\n".$prose('declining yield')),
+        ];
+
+        foreach (['METHODOLOGY' => 'the field trial', 'RESULTS AND DISCUSSION' => 'the yield increase', 'CONCLUSION' => 'fertilizer adoption'] as $heading => $topic) {
+            for ($i = 0; $i < 11; $i++) {
+                $pages[] = MinimalPdf::textPage("{$header}\n".($i === 0 ? "{$heading}\n" : '').$prose($topic));
+            }
+        }
+
+        $response = $this->actingAs($student)
+            ->post('/research/pdf/analyze', ['file' => UploadedFile::fake()->createWithContent('thesis.pdf', MinimalPdf::build($pages))], ['Accept' => 'application/json'])
+            ->assertOk()
+            ->assertJson(['can_generate_abstract' => true]);
+
+        $this->fakeOpenAi(['abstract' => 'A draft.']);
+
+        $this->actingAs($student)
+            ->postJson('/research/abstract/generate', ['pdf_hash' => $response->json('pdf_hash'), 'title' => 'Rice study'])
+            ->assertOk();
+
+        Http::assertSent(function ($request) {
+            $prompt = $request['messages'][1]['content'];
+
+            $this->assertLessThanOrEqual(2000, app(TokenEstimator::class)->estimate($prompt));
+            $this->assertStringContainsString('declining yield', $prompt);
+            $this->assertStringContainsString('fertilizer adoption', $prompt);
+
+            foreach (['TABLE OF CONTENTS', 'beloved parents', 'APPROVAL SHEET', 'Isabela State University'] as $noise) {
+                $this->assertStringNotContainsString($noise, $prompt);
+            }
+
+            return true;
+        });
     }
 
     public function test_a_scanned_pdf_is_rejected_with_a_clear_message(): void
