@@ -846,37 +846,59 @@
 
         <!--Rejected reason-->
         @if($file->status === 'rejected' && !empty($file->rejection_reason))
-            <div class="alert alert-danger rounded-3 mb-4">
+            <div class="rounded-3 mb-4">
 
-                <div class="d-flex align-items-start">
-                    <i class="fa-solid fa-circle-exclamation fs-5 me-3 mt-1"></i>
+                <div class="card border-0 shadow-sm" style="background-color: #fffafa; border-left: 4px solid #f27c85 !important;">
+                    <div class="card-body p-3 p-md-4">
+                        <div class="d-flex align-items-start">
 
-                    <div class="w-100">
-
-                        <div class="fw-semibold mb-1">
-                            Reason for Rejection
-                        </div>
-
-                        <div class="mb-1">
-                            <strong>{{ $file->adviser }}</strong>
-                        </div>
-
-                        <div class="small text-secondary d-flex align-items-center flex-wrap gap-3">
-
-                            <div>
-                                <small>{{ $file->rejected_at?->format('M d, Y') ?? $file->updated_at?->format('M d, Y') }}</small>
+                            {{-- Icon --}}
+                            <div class="d-flex align-items-center justify-content-center rounded-circle flex-shrink-0 me-3"
+                                style="width: 44px; height: 44px; background-color: #fde3e5; color: #e5535d;">
+                                <i class="fa-solid fa-circle-exclamation fs-5"></i>
                             </div>
 
-                            <div>
-                                <small>{{ $file->rejected_at?->format('h:i A') ?? $file->updated_at?->format('h:i A') }}</small>
+                            <div class="w-100">
+
+                                {{-- Header --}}
+                                <div class="d-flex align-items-center justify-content-between flex-wrap gap-2 mb-2">
+                                    <h6 class="fw-semibold mb-0" style="color: #d9534f;">Reason for Rejection</h6>
+                                    <span class="badge rounded-pill fw-medium px-3 py-2"
+                                        style="background-color: #fde3e5; color: #c9444e;">Rejected</span>
+                                </div>
+
+                                {{-- Adviser and date/time --}}
+                                <div class="d-flex align-items-center flex-wrap gap-2 gap-md-3 mb-3 text-secondary small">
+                                    <div class="d-flex align-items-center">
+                                        <i class="fa-solid fa-user-tie me-2"></i>
+                                        <strong class="text-dark">{{ $file->adviser }}</strong>
+                                    </div>
+
+                                    <span class="d-none d-md-inline text-black-50">&bull;</span>
+
+                                    <div class="d-flex align-items-center">
+                                        <i class="fa-regular fa-calendar me-2"></i>
+                                        <span>{{ $file->rejected_at?->format('M d, Y') ?? $file->updated_at?->format('M d, Y') }}</span>
+                                    </div>
+
+                                    <span class="d-none d-md-inline text-black-50">&bull;</span>
+
+                                    <div class="d-flex align-items-center">
+                                        <i class="fa-regular fa-clock me-2"></i>
+                                        <span>{{ $file->rejected_at?->format('h:i A') ?? $file->updated_at?->format('h:i A') }}</span>
+                                    </div>
+                                </div>
+
+                                {{-- Rejection reason --}}
+                                <div class="rounded-3 p-3" style="background-color: #fdeeee; border: 1px solid #f8d4d7;">
+                                    <div class="text-uppercase fw-semibold mb-1" style="font-size: .7rem; letter-spacing: .05em; color: #c9444e;">
+                                        Adviser's Remarks
+                                    </div>
+                                    <div class="text-dark" style="white-space: pre-line;">{{ $file->rejection_reason }}</div>
+                                </div>
+
                             </div>
-
                         </div>
-
-                        <div class="mt-2">
-                            {{ $file->rejection_reason }}
-                        </div>
-
                     </div>
                 </div>
 
