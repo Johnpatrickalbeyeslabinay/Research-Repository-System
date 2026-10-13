@@ -45,6 +45,13 @@ return [
         'embedding_model' => env('OPENAI_EMBEDDING_MODEL', 'text-embedding-3-small'),
         'metadata_max_input_tokens' => env('OPENAI_METADATA_MAX_INPUT_TOKENS', 2000),
         'metadata_max_output_tokens' => env('OPENAI_METADATA_MAX_OUTPUT_TOKENS', 300),
+        // AI abstract generation (App\Services\Ai\AbstractGenerationService)
+        // — only for papers with no detectable abstract, on explicit click.
+        'abstract_model' => env('OPENAI_ABSTRACT_MODEL', env('OPENAI_METADATA_MODEL', 'gpt-4o-mini')),
+        // Hard ceiling; SectionDetector::abstractSourceExcerpt() normally
+        // stays around 1,000 tokens on its own.
+        'abstract_max_input_tokens' => env('OPENAI_ABSTRACT_MAX_INPUT_TOKENS', 2000),
+        'abstract_max_output_tokens' => env('OPENAI_ABSTRACT_MAX_OUTPUT_TOKENS', 450),
     ],
 
     'turnstile' => [

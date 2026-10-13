@@ -14,10 +14,16 @@ use Illuminate\Http\UploadedFile;
  */
 class PdfValidationService
 {
-    public function __construct(private PdfTextExtractor $extractor) {}
+    public function __construct(
+        private PdfTextExtractor $extractor,
+        private ScannedPdfDetector $scanDetector,
+    ) {}
 
     /**
-     * @return array{hash: string, full_text: string, pages: string[], page_count: int}
+     * Rejects a mostly-scanned PDF outright; a partly-scanned one passes
+     * with its 'scan' summary attached so the form can warn about it.
+     *
+     * @return array{hash: string, full_text: string, pages: string[], page_has_image: bool[], page_count: int, scan: array{image_pages: int, text_pages: int, page_count: int, ratio: float, verdict: string}}
      *
      * @throws PdfProcessingException
      */
@@ -33,6 +39,12 @@ class PdfValidationService
 
         $extracted = $this->extractor->extractCached($hash, $file->getRealPath());
 
-        return array_merge(['hash' => $hash], $extracted);
+        $scan = $this->scanDetector->detect($extracted['pages'], $extracted['page_has_image'] ?? []);
+
+        if ($scan['verdict'] === ScannedPdfDetector::VERDICT_SCANNED) {
+            throw PdfProcessingException::scanned($scan['image_pages'], $scan['page_count']);
+        }
+
+        return array_merge(['hash' => $hash], $extracted, ['scan' => $scan]);
     }
 }

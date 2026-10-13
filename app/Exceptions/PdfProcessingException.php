@@ -25,4 +25,9 @@ class PdfProcessingException extends RuntimeException
     {
         return new self('We could not extract readable text from this PDF. If it is a scanned/image-only document, please upload a text-based PDF instead.');
     }
+
+    public static function scanned(int $imagePages, int $pageCount): self
+    {
+        return new self("This PDF appears to be a scanned/image-only document ({$imagePages} of {$pageCount} pages are images). Please upload a text-based PDF — export it from Word/Google Docs, or run OCR on the scan first.");
+    }
 }

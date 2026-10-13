@@ -2,8 +2,10 @@
 
 namespace App\Services\Ai;
 
+use App\Exceptions\AiQuotaExceededException;
 use App\Exceptions\MetadataAnalysisException;
 use App\Models\AiUsageLog;
+use App\Support\SubmissionAiQuota;
 use App\Support\TokenEstimator;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Cache;
@@ -15,15 +17,16 @@ use Illuminate\Support\Str;
  * Generates keyword + SDG suggestions from a research title and abstract
  * only — never the full document. One structured OpenAI call produces both
  * fields together. Results are cached by a fingerprint of the (normalized)
- * title + abstract + prompt version, so re-analyzing unchanged content never
- * re-hits the API.
+ * inputs + prompt version, so re-analyzing unchanged content never re-hits
+ * the API or counts against the student's daily SubmissionAiQuota.
  */
 class MetadataAnalysisService
 {
     // Bump this when the prompt or schema changes so old cached/stored
     // results are treated as stale rather than silently reused.
     // v2: sanitizeSdgs() now returns 'number' instead of 'id' — see below.
-    private const PROMPT_VERSION = 'v2';
+    // v3: prompt also grounded in a paper excerpt + the author's own keywords.
+    private const PROMPT_VERSION = 'v3';
 
     // These are SDG *numbers* (1-17, the fixed UN numbering used in the
     // prompt below), not sdgs.id database row ids — the two are easy to
@@ -50,13 +53,18 @@ class MetadataAnalysisService
     }
 
     /**
-     * @param  ?string  $fallbackExcerpt  small intro/conclusion excerpt, only
-     *                                    used when the abstract is missing/too short
-     * @return array{keywords: string[], sdgs: array<int, array{number: int, confidence: float}>, model: string, fingerprint: string}
+     * @param  ?string  $fallbackExcerpt  small intro excerpt from the PDF, so
+     *                                    suggestions reflect the paper itself
+     *                                    and not only its abstract
+     * @param  string[]  $existingKeywords  keywords the author already listed
+     *                                      in the PDF — the model is asked to
+     *                                      complement rather than repeat them
+     * @return array{keywords: string[], sdgs: array<int, array{number: int, confidence: float}>, model: string, fingerprint: string, cached: bool}
      *
      * @throws MetadataAnalysisException
+     * @throws AiQuotaExceededException
      */
-    public function analyze(string $title, string $abstract, ?string $fallbackExcerpt = null): array
+    public function analyze(string $title, string $abstract, ?string $fallbackExcerpt = null, array $existingKeywords = []): array
     {
         $apiKey = config('services.openai.api_key');
 
@@ -64,13 +72,34 @@ class MetadataAnalysisService
             throw MetadataAnalysisException::notConfigured();
         }
 
+        $existingKeywords = $this->sanitizeKeywords($existingKeywords);
         $fingerprint = $this->fingerprint($title, $abstract);
 
-        return Cache::remember(
-            "ai_metadata:{$fingerprint}",
-            now()->addDays(7),
-            fn () => $this->callOpenAi($apiKey, $title, $abstract, $fallbackExcerpt, $fingerprint)
+        // The cache key covers every input that reaches the prompt — the
+        // excerpt and author keywords too — while fingerprint() stays
+        // title+abstract only, because StudentController::applyAiAuditFields()
+        // recomputes it from the submitted title/desc to verify the audit
+        // fields.
+        $cacheKey = 'ai_metadata:'.$fingerprint.':'.sha1(
+            $this->normalize((string) $fallbackExcerpt).'|'.implode('|', array_map(fn ($k) => mb_strtolower($k), $existingKeywords))
         );
+
+        // Explicit get/put rather than Cache::remember(): the daily quota
+        // must be charged only when the API is actually about to be called,
+        // so a hit (page reload, re-click on unchanged text) stays free.
+        $cached = Cache::get($cacheKey);
+
+        if (is_array($cached)) {
+            return ['cached' => true] + $cached;
+        }
+
+        SubmissionAiQuota::consume(Auth::id());
+
+        $result = $this->callOpenAi($apiKey, $title, $abstract, $fallbackExcerpt, $existingKeywords, $fingerprint);
+
+        Cache::put($cacheKey, $result, now()->addDays(7));
+
+        return ['cached' => false] + $result;
     }
 
     /**
@@ -87,7 +116,7 @@ class MetadataAnalysisService
      *
      * @throws MetadataAnalysisException
      */
-    private function callOpenAi(string $apiKey, string $title, string $abstract, ?string $fallbackExcerpt, string $fingerprint): array
+    private function callOpenAi(string $apiKey, string $title, string $abstract, ?string $fallbackExcerpt, array $existingKeywords, string $fingerprint): array
     {
         $requestId = (string) Str::uuid();
         $start = microtime(true);
@@ -97,8 +126,12 @@ class MetadataAnalysisService
 
         $userContent = "Title: {$title}\n\nAbstract: {$abstract}";
 
-        if ($fallbackExcerpt !== null) {
-            $userContent .= "\n\nAdditional excerpt: {$fallbackExcerpt}";
+        if ($existingKeywords !== []) {
+            $userContent .= "\n\nKeywords the author already listed: ".implode(', ', $existingKeywords);
+        }
+
+        if ($fallbackExcerpt !== null && trim($fallbackExcerpt) !== '') {
+            $userContent .= "\n\nExcerpt from the paper's introduction: {$fallbackExcerpt}";
         }
 
         // Applied unconditionally: previously this only ran when a
@@ -129,9 +162,11 @@ class MetadataAnalysisService
                     'messages' => [
                         [
                             'role' => 'system',
-                            'content' => 'You classify academic research metadata. Given a title and abstract, '
-                                .'suggest 5-8 specific, domain-relevant keywords (avoid generic terms like '
-                                .'"system", "study", "research", "technology" unless truly central) and 1-3 '
+                            'content' => 'You classify academic research metadata. Given a title, abstract and '
+                                .'possibly an excerpt from the paper itself, suggest 5-8 specific, domain-relevant '
+                                .'keywords grounded in what the paper actually studies (avoid generic terms like '
+                                .'"system", "study", "research", "technology" unless truly central; do not repeat '
+                                .'keywords the author already listed) and 1-3 '
                                 .'UN Sustainable Development Goals (1-17) that genuinely relate to the research, '
                                 .'with a confidence from 0 to 1 for each. Only suggest SDGs you are reasonably '
                                 .'confident about — do not pad the list to appear broadly applicable.',
@@ -201,8 +236,13 @@ class MetadataAnalysisService
 
         $this->recordUsage($requestId, $model, $response, $start, true, null);
 
+        $alreadyListed = array_flip(array_map(fn ($k) => mb_strtolower($k), $existingKeywords));
+
         return [
-            'keywords' => $this->sanitizeKeywords($parsed['keywords']),
+            'keywords' => array_values(array_filter(
+                $this->sanitizeKeywords($parsed['keywords']),
+                fn ($k) => ! isset($alreadyListed[mb_strtolower($k)])
+            )),
             'sdgs' => $this->sanitizeSdgs($parsed['sdgs']),
             'model' => $model,
             'fingerprint' => $fingerprint,
