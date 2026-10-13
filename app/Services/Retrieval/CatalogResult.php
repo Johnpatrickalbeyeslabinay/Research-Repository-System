@@ -22,12 +22,15 @@ final class CatalogResult
      *         or most recent first), eager-loaded with authors/keywords/sdgs
      * @param  int  $total  matching documents the user may access, before the cap
      * @param  array  $filters  QueryPlanner::plan()'s output, for explaining an empty result
+     * @param  int  $unindexed  set only on an empty result: matching documents the
+     *         user may access whose search index is not ready (pending, failed)
      */
     public function __construct(
         public readonly Collection $documents,
         public readonly int $total,
         public readonly array $filters,
         public readonly bool $semantic = false,
+        public readonly int $unindexed = 0,
     ) {}
 
     public function isEmpty(): bool

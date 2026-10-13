@@ -3,6 +3,7 @@
 namespace App\Services\Chat;
 
 use App\Exceptions\ChatUnavailableException;
+use App\Exceptions\EmbeddingFailedException;
 use App\Models\AiUsageLog;
 use App\Models\ChatConversation;
 use App\Models\ChatMessage;
@@ -96,7 +97,7 @@ class ChatTurnService
         ]);
 
         $turn = new ChatTurn($routed, $conversation, $userMessage, $user, $requestId);
-        $outcome = $this->resolveHandler($routed->intent)->handle($turn);
+        $outcome = $this->handle($turn);
 
         $suggested = $outcome->suggestedResearch;
 
@@ -119,6 +120,35 @@ class ChatTurnService
             'suggested_research' => $this->suggestedResearchCards($suggested),
             'tier' => $outcome->retrieval?->tier?->tier->value,
         ];
+    }
+
+    /**
+     * Handlers embed the question (RetrievalService, CatalogHandler) before any
+     * answer call, so an embedding outage surfaces here rather than in
+     * answerWithLlm(). Left uncaught it was a 500, which with APP_DEBUG on
+     * showed the user OpenAI's raw error and wrote no failure row — a dead key
+     * was invisible in ai_usage_logs.
+     *
+     * @throws ChatUnavailableException
+     */
+    private function handle(ChatTurn $turn): TurnOutcome
+    {
+        try {
+            return $this->resolveHandler($turn->routed->intent)->handle($turn);
+        } catch (EmbeddingFailedException $e) {
+            AiUsageLog::record([
+                'user_id' => $turn->user?->id,
+                'conversation_id' => $turn->conversation->id,
+                'request_id' => $turn->requestId,
+                'operation' => 'query_embedding',
+                'model' => config('services.openai.embedding_model'),
+                'chunks_retrieved' => 0,
+                'success' => false,
+                'error_code' => class_basename($e),
+            ]);
+
+            throw ChatUnavailableException::providerError();
+        }
     }
 
     /**

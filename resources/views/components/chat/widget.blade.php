@@ -135,8 +135,6 @@
 
         {{-- Composer --}}
         <div class="border-top bg-white p-2" style="flex:0 0 auto;">
-            <div id="ai-chat-error" class="small text-danger px-1 pb-2" style="display:none;"></div>
-
             <form id="ai-chat-form" class="d-flex gap-2 align-items-end" autocomplete="off">
                 <textarea id="ai-chat-input" class="form-control" rows="1" placeholder="Ask about research..."
                     maxlength="1000" style="resize:none;max-height:100px;font-size:0.9rem;"></textarea>

@@ -92,6 +92,21 @@ class ChatEndpointTest extends TestCase
         $this->assertSame(0, $response->json('quota.used'));
     }
 
+    /**
+     * A TOPICAL catalog question used to embed its topic before counting,
+     * so an empty repository still cost an embedding call — and failed
+     * outright whenever the embedding provider was down, for an answer that
+     * needs no AI at all.
+     */
+    public function test_a_topical_question_against_an_empty_repository_makes_no_api_call(): void
+    {
+        $response = $this->ask($this->conversation(), 'What research is available about artificial intelligence?');
+
+        $response->assertOk();
+        Http::assertNothingSent();
+        $this->assertSame(0, $response->json('quota.used'));
+    }
+
     public function test_a_greeting_costs_nothing(): void
     {
         $response = $this->ask($this->conversation(), 'hi');
@@ -290,6 +305,59 @@ class ChatEndpointTest extends TestCase
             'operation' => 'catalog',
             'success' => false,
         ]);
+    }
+
+    /**
+     * The two questions from the bug report. Both need a query embedding
+     * before any answer call, and with a revoked key that embedding used to
+     * throw a bare RuntimeException — a 500 whose message, under APP_DEBUG,
+     * was OpenAI's raw error JSON rendered into the chat bubble.
+     *
+     * @return array<string, array{0: string}>
+     */
+    public static function questionsThatNeedAnEmbedding(): array
+    {
+        return [
+            'topical catalog question' => ['What research is available about artificial intelligence?'],
+            'research question' => ['Which studies support SDG 4?'],
+        ];
+    }
+
+    #[\PHPUnit\Framework\Attributes\DataProvider('questionsThatNeedAnEmbedding')]
+    public function test_a_rejected_embedding_key_returns_the_friendly_503(string $question): void
+    {
+        Http::fake([
+            'api.openai.com/v1/embeddings' => Http::response([
+                'error' => [
+                    'message' => 'Incorrect API key provided: sk-proj-****SYcA.',
+                    'code' => 'invalid_api_key',
+                ],
+            ], 401),
+        ]);
+
+        // Tagged SDG 4 so the SDG question has something to rank — an empty
+        // match is answered before any embedding is attempted.
+        $file = UserFile::factory()->approved()->publicVisibility()->create(['search_index_status' => 'ready']);
+        $file->sdgs()->attach(\App\Models\Sdg::create(['number' => 4]));
+
+        $conversation = $this->conversation();
+        $response = $this->ask($conversation, $question);
+
+        $response->assertStatus(503)
+            ->assertJsonPath('message', 'The AI research assistant is temporarily unavailable. Please try again in a moment.');
+        $this->assertStringNotContainsString('sk-proj', $response->getContent());
+        $this->assertStringNotContainsString('invalid_api_key', $response->getContent());
+
+        // The question survives, and the outage is accounted for.
+        $this->assertSame($question, $conversation->messages()->where('role', 'user')->first()->content);
+        $this->assertDatabaseHas('ai_usage_logs', [
+            'operation' => 'query_embedding',
+            'success' => false,
+            'error_code' => 'EmbeddingFailedException',
+        ]);
+
+        // No answer call was attempted on top of the failed embedding.
+        Http::assertNotSent(fn ($request) => str_contains($request->url(), 'chat/completions'));
     }
 
     public function test_consecutive_greetings_do_not_repeat_the_same_reply(): void

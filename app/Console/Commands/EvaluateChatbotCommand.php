@@ -403,7 +403,7 @@ class EvaluateChatbotCommand extends Command
         }
 
         $plan = $planner->plan($question, null, null);
-        $vector = $intents->isBareInventory($question) ? null : $retrieval->topicVector($plan['topic']);
+        $vector = $intents->isBareInventory($question) ? null : fn () => $retrieval->topicVector($plan['topic']);
         $catalog = $catalogService->browse($runningAs, $plan, $vector);
 
         if ($fixture['type'] === 'catalog-permission-probe') {

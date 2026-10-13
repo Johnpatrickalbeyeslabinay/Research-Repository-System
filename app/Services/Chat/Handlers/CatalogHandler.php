@@ -44,10 +44,11 @@ final class CatalogHandler implements TurnHandler
 
         // A bare inventory question ("list repository available") has no real
         // topic — embedding it produces a meaningless vector, so skip the
-        // semantic arm and the embedding call with it.
+        // semantic arm and the embedding call with it. Otherwise deferred:
+        // CatalogService only embeds once it knows there is something to rank.
         $queryVector = $this->intents->isBareInventory($question)
             ? null
-            : $this->retrieval->topicVector($plan['topic']);
+            : fn () => $this->retrieval->topicVector($plan['topic']);
 
         $catalog = $this->catalog->browse($turn->user, $plan, $queryVector);
 
@@ -57,7 +58,7 @@ final class CatalogHandler implements TurnHandler
             // later turns, "no research matched" nudges the model toward
             // declining again.
             return TurnOutcome::canned(
-                content: $this->catalog->emptyMessage($plan),
+                content: $this->catalog->emptyMessage($plan, $catalog->unindexed),
                 retrievalMeta: $turn->routed->toMeta() + [
                     'skipped' => 'catalog_empty',
                     'filters' => $plan,

@@ -42,7 +42,11 @@ final class CatalogCountHandler implements TurnHandler
         $catalog = $this->catalog->browse($turn->user, $plan, null);
 
         return TurnOutcome::canned(
-            content: $this->reply($catalog->total),
+            // An empty count shares CatalogHandler's wording, so "nothing
+            // here" and "here but not indexed yet" read the same from both.
+            content: $catalog->total === 0
+                ? $this->catalog->emptyMessage($plan, $catalog->unindexed)
+                : $this->reply($catalog->total),
             retrievalMeta: $turn->routed->toMeta() + ['total' => $catalog->total],
             suggestedResearch: $catalog->documents->pluck('id')->take(3)->all(),
             excludeFromHistory: false,
@@ -52,11 +56,6 @@ final class CatalogCountHandler implements TurnHandler
 
     private function reply(int $total): string
     {
-        if ($total === 0) {
-            return 'There is no research in the repository you can access yet. '
-                .'Once submissions are approved and made public they will show up here.';
-        }
-
         if ($total === 1) {
             return 'There is 1 research document you can access. Ask me what it is about, '
                 .'or search by topic, author, year or SDG.';

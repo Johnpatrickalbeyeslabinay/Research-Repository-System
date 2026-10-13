@@ -2,7 +2,10 @@
 
 namespace App\Services\Research;
 
+use App\Exceptions\EmbeddingFailedException;
+use Illuminate\Http\Client\ConnectionException;
 use Illuminate\Support\Facades\Http;
+use Illuminate\Support\Facades\Log;
 
 /**
  * Generates embeddings for pre-chunked document text via OpenAI's
@@ -36,7 +39,7 @@ class EmbeddingService
      * @param  string[]  $texts
      * @return array{embeddings: array<int, float[]>, prompt_tokens: int}
      *
-     * @throws \RuntimeException
+     * @throws EmbeddingFailedException
      */
     public function embedBatch(array $texts): array
     {
@@ -47,7 +50,7 @@ class EmbeddingService
         $apiKey = config('services.openai.api_key');
 
         if (empty($apiKey)) {
-            throw new \RuntimeException('OpenAI API key is not configured.');
+            throw EmbeddingFailedException::notConfigured();
         }
 
         $model = config('services.openai.embedding_model');
@@ -55,21 +58,35 @@ class EmbeddingService
         $promptTokens = 0;
 
         foreach (array_chunk($texts, self::BATCH_SIZE) as $batch) {
-            $response = Http::withToken($apiKey)
-                ->timeout(60)
-                ->post('https://api.openai.com/v1/embeddings', [
-                    'model' => $model,
-                    'input' => array_values($batch),
-                ]);
+            try {
+                $response = Http::withToken($apiKey)
+                    ->timeout(60)
+                    ->post('https://api.openai.com/v1/embeddings', [
+                        'model' => $model,
+                        'input' => array_values($batch),
+                    ]);
+            } catch (ConnectionException $e) {
+                Log::warning('Embedding call failed', ['error' => $e->getMessage()]);
+
+                throw EmbeddingFailedException::unreachable();
+            }
 
             if ($response->failed()) {
-                throw new \RuntimeException('Embedding request failed: '.$response->body());
+                // The body stays in the log. It used to be the exception
+                // message, which a chat turn's uncaught 500 then showed the
+                // user verbatim — OpenAI's error JSON, masked key and all.
+                Log::warning('Embedding call returned an error', [
+                    'status' => $response->status(),
+                    'body' => $response->body(),
+                ]);
+
+                throw EmbeddingFailedException::requestFailed($response->status(), $response->json('error.code'));
             }
 
             $data = $response->json('data');
 
             if (! is_array($data) || count($data) !== count($batch)) {
-                throw new \RuntimeException('Unexpected embedding response shape.');
+                throw EmbeddingFailedException::malformedResponse();
             }
 
             // OpenAI returns items tagged with their input index — sort to

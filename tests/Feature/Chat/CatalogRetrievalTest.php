@@ -127,6 +127,45 @@ class CatalogRetrievalTest extends TestCase
         $this->assertSame('Indexed', $result->documents->first()->title);
     }
 
+    /**
+     * The bug report's first screenshot: approved research existed, but
+     * indexing had failed against a revoked OpenAI key, and the reply told
+     * the user to wait for approval. It must say what is actually wrong.
+     */
+    public function test_approved_but_unindexed_research_is_explained_not_denied(): void
+    {
+        UserFile::factory()->count(2)->approved()->publicVisibility()->create(['search_index_status' => 'failed']);
+
+        $result = $this->browse('list repository available', User::factory()->student()->create());
+        $message = $this->catalog->emptyMessage($result->filters, $result->unindexed);
+
+        $this->assertTrue($result->isEmpty());
+        $this->assertSame(2, $result->unindexed);
+        $this->assertStringContainsString('There are 2 studies you can access', $message);
+        $this->assertStringContainsString("indexing hasn't finished", $message);
+        $this->assertStringNotContainsString('approved', $message);
+    }
+
+    /**
+     * The unindexed count is a second door into the corpus, so it gets the
+     * same permission check as the listing itself.
+     */
+    public function test_the_unindexed_count_never_includes_research_the_user_cannot_access(): void
+    {
+        UserFile::factory()->count(3)->pending()->create([
+            'user_id' => User::factory()->student()->create()->id,
+            'search_index_status' => 'failed',
+        ]);
+
+        $result = $this->browse('list repository available', User::factory()->student()->create());
+
+        $this->assertSame(0, $result->unindexed);
+        $this->assertStringContainsString(
+            "doesn't have any research you can access",
+            $this->catalog->emptyMessage($result->filters, $result->unindexed)
+        );
+    }
+
     public function test_an_empty_repository_produces_the_zero_token_message(): void
     {
         $result = $this->browse('list repository available', User::factory()->student()->create());

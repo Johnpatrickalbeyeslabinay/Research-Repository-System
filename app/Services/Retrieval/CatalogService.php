@@ -45,18 +45,34 @@ class CatalogService
 
     /**
      * @param  array  $plan  QueryPlanner::plan() output
-     * @param  ?float[]  $queryVector  null for a bare inventory question
-     *         ("list everything"), where embedding the question produces a
-     *         meaningless vector and arm B is skipped entirely
+     * @param  float[]|\Closure(): float[]|null  $queryVector  null for a bare
+     *         inventory question ("list everything"), where embedding the
+     *         question produces a meaningless vector and arm B is skipped
+     *         entirely. A closure is resolved only once there is something to
+     *         rank, so an empty catalog costs no embedding call — and still
+     *         answers when the embedding provider is down.
      */
-    public function browse(?User $user, array $plan, ?array $queryVector = null): CatalogResult
+    public function browse(?User $user, array $plan, array|\Closure|null $queryVector = null): CatalogResult
     {
         $limit = (int) config('chat.catalog.max_documents', 10);
 
         $total = $this->accessibleQuery($user, $plan)->count();
 
         if ($total === 0) {
-            return new CatalogResult(collect(), 0, $plan);
+            // Counted so the empty reply can tell "nothing exists" apart from
+            // "it exists but indexing failed or hasn't run" — an indexing
+            // outage (a revoked OpenAI key) otherwise reads as an empty
+            // repository. Still permission-scoped: only research this user
+            // could read is counted.
+            $unindexed = $this->accessibleQuery($user, $plan, readyOnly: false)
+                ->where('stud_file.search_index_status', '<>', 'ready')
+                ->count();
+
+            return new CatalogResult(collect(), 0, $plan, unindexed: $unindexed);
+        }
+
+        if ($queryVector instanceof \Closure) {
+            $queryVector = $queryVector();
         }
 
         $semanticIds = $queryVector === null
@@ -77,10 +93,13 @@ class CatalogService
      * VectorSearchService and LexicalSearchService require, so the catalog
      * can never advertise a document the other two arms can't answer from.
      */
-    private function accessibleQuery(?User $user, array $plan): Builder
+    private function accessibleQuery(?User $user, array $plan, bool $readyOnly = true): Builder
     {
-        $query = ResearchAccess::scope(UserFile::query(), $user)
-            ->where('stud_file.search_index_status', 'ready');
+        $query = ResearchAccess::scope(UserFile::query(), $user);
+
+        if ($readyOnly) {
+            $query->where('stud_file.search_index_status', 'ready');
+        }
 
         if (! empty($plan['year_from'])) {
             $query->where('publication_year', '>=', $plan['year_from']);
@@ -230,10 +249,22 @@ class CatalogService
      * The zero-token answer for an empty catalog — deliberately names the
      * filters that were applied, so "nothing found" is explainable rather
      * than a dead end the user can't act on.
+     *
+     * @param  int  $unindexed  CatalogResult::$unindexed — matching research the
+     *         user may read that is not searchable yet
      */
-    public function emptyMessage(array $plan): string
+    public function emptyMessage(array $plan, int $unindexed = 0): string
     {
         $described = $this->describeFilters($plan);
+
+        if ($unindexed > 0) {
+            $studies = $unindexed === 1 ? '1 study' : "{$unindexed} studies";
+            $matching = $described === null ? '' : " matching {$described}";
+
+            return "There {$this->isAre($unindexed)} {$studies}{$matching} you can access, "
+                ."but I can't search {$this->itThem($unindexed)} yet — indexing hasn't finished. "
+                .'Please try again later.';
+        }
 
         if ($described === null) {
             return "The repository doesn't have any research you can access yet. "
@@ -242,6 +273,16 @@ class CatalogService
 
         return "I couldn't find any research you can access matching {$described}. "
             .'Try widening the year range, removing a filter, or asking about a broader topic.';
+    }
+
+    private function isAre(int $n): string
+    {
+        return $n === 1 ? 'is' : 'are';
+    }
+
+    private function itThem(int $n): string
+    {
+        return $n === 1 ? 'it' : 'them';
     }
 
     /** Human-readable summary of the active filters, or null if there are none. */

@@ -129,7 +129,6 @@ function initChatWidget(root) {
     const sendBtn = document.getElementById('ai-chat-send');
     const sendIcon = document.getElementById('ai-chat-send-icon');
     const stopIcon = document.getElementById('ai-chat-stop-icon');
-    const errorEl = document.getElementById('ai-chat-error');
     const newChatBtn = document.getElementById('ai-chat-new-btn');
     const historyBtn = document.getElementById('ai-chat-history-btn');
     const historyList = document.getElementById('ai-chat-history-list');
@@ -175,16 +174,6 @@ function initChatWidget(root) {
 
     function scrollToBottom() {
         messagesEl.scrollTop = messagesEl.scrollHeight;
-    }
-
-    function showError(message) {
-        errorEl.textContent = message;
-        errorEl.style.display = '';
-    }
-
-    function clearError() {
-        errorEl.style.display = 'none';
-        errorEl.textContent = '';
     }
 
     function renderUserMessage(text) {
@@ -383,7 +372,6 @@ function initChatWidget(root) {
         const text = (rawText ?? input.value).trim();
         if (!text || state.sending) return;
 
-        clearError();
         hideEmptyState();
         renderUserMessage(text);
         input.value = '';
@@ -414,8 +402,9 @@ function initChatWidget(root) {
             updateQuota(body.quota);
 
             if (!response.ok) {
+                // Shown once, as a turn with Retry. It used to also fill a
+                // banner above the composer, so every error appeared twice.
                 const message = body.message || 'Something went wrong. Please try again.';
-                showError(message);
                 renderErrorAsAssistantTurn(message, text);
                 return;
             }
@@ -439,7 +428,6 @@ function initChatWidget(root) {
                 );
             } else {
                 const message = 'Could not reach the AI research assistant. Check your connection and try again.';
-                showError(message);
                 renderErrorAsAssistantTurn(message, text);
             }
         } finally {
@@ -462,7 +450,6 @@ function initChatWidget(root) {
         state.conversationId = null;
         state.lastQuestion = null;
         messagesEl.querySelectorAll('.ai-chat-msg').forEach((el) => el.remove());
-        clearError();
         showEmptyState();
         historyList.style.display = 'none';
     }
