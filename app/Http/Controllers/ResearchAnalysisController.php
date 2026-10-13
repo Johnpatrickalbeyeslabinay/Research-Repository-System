@@ -2,21 +2,30 @@
 
 namespace App\Http\Controllers;
 
+use App\Exceptions\AbstractGenerationException;
+use App\Exceptions\AiQuotaExceededException;
 use App\Exceptions\MetadataAnalysisException;
 use App\Models\Sdg;
+use App\Services\Ai\AbstractGenerationService;
 use App\Services\Ai\MetadataAnalysisService;
+use App\Support\SubmissionAiQuota;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
 
 /**
- * AI-assisted metadata suggestions (keywords + SDGs) from a research title
- * and abstract only. Deliberately separate from StudentController, which
- * owns the deterministic PDF pipeline (validation/extraction) — this
- * controller is the one place a generative AI call happens in the
- * submission flow.
+ * AI assistance in the submission form: keyword + SDG suggestions, and an
+ * abstract draft for papers that have none. Deliberately separate from
+ * StudentController, which owns the deterministic PDF pipeline
+ * (validation/extraction) — this controller is the one place generative
+ * AI calls happen in the submission flow. Both endpoints share the
+ * student's daily SubmissionAiQuota; cached results don't count against it.
  */
 class ResearchAnalysisController extends Controller
 {
-    public function __construct(private MetadataAnalysisService $metadataAnalysis) {}
+    public function __construct(
+        private MetadataAnalysisService $metadataAnalysis,
+        private AbstractGenerationService $abstractGeneration,
+    ) {}
 
     public function analyze(Request $request)
     {
@@ -29,14 +38,19 @@ class ResearchAnalysisController extends Controller
             'title' => 'required|string|max:255',
             'abstract' => 'required|string|max:5000',
             'fallback_excerpt' => 'nullable|string|max:5000',
+            'existing_keywords' => 'nullable|array|max:30',
+            'existing_keywords.*' => 'string|max:100',
         ]);
 
         try {
             $result = $this->metadataAnalysis->analyze(
                 $request->input('title'),
                 $request->input('abstract'),
-                $request->input('fallback_excerpt')
+                $request->input('fallback_excerpt'),
+                $request->input('existing_keywords', [])
             );
+        } catch (AiQuotaExceededException $e) {
+            return $this->quotaExceeded($e);
         } catch (MetadataAnalysisException $e) {
             return response()->json(['success' => false, 'message' => $e->getMessage()], 422);
         }
@@ -58,6 +72,50 @@ class ResearchAnalysisController extends Controller
             $result['sdgs']
         )));
 
-        return response()->json(array_merge(['success' => true], $result));
+        return response()->json(array_merge(
+            ['success' => true],
+            $result,
+            ['quota' => SubmissionAiQuota::status(Auth::id())]
+        ));
+    }
+
+    /**
+     * Drafts an abstract for the PDF the student just picked. Only the
+     * PDF's hash comes from the client — the paper excerpt was stored
+     * server-side by StudentController::analyzePdf() (see
+     * AbstractGenerationService's docblock for why).
+     */
+    public function generateAbstract(Request $request)
+    {
+        $request->validate([
+            'pdf_hash' => ['required', 'string', 'regex:/^[a-f0-9]{64}$/'],
+            'title' => 'required|string|max:255',
+        ]);
+
+        try {
+            $result = $this->abstractGeneration->generate(
+                $request->input('pdf_hash'),
+                $request->input('title')
+            );
+        } catch (AiQuotaExceededException $e) {
+            return $this->quotaExceeded($e);
+        } catch (AbstractGenerationException $e) {
+            return response()->json(['success' => false, 'message' => $e->getMessage()], 422);
+        }
+
+        return response()->json(array_merge(
+            ['success' => true],
+            $result,
+            ['quota' => SubmissionAiQuota::status(Auth::id())]
+        ));
+    }
+
+    private function quotaExceeded(AiQuotaExceededException $e)
+    {
+        return response()->json([
+            'success' => false,
+            'message' => $e->getMessage(),
+            'quota' => SubmissionAiQuota::status(Auth::id()),
+        ], 429);
     }
 }

@@ -4,7 +4,9 @@ namespace App\Services\Pdf;
 
 use App\Exceptions\PdfProcessingException;
 use Illuminate\Support\Facades\Cache;
+use Smalot\PdfParser\Page;
 use Smalot\PdfParser\Parser;
+use Smalot\PdfParser\XObject\Image;
 
 /**
  * Thin wrapper around smalot/pdfparser. Deterministic text extraction only
@@ -17,7 +19,8 @@ class PdfTextExtractor
     // already-cached extraction from before the change, since a cached
     // result from a buggy version would otherwise keep being served as-is
     // for the rest of its TTL regardless of the code fix.
-    private const CACHE_VERSION = 'v2';
+    // v3: page_has_image added for ScannedPdfDetector.
+    private const CACHE_VERSION = 'v3';
 
     /**
      * Same as extract(), but cached by content hash. A single submission
@@ -27,7 +30,7 @@ class PdfTextExtractor
      * smalot/pdfparser pass over the whole document. Caching by hash
      * collapses that to one parse; the other two calls become cache hits.
      *
-     * @return array{full_text: string, pages: string[], page_count: int}
+     * @return array{full_text: string, pages: string[], page_has_image: bool[], page_count: int}
      *
      * @throws PdfProcessingException
      */
@@ -41,7 +44,7 @@ class PdfTextExtractor
     }
 
     /**
-     * @return array{full_text: string, pages: string[], page_count: int}
+     * @return array{full_text: string, pages: string[], page_has_image: bool[], page_count: int}
      *
      * @throws PdfProcessingException
      */
@@ -59,6 +62,7 @@ class PdfTextExtractor
         }
 
         $pageTexts = [];
+        $pageHasImage = [];
 
         foreach ($pages as $page) {
             try {
@@ -67,19 +71,50 @@ class PdfTextExtractor
                 // A single unreadable page shouldn't sink the whole document.
                 $pageTexts[] = '';
             }
+
+            $pageHasImage[] = $this->pageHasImage($page);
         }
 
         $fullText = implode("\n", $pageTexts);
 
         if (trim($fullText) === '') {
-            throw PdfProcessingException::noExtractableText();
+            $imagePages = count(array_filter($pageHasImage));
+
+            // No text at all but pictures on the pages is a scan — say so,
+            // rather than the vaguer "no extractable text".
+            throw $imagePages > 0
+                ? PdfProcessingException::scanned($imagePages, count($pageTexts))
+                : PdfProcessingException::noExtractableText();
         }
 
         return [
             'full_text' => $fullText,
             'pages' => $pageTexts,
+            'page_has_image' => $pageHasImage,
             'page_count' => count($pageTexts),
         ];
+    }
+
+    /**
+     * Whether the page embeds at least one raster image — the signal
+     * ScannedPdfDetector pairs with a near-empty page text to call a page
+     * a scan. A page whose resources can't be read counts as no image, so
+     * a parser quirk can only make detection more lenient, never reject a
+     * real text PDF.
+     */
+    private function pageHasImage(Page $page): bool
+    {
+        try {
+            foreach ($page->getXObjects() as $xObject) {
+                if ($xObject instanceof Image) {
+                    return true;
+                }
+            }
+        } catch (\Throwable) {
+            return false;
+        }
+
+        return false;
     }
 
     /**

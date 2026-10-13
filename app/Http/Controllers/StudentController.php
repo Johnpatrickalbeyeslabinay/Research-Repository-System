@@ -12,6 +12,7 @@ use App\Models\Sdg;
 use App\Models\User;
 use App\Models\UserFile;
 use App\Notifications\ResearchSubmitted;
+use App\Services\Ai\AbstractGenerationService;
 use App\Services\Ai\MetadataAnalysisService;
 use App\Services\Pdf\PdfValidationService;
 use App\Services\Pdf\SectionDetector;
@@ -41,7 +42,29 @@ class StudentController extends Controller
         private PdfValidationService $pdfValidation,
         private SectionDetector $sectionDetector,
         private MetadataAnalysisService $metadataAnalysis,
+        private AbstractGenerationService $abstractGeneration,
     ) {}
+
+    /**
+     * Where the submitted abstract came from, decided server-side rather
+     * than from a client flag: 'ai_generated' when it is (a lightly edited)
+     * AbstractGenerationService draft for this PDF, 'extracted' when it is
+     * the abstract SectionDetector found in the PDF, otherwise 'manual'.
+     */
+    private function abstractSource(?string $pdfHash, ?string $desc, ?string $extractedAbstract): string
+    {
+        if ($pdfHash !== null && $this->abstractGeneration->matchesGenerated($pdfHash, $desc)) {
+            return 'ai_generated';
+        }
+
+        $normalize = fn (?string $text) => mb_strtolower(trim(preg_replace('/\s+/', ' ', (string) $text)));
+
+        if ($extractedAbstract !== null && $normalize($extractedAbstract) !== '' && $normalize($extractedAbstract) === $normalize($desc)) {
+            return 'extracted';
+        }
+
+        return 'manual';
+    }
 
     /**
      * The AI metadata fingerprint/model are echoed back from a prior
@@ -256,6 +279,7 @@ class StudentController extends Controller
             'pdf_hash' => $hash,
             'pdf_page_count' => $processed['page_count'],
             'extracted_abstract' => $detected['abstract']['text'],
+            'abstract_source' => $this->abstractSource($hash, $request->desc, $detected['abstract']['text']),
             'extracted_sections' => $detected['sections'],
             'extracted_references' => $detected['references'],
         ]);
@@ -449,6 +473,22 @@ class StudentController extends Controller
             $processed['full_text']
         );
 
+        // No confidently-detected abstract: keep a bounded excerpt of the
+        // paper server-side so the student can ask for an AI draft
+        // (/research/abstract/generate) by sending back only this hash.
+        // Nothing is generated here — that only happens on their click.
+        $canGenerateAbstract = ($detected['abstract']['confidence'] ?? null) !== 'high';
+
+        if ($canGenerateAbstract) {
+            $excerpt = $this->sectionDetector->abstractSourceExcerpt($detected['sections'], $processed['full_text'], $processed['pages']);
+
+            if ($excerpt !== null) {
+                $this->abstractGeneration->storeSource($processed['hash'], $excerpt);
+            } else {
+                $canGenerateAbstract = false;
+            }
+        }
+
         return response()->json([
             'success' => true,
 
@@ -462,6 +502,9 @@ class StudentController extends Controller
             'abstract' => $detected['abstract'],
             'keywords' => $detected['keywords'],
             'fallback_excerpt' => $detected['fallback_excerpt'],
+            'pdf_hash' => $processed['hash'],
+            'can_generate_abstract' => $canGenerateAbstract,
+            'scan' => $processed['scan'],
         ]);
     }
 
@@ -589,6 +632,8 @@ class StudentController extends Controller
                 $file->search_index_status = 'not_started';
             }
         }
+
+        $file->abstract_source = $this->abstractSource($file->pdf_hash, $file->desc, $file->extracted_abstract);
 
         // Send back for approval
         $file->status = 'pending';

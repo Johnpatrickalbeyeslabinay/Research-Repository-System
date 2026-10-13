@@ -30,6 +30,7 @@ class AiUsageLog extends Model
         'query_condense',
         'doc_embedding',
         'metadata',
+        'abstract',
         'external_search',
     ];
 

@@ -253,6 +253,13 @@ Route::middleware(['auth', 'role:student'])->group(function () {
     Route::post('/research/analyze', [ResearchAnalysisController::class, 'analyze'])
         ->middleware('throttle:10,1')
         ->name('research.analyze');
+
+    // AI abstract draft for a PDF with no detectable abstract — only on
+    // explicit click, and the student reviews it before it is used. Shares
+    // the daily SubmissionAiQuota with /research/analyze.
+    Route::post('/research/abstract/generate', [ResearchAnalysisController::class, 'generateAbstract'])
+        ->middleware('throttle:5,1')
+        ->name('research.abstract.generate');
 });
 
 // instructor routes

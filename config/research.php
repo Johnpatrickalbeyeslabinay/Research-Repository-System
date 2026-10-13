@@ -114,4 +114,36 @@ return [
 
     'storage_disk' => env('RESEARCH_FILES_DISK', 'local'),
 
+    /*
+    |--------------------------------------------------------------------------
+    | Scanned PDF detection
+    |--------------------------------------------------------------------------
+    |
+    | App\Services\Pdf\ScannedPdfDetector: the share of pages that are
+    | images with (almost) no text. At or above 'scanned_ratio' the upload is
+    | rejected; at or above 'partial_ratio' it is accepted with a warning.
+    |
+    */
+
+    'scan_detection' => [
+        'scanned_ratio' => (float) env('RESEARCH_SCANNED_RATIO', 0.6),
+        'partial_ratio' => (float) env('RESEARCH_PARTIAL_SCAN_RATIO', 0.2),
+    ],
+
+    /*
+    |--------------------------------------------------------------------------
+    | Submission AI daily quota
+    |--------------------------------------------------------------------------
+    |
+    | Per-student, per-day cap on AI calls made from the submission form
+    | (abstract generation + keyword/SDG suggestions) — see
+    | App\Support\SubmissionAiQuota. Only calls that actually reach OpenAI
+    | count; a cached result (same PDF, same title/abstract) is free.
+    |
+    */
+
+    'ai' => [
+        'per_day' => (int) env('RESEARCH_AI_PER_DAY', 10),
+    ],
+
 ];

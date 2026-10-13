@@ -3,8 +3,10 @@
 // no AI), keyword chip input, the SDG "Done" button, the pre-submit review
 // summary, the researcher list, the multi-step wizard (create form only),
 // and the "Analyze Research" AI metadata suggestion button
-// (/research/analyze — the one generative-AI call in this form, and only
-// fired on explicit user action, never automatically).
+// (/research/analyze), plus "Generate abstract with AI" for PDFs with no
+// detectable abstract (/research/abstract/generate). Both are generative-AI
+// calls fired only on explicit user action, never automatically, and share
+// the student's daily AI quota.
 //
 // AI/extracted keyword and SDG suggestions are never added directly to the
 // student's selections — they land in a suggestion tray first (see
@@ -79,11 +81,10 @@ function initDropzone(root) {
         "[data-fallback-excerpt-field]",
     );
 
-    // Only present on the redesigned wizard's Document step — the Update
-    // Research form doesn't have this markup, so every reference below is
-    // null-guarded and simply no-ops there (it keeps the plain "couldn't
-    // detect / enter manually" message instead).
+    // Null-guarded throughout: a form without this markup simply keeps the
+    // plain "couldn't detect / enter manually" message instead.
     const previewBox = form.querySelector("[data-abstract-preview]");
+    const previewLabel = form.querySelector("[data-abstract-preview-label]");
     const previewText = form.querySelector("[data-abstract-preview-text]");
     const previewUseBtn = form.querySelector("[data-abstract-preview-use]");
     const previewDismissBtn = form.querySelector(
@@ -122,6 +123,12 @@ function initDropzone(root) {
 
     function hidePreview() {
         if (previewBox) previewBox.classList.add("d-none");
+    }
+
+    // The preview box is shared by the PDF's own abstract and an AI draft
+    // (initAbstractGenerate) — reset its label whenever the PDF is re-read.
+    function setPreviewLabel(text) {
+        if (previewLabel) previewLabel.textContent = text;
     }
 
     if (previewUseBtn) {
@@ -165,6 +172,12 @@ function initDropzone(root) {
                         body.message || "This PDF could not be validated.";
                     status.innerHTML = `<span class="text-danger"><i class="bi bi-exclamation-triangle me-1"></i>${message}</span>`;
                     showError(message);
+                    form.dataset.pdfHash = "";
+                    form.dispatchEvent(
+                        new CustomEvent("research:pdf-analyzed", {
+                            detail: { canGenerateAbstract: false },
+                        }),
+                    );
                     return;
                 }
 
@@ -196,6 +209,31 @@ function initDropzone(root) {
                     '<span class="text-success"><i class="bi bi-check-circle me-1"></i>Document validated</span>';
                 if (fallbackExcerptField) {
                     fallbackExcerptField.value = body.fallback_excerpt || "";
+                }
+
+                // Read by initAnalyzeButton (author keywords, so AI
+                // suggests complementary ones) and initAbstractGenerate
+                // (the hash identifies the server-side paper excerpt).
+                form.dataset.pdfHash = body.pdf_hash || "";
+                form.dataset.extractedKeywords = JSON.stringify(
+                    Array.isArray(body.keywords) ? body.keywords : [],
+                );
+                form.dispatchEvent(
+                    new CustomEvent("research:pdf-analyzed", {
+                        detail: {
+                            canGenerateAbstract: Boolean(
+                                body.can_generate_abstract,
+                            ),
+                        },
+                    }),
+                );
+
+                // A mostly-scanned PDF was already rejected server-side;
+                // a partly-scanned one is accepted but worth flagging,
+                // since its image pages contribute no text to the
+                // abstract, keywords or search index.
+                if (body.scan && body.scan.verdict === "partial") {
+                    statusHtml += `<br><span class="text-warning"><i class="bi bi-exclamation-triangle me-1"></i>${body.scan.image_pages} of ${body.scan.page_count} pages look like scanned images — their text can't be read. Consider uploading a fully text-based PDF.</span>`;
                 }
 
                 const hasAbstractText = Boolean(
@@ -255,12 +293,16 @@ function initDropzone(root) {
                     // typed content): show what was found and let the
                     // student decide, rather than silently overwriting or
                     // silently discarding it.
+                    setPreviewLabel(
+                        "We found this text in your PDF — is this your abstract?",
+                    );
                     previewText.textContent = body.abstract.text;
                     previewBox.classList.remove("d-none");
                     if (abstractBadge) abstractBadge.classList.add("d-none");
                 } else if (abstractBadge) {
-                    abstractBadge.textContent =
-                        "We couldn't reliably detect an abstract — please enter it manually.";
+                    abstractBadge.textContent = body.can_generate_abstract
+                        ? "We couldn't reliably detect an abstract."
+                        : "We couldn't reliably detect an abstract — please enter it manually.";
                     abstractBadge.classList.remove("d-none", "text-success");
                     abstractBadge.classList.add("text-muted");
                 }
@@ -767,6 +809,125 @@ function initSdgSection(form) {
     });
 }
 
+// "· 7 of 10 AI uses left today", or a note that the result came from
+// cache and cost nothing — appended to either AI action's status line.
+function aiQuotaNote(body) {
+    if (body.cached) {
+        return '<br><span class="text-muted small"><i class="bi bi-lightning-charge me-1"></i>Loaded from cache — no AI use counted.</span>';
+    }
+    if (body.quota) {
+        return `<br><span class="text-muted small">${body.quota.remaining} of ${body.quota.limit} AI uses left today.</span>`;
+    }
+    return "";
+}
+
+// Today's SubmissionAiQuota is spent: disable every AI button in the form.
+// Manual entry stays available, and a cached result would still be free,
+// but there's no way to tell which clicks would hit the cache client-side.
+function markAiQuotaExhausted(form) {
+    form.dataset.aiQuotaExhausted = "true";
+    form.querySelectorAll(
+        "[data-analyze-btn], [data-abstract-generate-btn]",
+    ).forEach((btn) => {
+        btn.disabled = true;
+        btn.title = "Today's AI limit is used up — you can still type it manually.";
+    });
+}
+
+// "Generate abstract with AI" — only offered when the PDF had no
+// confidently-detected abstract (research:pdf-analyzed). Sends just the
+// PDF hash + title; the paper excerpt is held server-side. The draft goes
+// into the [data-abstract-preview] box for the student to accept or
+// dismiss — it never overwrites the abstract field on its own.
+function initAbstractGenerate(form) {
+    const box = form.querySelector("[data-abstract-generate]");
+    const btn = form.querySelector("[data-abstract-generate-btn]");
+    const status = form.querySelector("[data-abstract-generate-status]");
+    const titleField = form.querySelector('[name="title"]');
+    const abstractField = form.querySelector("[data-abstract-field]");
+    const previewBox = form.querySelector("[data-abstract-preview]");
+    const previewLabel = form.querySelector("[data-abstract-preview-label]");
+    const previewText = form.querySelector("[data-abstract-preview-text]");
+
+    if (!box || !btn || !status) return;
+
+    form.addEventListener("research:pdf-analyzed", (e) => {
+        box.classList.toggle("d-none", !e.detail.canGenerateAbstract);
+        status.innerHTML = "";
+    });
+
+    btn.addEventListener("click", () => {
+        const title = titleField ? titleField.value.trim() : "";
+        const pdfHash = form.dataset.pdfHash || "";
+
+        if (!pdfHash) {
+            status.innerHTML =
+                '<span class="text-danger">Please select your PDF first.</span>';
+            return;
+        }
+        if (!title) {
+            status.innerHTML =
+                '<span class="text-danger">Please enter your research title first — it helps the AI write an accurate abstract.</span>';
+            if (titleField) titleField.focus();
+            return;
+        }
+
+        btn.disabled = true;
+        status.innerHTML =
+            '<span class="text-muted"><span class="spinner-border spinner-border-sm me-1"></span>Drafting an abstract from your paper…</span>';
+
+        fetch(btn.dataset.generateUrl || "/research/abstract/generate", {
+            method: "POST",
+            headers: {
+                "X-CSRF-TOKEN": csrfTokenFor(form),
+                Accept: "application/json",
+                "Content-Type": "application/json",
+            },
+            body: JSON.stringify({ pdf_hash: pdfHash, title }),
+        })
+            .then((res) => res.json().then((body) => ({ ok: res.ok, body })))
+            .then(({ ok, body }) => {
+                if (!ok || !body.success) {
+                    if (body.quota && body.quota.remaining === 0) {
+                        markAiQuotaExhausted(form);
+                    }
+                    status.innerHTML = `<span class="text-danger"><i class="bi bi-exclamation-triangle me-1"></i>${body.message || "AI abstract generation is temporarily unavailable. Please write the abstract manually."}</span>`;
+                    return;
+                }
+
+                if (previewBox && previewText) {
+                    if (previewLabel) {
+                        previewLabel.textContent =
+                            "AI-generated draft — review it, then edit it in the abstract box before submitting.";
+                    }
+                    previewText.textContent = body.abstract;
+                    previewBox.classList.remove("d-none");
+                } else if (abstractField && !abstractField.value.trim()) {
+                    abstractField.value = body.abstract;
+                    abstractField.dispatchEvent(
+                        new Event("input", { bubbles: true }),
+                    );
+                }
+
+                status.innerHTML =
+                    '<span class="text-success"><i class="bi bi-check-circle me-1"></i>Draft ready below.</span>' +
+                    aiQuotaNote(body);
+                if (body.quota && body.quota.remaining === 0) {
+                    markAiQuotaExhausted(form);
+                }
+            })
+            .catch(() => {
+                status.innerHTML =
+                    '<span class="text-danger"><i class="bi bi-exclamation-triangle me-1"></i>AI abstract generation is temporarily unavailable. Please write the abstract manually.</span>';
+            })
+            .finally(() => {
+                if (form.dataset.aiQuotaExhausted !== "true") {
+                    btn.disabled = false;
+                }
+            });
+    });
+}
+
 function initAnalyzeButton(form, prefix) {
     const titleField = form.querySelector('[name="title"]');
     const abstractField = form.querySelector("[data-abstract-field]");
@@ -794,7 +955,10 @@ function initAnalyzeButton(form, prefix) {
 
     function refreshButtonState() {
         const { title, abstract } = currentContent();
-        const ready = Boolean(title) && Boolean(abstract);
+        const ready =
+            Boolean(title) &&
+            Boolean(abstract) &&
+            form.dataset.aiQuotaExhausted !== "true";
         buttons.forEach((btn) => {
             if (btn.hasAttribute("disabled") !== !ready) btn.disabled = !ready;
         });
@@ -821,17 +985,31 @@ function initAnalyzeButton(form, prefix) {
 
         const payload = { title, abstract };
 
-        // Only bother sending the fallback excerpt when the abstract itself
-        // is thin — matches SectionDetector's own ABSTRACT_MIN_WORDS
-        // threshold, so this and the deterministic confidence check agree
-        // on what counts as "too short to classify reliably alone".
-        const wordCount = abstract.split(/\s+/).filter(Boolean).length;
-        if (
-            wordCount < 50 &&
-            fallbackExcerptField &&
-            fallbackExcerptField.value
-        ) {
-            payload.fallback_excerpt = fallbackExcerptField.value;
+        // Send the intro excerpt when the PDF had one, so keyword
+        // suggestions are grounded in the paper itself and not only in its
+        // abstract. A full abstract (50+ words, SectionDetector's
+        // ABSTRACT_MIN_WORDS) already says most of it, so only a short
+        // 120-word slice goes along then; a thin abstract gets the whole
+        // 300-word excerpt. Keeps the common case ~250 tokens cheaper.
+        if (fallbackExcerptField && fallbackExcerptField.value) {
+            const wordCount = abstract.split(/\s+/).filter(Boolean).length;
+            const excerptWords = fallbackExcerptField.value
+                .split(/\s+/)
+                .filter(Boolean);
+            payload.fallback_excerpt = excerptWords
+                .slice(0, wordCount >= 50 ? 120 : 300)
+                .join(" ");
+        }
+
+        // Keywords the author already listed in the PDF — the AI is asked
+        // to complement these rather than repeat them.
+        try {
+            const existing = JSON.parse(form.dataset.extractedKeywords || "[]");
+            if (Array.isArray(existing) && existing.length) {
+                payload.existing_keywords = existing.slice(0, 30);
+            }
+        } catch {
+            // Malformed dataset value — just send without it.
         }
 
         fetch(analyzeUrl, {
@@ -846,6 +1024,9 @@ function initAnalyzeButton(form, prefix) {
             .then((res) => res.json().then((body) => ({ ok: res.ok, body })))
             .then(({ ok, body }) => {
                 if (!ok || !body.success) {
+                    if (body.quota && body.quota.remaining === 0) {
+                        markAiQuotaExhausted(form);
+                    }
                     status.innerHTML = `<span class="text-danger"><i class="bi bi-exclamation-triangle me-1"></i>${body.message || "AI suggestions are temporarily unavailable. You can continue by entering keywords and SDGs manually."}</span>`;
                     return;
                 }
@@ -885,9 +1066,13 @@ function initAnalyzeButton(form, prefix) {
                 // even then, which read as the click having silently done
                 // nothing since there was no visible change to point at.
                 status.innerHTML =
-                    addedKeywords || addedSdgs
+                    (addedKeywords || addedSdgs
                         ? '<span class="text-success"><i class="bi bi-check-circle me-1"></i>Suggestions added below — review before adding them.</span>'
-                        : '<span class="text-muted"><i class="bi bi-info-circle me-1"></i>AI ran, but found no confident keyword or SDG suggestions for this abstract — add them manually below.</span>';
+                        : '<span class="text-muted"><i class="bi bi-info-circle me-1"></i>AI ran, but found no confident keyword or SDG suggestions for this abstract — add them manually below.</span>') +
+                    aiQuotaNote(body);
+                if (body.quota && body.quota.remaining === 0) {
+                    markAiQuotaExhausted(form);
+                }
             })
             .catch(() => {
                 status.innerHTML =
@@ -1535,6 +1720,10 @@ export function init() {
 
         if (form.querySelector("[data-review-summary]")) {
             safeInit("review-summary", () => initReviewSummary(form));
+        }
+
+        if (form.querySelector("[data-abstract-generate]")) {
+            safeInit("abstract-generate", () => initAbstractGenerate(form));
         }
 
         const analyzePrefixes = new Set(
