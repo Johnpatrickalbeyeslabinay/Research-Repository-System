@@ -1,0 +1,103 @@
+{
+  "resources/css/app.css": {
+    "file": "assets/app-C-UcSG6r.css",
+    "src": "resources/css/app.css",
+    "isEntry": true,
+    "name": "app",
+    "names": [
+      "app.css"
+    ]
+  },
+  "resources/css/layout.css": {
+    "file": "assets/layout-D55wd_39.css",
+    "src": "resources/css/layout.css",
+    "isEntry": true,
+    "name": "layout",
+    "names": [
+      "layout.css"
+    ]
+  },
+  "resources/css/layouts/admin.css": {
+    "file": "assets/admin-CAKvSchz.css",
+    "src": "resources/css/layouts/admin.css",
+    "isEntry": true,
+    "name": "admin",
+    "names": [
+      "admin.css"
+    ]
+  },
+  "resources/css/layouts/home.css": {
+    "file": "assets/home-CgGxrpLu.css",
+    "src": "resources/css/layouts/home.css",
+    "isEntry": true,
+    "name": "home",
+    "names": [
+      "home.css"
+    ]
+  },
+  "resources/css/layouts/instructor.css": {
+    "file": "assets/instructor-AGcz8RXp.css",
+    "src": "resources/css/layouts/instructor.css",
+    "isEntry": true,
+    "name": "instructor",
+    "names": [
+      "instructor.css"
+    ]
+  },
+  "resources/css/layouts/public.css": {
+    "file": "assets/public-BN7Cra4_.css",
+    "src": "resources/css/layouts/public.css",
+    "isEntry": true,
+    "name": "public",
+    "names": [
+      "public.css"
+    ]
+  },
+  "resources/css/layouts/repository.css": {
+    "file": "assets/repository-DAfwbfv_.css",
+    "src": "resources/css/layouts/repository.css",
+    "isEntry": true,
+    "name": "repository",
+    "names": [
+      "repository.css"
+    ]
+  },
+  "resources/css/layouts/student.css": {
+    "file": "assets/student-CxsVNwFG.css",
+    "src": "resources/css/layouts/student.css",
+    "isEntry": true,
+    "name": "student",
+    "names": [
+      "student.css"
+    ]
+  },
+  "resources/js/admin-charts.js": {
+    "file": "assets/admin-charts-JSxzdewX.js",
+    "name": "admin-charts",
+    "src": "resources/js/admin-charts.js",
+    "isDynamicEntry": true
+  },
+  "resources/js/app.js": {
+    "file": "assets/app-DDvrg9Jt.js",
+    "name": "app",
+    "src": "resources/js/app.js",
+    "isEntry": true,
+    "dynamicImports": [
+      "resources/js/chat.js",
+      "resources/js/research-submission.js",
+      "resources/js/admin-charts.js"
+    ]
+  },
+  "resources/js/chat.js": {
+    "file": "assets/chat-CvTUnp7Y.js",
+    "name": "chat",
+    "src": "resources/js/chat.js",
+    "isDynamicEntry": true
+  },
+  "resources/js/research-submission.js": {
+    "file": "assets/research-submission-DbX1m-ih.js",
+    "name": "research-submission",
+    "src": "resources/js/research-submission.js",
+    "isDynamicEntry": true
+  }
+}
