@@ -18,7 +18,6 @@ class AccessRequestController extends Controller
     public function store(Request $request, UserFile $file)
     {
         $validated = $request->validate([
-            'name' => ['required', 'string', 'max:255'],
             'email' => ['required', 'email'],
             'reason_access' => [
                 'required',
@@ -28,7 +27,6 @@ class AccessRequestController extends Controller
 
         $accessRequest = AccessRequest::create([
             'stud_file_id' => $file->id,
-            'name' => $validated['name'],
             'email' => $validated['email'],
             'reason_access' => $validated['reason_access'],
             'status' => 'pending',

@@ -138,45 +138,45 @@
 
                         <div class="mb-3 captcha-field">
 
-    <label class="form-label">Security code</label>
+                            <label class="form-label">Security code</label>
 
-    <div class="d-flex align-items-center gap-2">
+                            <div class="d-flex align-items-center gap-2">
 
-        <div class="captcha-box flex-grow-1" id="captchaCode">
-            @foreach(str_split($captchaCode) as $character)
-                <span>{{ $character }}</span>
-            @endforeach
-        </div>
+                                <div class="captcha-box flex-grow-1" id="captchaCode">
+                                    @foreach(str_split($captchaCode) as $character)
+                                        <span>{{ $character }}</span>
+                                    @endforeach
+                                </div>
 
-        <button
-            type="button"
-            class="btn btn-light border captcha-refresh"
-            onclick="refreshCaptcha()"
-            aria-label="Refresh CAPTCHA"
-            title="Refresh"
-        >
-            <i class="fa-solid fa-rotate"></i>
-        </button>
+                                <button
+                                    type="button"
+                                    class="btn btn-light border captcha-refresh"
+                                    onclick="refreshCaptcha()"
+                                    aria-label="Refresh CAPTCHA"
+                                    title="Refresh"
+                                >
+                                    <i class="fa-solid fa-rotate"></i>
+                                </button>
 
-    </div>
+                            </div>
 
-    <input
-        type="text"
-        name="captcha"
-        class="form-control mt-2 @error('captcha') is-invalid @enderror"
-        placeholder="Enter the code"
-        maxlength="6"
-        autocomplete="off"
-        required
-    >
+                            <input
+                                type="text"
+                                name="captcha"
+                                class="form-control mt-2 @error('captcha') is-invalid @enderror"
+                                placeholder="Enter the code"
+                                maxlength="6"
+                                autocomplete="off"
+                                required
+                            >
 
-    @error('captcha')
-        <div class="text-danger small mt-1">
-            {{ $message }}
-        </div>
-    @enderror
+                            @error('captcha')
+                                <div class="text-danger small mt-1">
+                                    {{ $message }}
+                                </div>
+                            @enderror
 
-</div>
+                        </div>
 
 
                             <button type="submit" class="btn btn-primary w-100 mb-4" id="loginBtn">
